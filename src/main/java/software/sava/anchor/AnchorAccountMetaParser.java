@@ -19,7 +19,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
   private PublicKey address;
   private String name;
   private boolean writable;
-  private boolean isOptional;
+  private boolean optional;
   private boolean signer;
   private String desc;
   private List<String> docs;
@@ -40,7 +40,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
         signer,
         desc,
         docs == null ? desc == null || desc.isBlank() ? NO_DOCS : List.of(desc) : docs,
-        isOptional,
+        optional,
         pda,
         relations
     );
@@ -69,7 +69,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     } else if (fieldEquals("isMut", buf, offset, len) || fieldEquals("writable", buf, offset, len)) {
       this.writable = ji.readBoolean();
     } else if (fieldEquals("optional", buf, offset, len) || fieldEquals("isOptional", buf, offset, len)) {
-      this.isOptional = ji.readBoolean();
+      this.optional = ji.readBoolean();
     } else if (fieldEquals("isSigner", buf, offset, len) || fieldEquals("signer", buf, offset, len)) {
       this.signer = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {

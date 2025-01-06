@@ -112,7 +112,17 @@ public record AnchorInstruction(Discriminator discriminator,
         if (knowAccount != null) {
           varName = knowAccount.callReference();
         } else {
-          varName = accountMeta.name().endsWith("Key") || accountMeta.name().endsWith("key") ? accountMeta.name() : accountMeta.name() + "Key";
+          final var accountMetaName = accountMeta.name();
+          varName = accountMetaName.endsWith("Key") || accountMetaName.endsWith("key")
+              ? accountMetaName
+              : accountMetaName + "Key";
+          if (accountMeta.optional()) {
+            genSrcContext.addStaticImport(Objects.class, "requireNonNullElse");
+            varName = String.format(
+                "requireNonNullElse(%s, %s.publicKey())",
+                varName, programMetaReference
+            );
+          }
         }
         final String append;
         if (accountMeta.signer()) {

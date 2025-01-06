@@ -11,7 +11,7 @@ public record AnchorAccountMeta(List<AnchorAccountMeta> accounts,
                                 boolean signer,
                                 String description,
                                 List<String> docs,
-                                boolean isOptional,
+                                boolean optional,
                                 AnchorPDA pda,
                                 List<String> relations) {
 
