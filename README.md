@@ -31,6 +31,7 @@ Leaf links provide concrete examples.
         * [Glam FundAccount](https://github.com/sava-software/anchor-programs/blob/2715022ac3c6a72469ff817541e0f1c38cb942c3/programs/src/main/java/software/sava/anchor/programs/glam/anchor/types/FundAccount.java#L31)
     * PDA helpers:
         * [GLAM PDA's](https://github.com/sava-software/anchor-programs/blob/2715022ac3c6a72469ff817541e0f1c38cb942c3/programs/src/main/java/software/sava/anchor/programs/glam/anchor/GlamPDAs.java)
+    * Optional account keys default to the instruction program being called if null.
 - Enums:
     * Simple:
         * [Drift ExchangeStatus](https://github.com/sava-software/anchor-programs/blob/329056d611440fde45371aea7f5c95bf1bb465fb/programs/src/main/java/software/sava/anchor/programs/drift/anchor/types/ExchangeStatus.java)
@@ -56,7 +57,7 @@ implement solutions.
 #### New to anchor 0.30
 
 * Event discriminators
-* Bytemuck serialization (previously only borsh)
+* Bytemuck serialization (previously only Borsh)
 * Generics
 
 #### Ideas:
@@ -101,26 +102,26 @@ Then add the following to your Gradle build script.
 
 ```groovy
 repositories {
-  maven {
-    url = "https://maven.pkg.github.com/sava-software/sava"
-    credentials {
-      username = GITHUB_USERNAME
-      password = GITHUB_PERSONAL_ACCESS_TOKEN
+    maven {
+        url = "https://maven.pkg.github.com/sava-software/sava"
+        credentials {
+            username = GITHUB_USERNAME
+            password = GITHUB_PERSONAL_ACCESS_TOKEN
+        }
     }
-  }
-  maven {
-    url = "https://maven.pkg.github.com/sava-software/solana-programs"
-  }
-  maven {
-    url = "https://maven.pkg.github.com/sava-software/anchor-src-gen"
-  }
+    maven {
+        url = "https://maven.pkg.github.com/sava-software/solana-programs"
+    }
+    maven {
+        url = "https://maven.pkg.github.com/sava-software/anchor-src-gen"
+    }
 }
 
 dependencies {
-  implementation "software.sava:sava-core:$VERSION"
-  implementation "software.sava:sava-rpc:$VERSION"
-  implementation "software.sava:solana-programs:$VERSION"
-  implementation "software.sava:anchor-src-gen:$VERSION"
+    implementation "software.sava:sava-core:$VERSION"
+    implementation "software.sava:sava-rpc:$VERSION"
+    implementation "software.sava:solana-programs:$VERSION"
+    implementation "software.sava:anchor-src-gen:$VERSION"
 }
 ```
 
