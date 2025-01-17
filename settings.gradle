@@ -13,7 +13,7 @@ dependencyResolutionManagement {
   }
   versionCatalogs {
     libs {
-      from("software.sava:solana-version-catalog:0.4.55")
+      from("software.sava:solana-version-catalog:0.4.68")
     }
   }
 }
