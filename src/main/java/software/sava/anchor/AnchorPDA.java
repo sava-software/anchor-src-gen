@@ -4,6 +4,7 @@ import software.sava.core.accounts.PublicKey;
 import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
+import systems.comodal.jsoniter.ValueType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +32,10 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     String fieldName(final GenSrcContext genSrcContext);
   }
 
-  public record AccountSeed(int index, String path, String camelPath) implements Seed {
+  public record AccountSeed(AnchorType type,
+                            int index,
+                            String path,
+                            String camelPath) implements Seed {
 
     @Override
     public String varName(final GenSrcContext genSrcContext) {
@@ -40,7 +44,11 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
 
     @Override
     public String fieldName(final GenSrcContext genSrcContext) {
-      return "final PublicKey " + camelPath + "Account";
+      return String.format(
+          "final %s %sAccount",
+          type.javaType().getSimpleName(),
+          camelPath
+      );
     }
 
     @Override
@@ -59,7 +67,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     }
   }
 
-  public record ArgSeed(int index, String path, String camelPath) implements Seed {
+  public record ArgSeed(AnchorType type, int index, String path, String camelPath) implements Seed {
 
     @Override
     public String varName(final GenSrcContext genSrcContext) {
@@ -68,6 +76,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
 
     @Override
     public String fieldName(final GenSrcContext genSrcContext) {
+      // TODO: generate more convenient methods based on type.
       return "final byte[] " + camelPath;
     }
 
@@ -169,6 +178,8 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
   private static final class SeedParser implements FieldBufferPredicate {
 
     private Kind kind;
+    private AnchorType type;
+    private String account;
     private String path;
     private byte[] value;
 
@@ -177,8 +188,18 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
 
     Seed createSeed(final int index) {
       return switch (kind) {
-        case account -> new AccountSeed(index, path, AnchorUtil.camelCase(path, false));
-        case arg -> new ArgSeed(index, path, AnchorUtil.camelCase(path.replace('.', '_'), false));
+        case account -> new AccountSeed(
+            Objects.requireNonNullElse(type, AnchorType.publicKey),
+            index,
+            path,
+            AnchorUtil.camelCase(path, false)
+        );
+        case arg -> new ArgSeed(
+            type,
+            index,
+            path,
+            AnchorUtil.camelCase(path.replace('.', '_'), false)
+        );
         case _const -> {
           final var str = new String(value);
           yield new ConstSeed(
@@ -196,16 +217,27 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
       if (fieldEquals("kind", buf, offset, len)) {
         this.kind = ji.applyChars(KIND_PARSER);
       } else if (fieldEquals("value", buf, offset, len)) {
-        final byte[] seed = new byte[PUBLIC_KEY_LENGTH];
-        int i = 0;
-        for (; ji.readArray(); ++i) {
-          seed[i] = (byte) ji.readInt();
+        final var next = ji.whatIsNext();
+        if (next == ValueType.STRING) {
+          this.value = ji.readString().getBytes();
+        } else if (next == ValueType.ARRAY) {
+          final byte[] seed = new byte[PUBLIC_KEY_LENGTH];
+          int i = 0;
+          for (; ji.readArray(); ++i) {
+            seed[i] = (byte) ji.readInt();
+          }
+          this.value = i < PUBLIC_KEY_LENGTH
+              ? Arrays.copyOfRange(seed, 0, i)
+              : seed;
+        } else {
+          throw new IllegalStateException("Unhandled AnchorPDA.Seed.value type " + next);
         }
-        this.value = i < PUBLIC_KEY_LENGTH
-            ? Arrays.copyOfRange(seed, 0, i)
-            : seed;
       } else if (fieldEquals("path", buf, offset, len)) {
         this.path = ji.readString();
+      } else if (fieldEquals("type", buf, offset, len)) {
+        this.type = AnchorType.valueOf(ji.readString());
+      } else if (fieldEquals("account", buf, offset, len)) {
+        this.account = ji.readString();
       } else {
         throw new IllegalStateException("Unhandled AnchorPDA.Seed field " + new String(buf, offset, len));
       }

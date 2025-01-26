@@ -1,7 +1,7 @@
 [
   {
-    "name": "Switchboard On-Demand",
-    "program": "SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv",
-    "package": "switchboard.on_demand"
+    "name": "merkle distributor",
+    "program": "DiS3nNjFVMieMgmiQFm6wgJL7nevk4NrhXKLbtEH1Z2R",
+    "package": "jupiter.merkle.distributor"
   }
 ]
