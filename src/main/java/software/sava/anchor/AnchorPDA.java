@@ -1,11 +1,13 @@
 package software.sava.anchor;
 
 import software.sava.core.accounts.PublicKey;
+import software.sava.core.encoding.ByteUtil;
 import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +28,8 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
   public sealed interface Seed permits AccountSeed, ArgSeed, ConstSeed {
 
     int index();
+
+    AnchorType type();
 
     String varName(final GenSrcContext genSrcContext);
 
@@ -71,13 +75,108 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
 
     @Override
     public String varName(final GenSrcContext genSrcContext) {
-      return camelPath;
+      return type == null || type.javaType().equals(byte[].class) ? camelPath : camelPath + "Bytes";
     }
 
     @Override
     public String fieldName(final GenSrcContext genSrcContext) {
       // TODO: generate more convenient methods based on type.
-      return "final byte[] " + camelPath;
+      return String.format(
+          "final %s %s",
+          type == null ? "byte[]" : type.javaType().getSimpleName(),
+          camelPath
+      );
+    }
+
+    public void serialize(final GenSrcContext genSrcContext, final StringBuilder src) {
+      if (type != null) {
+        final var serializationSrc = switch (type) {
+          case bool -> String.format("""
+                  final byte[] %sBytes = new byte[] {%s ? 1 : 0};""",
+              camelPath, camelPath
+          );
+          case _enum -> String.format("""
+                  final byte[] %sBytes = new byte[%s.l()];
+                  %s.write(%sBytes);""",
+              camelPath, camelPath, camelPath, camelPath
+          );
+          case publicKey -> String.format("""
+                  final byte[] %sBytes = %s.toByteArray();""",
+              camelPath, camelPath
+          );
+          case f32 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[Float.BYTES];
+                    ByteUtil.putFloat32LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case f64 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[Double.BYTES];
+                    ByteUtil.putFloat64LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case i8, u8 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[] {%s};""",
+                camelPath, camelPath
+            );
+          }
+          case i16, u16 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[Short.BYTES];
+                    ByteUtil.putInt16LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case i32, u32 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[Integer.BYTES];
+                    ByteUtil.putInt32LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case i64, u64 -> {
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[Long.BYTES];
+                    ByteUtil.putInt64LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case i128, u128 -> {
+            genSrcContext.addImport(BigDecimal.class);
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[128];
+                    ByteUtil.getUInt128LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case i256, u256 -> {
+            genSrcContext.addImport(BigDecimal.class);
+            genSrcContext.addImport(ByteUtil.class);
+            yield String.format("""
+                    final byte[] %sBytes = new byte[256];
+                    ByteUtil.getUInt256LE(%sBytes, 0, %s);""",
+                camelPath, camelPath, camelPath
+            );
+          }
+          case bytes -> null;
+          default ->
+              throw new UnsupportedOperationException("TODO: Support PDA serialization for " + type + " type args");
+        };
+        if (serializationSrc != null) {
+          src.append(serializationSrc.indent(genSrcContext.tabLength() << 1));
+        }
+      }
     }
 
     @Override
@@ -96,7 +195,8 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     }
   }
 
-  public record ConstSeed(int index,
+  public record ConstSeed(AnchorType type,
+                          int index,
                           byte[] seed, String str,
                           boolean isReadable,
                           PublicKey maybeKnownPublicKey) implements Seed {
@@ -203,6 +303,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
         case _const -> {
           final var str = new String(value);
           yield new ConstSeed(
+              type,
               index,
               value, str,
               ConstSeed.isReadable(str),
@@ -302,6 +403,11 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
       final var fields = fieldsList.stream()
           .collect(Collectors.joining(",\n" + argTab, ",\n" + argTab, ") {\n"));
       out.append(fields);
+      for (final var seed : seeds) {
+        if (seed instanceof ArgSeed argSeed) {
+          argSeed.serialize(genSrcContext, out);
+        }
+      }
     }
 
     final var paramRefs = seeds.stream()
