@@ -41,7 +41,7 @@ jobs:
           printf "\norg.gradle.java.installations.paths=%s" "$JAVA_HOME" >> gradle.properties
           java --version
           ./genSrc.sh --tjv="${{ vars.JAVA_VERSION }}" --tl=2 --bdm=200 --nt=5 --rpc="${{ secrets.RPC_URL }}"
-          ./gradlew -PtargetJava=${{ vars.JAVA_VERSION }} check --stacktrace
+          ./gradlew -PjavaVersion=${{ vars.JAVA_VERSION }} check --stacktrace --no-daemon
         env:
           GITHUB_ACTOR: ${{ secrets.GITHUB_ACTOR }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

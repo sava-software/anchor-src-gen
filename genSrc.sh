@@ -88,9 +88,7 @@ fi
 
 ./gradlew --stacktrace "-PmainClassName=$mainClass" clean jlink
 
-vcsRef="$(git rev-parse --short HEAD)"
-readonly vcsRef
-readonly javaExe="$projectDirectory/build/$vcsRef/bin/java"
+readonly javaExe="$projectDirectory/build/anchor-src-gen/bin/java"
 
 javaArgs+=(
   "-D$moduleName.baseDelayMillis=$baseDelayMillis"
