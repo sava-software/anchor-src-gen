@@ -22,6 +22,8 @@ project.group = 'software.sava'
 project.version = "$VERSION"
 
 final JLV = JavaLanguageVersion.of(project.findProperty('javaVersion') as Integer ?: 23)
+final GPR_USER = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+final GPR_TOKEN = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
 
 plugins.withType(JavaPlugin).configureEach {
   java {
@@ -36,22 +38,22 @@ repositories {
   maven {
     url = "https://maven.pkg.github.com/comodal/json-iterator"
     credentials {
-      username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-      password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+      username = GPR_USER
+      password = GPR_TOKEN
     }
   }
   maven {
     url = "https://maven.pkg.github.com/sava-software/sava"
     credentials {
-      username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-      password = project.findProperty("gpr.token") ?: System.getenv("GITHUB_TOKEN")
+      username = GPR_USER
+      password = GPR_TOKEN
     }
   }
   maven {
     url = "https://maven.pkg.github.com/sava-software/solana-programs"
     credentials {
-      username = project.findProperty("gpr.sava.user") ?: System.getenv("GITHUB_SAVA_USER")
-      password = project.findProperty("gpr.sava.token") ?: System.getenv("GITHUB_SAVA_TOKEN")
+      username = GPR_USER
+      password = GPR_TOKEN
     }
   }
   mavenCentral()
