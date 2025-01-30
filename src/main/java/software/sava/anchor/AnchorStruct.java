@@ -4,6 +4,7 @@ import software.sava.core.accounts.PublicKey;
 import software.sava.core.borsh.Borsh;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.rpc.Filter;
+import software.sava.rpc.json.http.response.AccountInfo;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.Arrays;
@@ -61,7 +62,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
       builder.append(recordSigLine).append(String.format("""
           ) implements %s {
           
-          """, interfaceName));
+          """, interfaceName
+      ));
       builder.append(String.format("""
           private static final %s INSTANCE = new %s();
           
@@ -78,7 +80,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
           public int l() {
           %sreturn 0;
           }
-          """, name, name, name, tab, tab, tab).indent(tabLength));
+          """, name, name, name, tab, tab, tab
+      ).indent(tabLength));
       return removeBlankLines(builder.append('}').toString());
     }
 
@@ -149,12 +152,14 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
         .append(String.format("""
             ) implements %s {
             
-            """, interfaceName));
+            """, interfaceName
+        ));
     if (byteLength > 0) {
       builder.append(tab).append(String.format("""
               public static final int BYTES = %d;
               """,
-          byteLength));
+          byteLength
+      ));
     }
     if (isAccount) {
       if (byteLength > 0) {
@@ -174,7 +179,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
         final var discriminatorLine = Arrays.stream(discriminator.toIntArray())
             .mapToObj(Integer::toString)
             .collect(Collectors.joining(", ",
-                "public static final Discriminator DISCRIMINATOR = toDiscriminator(", ");"));
+                "public static final Discriminator DISCRIMINATOR = toDiscriminator(", ");"
+            ));
         builder.append(tab).append(discriminatorLine);
         builder.append("\n").append(tab).append("""
             public static final Filter DISCRIMINATOR_FILTER = Filter.createMemCompFilter(0, DISCRIMINATOR.data());
@@ -257,8 +263,13 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
     }
     builder.append(String.format("public static %s read(final byte[] _data, final int offset) {", name).indent(tabLength));
     if (isAccount) {
+      genSrcContext.addImport(AccountInfo.class);
       builder.append(String.format("""
               %sreturn read(null, _data, offset);
+              }
+              
+              public static %s read(final AccountInfo<byte[]> accountInfo) {
+              %sreturn read(accountInfo.pubKey(), accountInfo.data(), 0);
               }
               
               public static %s read(final PublicKey _address, final byte[] _data) {
@@ -268,7 +279,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
               public static final BiFunction<PublicKey, byte[], %s> FACTORY = %s::read;
               
               public static %s read(final PublicKey _address, final byte[] _data, final int offset) {""",
-          tab, name, tab, name, name, name).indent(tabLength));
+          tab, name, tab, name, tab, name, name, name
+      ).indent(tabLength));
       builder.append("""
           if (_data == null || _data.length == 0) {""".indent(tabLength << 1));
       builder.append(tab).append("""
@@ -392,7 +404,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
           public int ordinal() {
             return %d;
           }
-          """, ordinal).indent(tabLength));
+          """, ordinal
+      ).indent(tabLength));
     }
 
     return removeBlankLines(builder.append('}').toString());
