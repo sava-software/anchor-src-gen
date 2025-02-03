@@ -6,7 +6,7 @@
 
 User documentation lives at [sava.software](https://sava.software/).
 
-* [IDL Source Generator](https://sava.software/libraries/anchor-src-gen)
+* [IDL Source Generator](https://sava.software/utilities/anchor-src-gen)
 
 ## Contribution
 
