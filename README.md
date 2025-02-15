@@ -6,12 +6,12 @@
 
 User documentation lives at [sava.software](https://sava.software/).
 
+* [Dependency Configuration](https://sava.software/quickstart)
 * [IDL Source Generator](https://sava.software/utilities/anchor-src-gen)
 
 ## Contribution
 
-Unit tests are needed and welcomed. Otherwise, please open
-a [discussion](https://github.com/sava-software/sava/discussions), issue, or send an email before working on a pull
+Unit tests are needed and welcomed. Otherwise, please open discussion, issue, or send an email before working on a pull
 request.
 
 ## Build

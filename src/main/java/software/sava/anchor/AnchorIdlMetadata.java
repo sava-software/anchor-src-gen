@@ -1,5 +1,7 @@
 package software.sava.anchor;
 
+import software.sava.core.accounts.PublicKey;
+import software.sava.rpc.json.PublicKeyEncoding;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
@@ -14,7 +16,8 @@ public record AnchorIdlMetadata(String name,
                                 String repository,
                                 List<AnchorIdlDependency> dependencies,
                                 String contact,
-                                List<AnchorIdlDeployments> deployments) {
+                                List<AnchorIdlDeployments> deployments,
+                                PublicKey address) {
 
   static AnchorIdlMetadata parseMetadata(final JsonIterator ji) {
     final var parser = new Parser();
@@ -32,6 +35,7 @@ public record AnchorIdlMetadata(String name,
     private List<AnchorIdlDependency> dependencies;
     private String contact;
     private List<AnchorIdlDeployments> deployments;
+    private PublicKey address;
 
     private Parser() {
     }
@@ -45,7 +49,8 @@ public record AnchorIdlMetadata(String name,
           repository,
           dependencies,
           contact,
-          deployments
+          deployments,
+          address
       );
     }
 
@@ -67,8 +72,10 @@ public record AnchorIdlMetadata(String name,
         this.contact = ji.readString();
       } else if (fieldEquals("deployments", buf, offset, len)) {
         this.deployments = AnchorIdlDeployments.parseDeployments(ji);
+      } else if (fieldEquals("address", buf, offset, len)) {
+        this.address = PublicKeyEncoding.parseBase58Encoded(ji);
       } else {
-        throw new IllegalStateException("Unhandled AnchorIdlMetadata field " + new String(buf, offset, len));
+        throw new IllegalStateException("Unhandled AnchorIdlMetadata field [" + new String(buf, offset, len) + ']');
       }
       return true;
     }
