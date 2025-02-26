@@ -140,26 +140,34 @@ public final class Entrypoint extends Thread {
                                String packageName,
                                PublicKey programAddress,
                                PublicKey idlAddress,
-                               URI idlURL) {
+                               URI idlURL,
+                               Path idlFile) {
 
     String formatPackage(final String basePackageName) {
       return String.format("%s.%s.anchor", basePackageName, packageName);
     }
 
     AnchorIDL fetchIDL(final SolanaRpcClient rpcClient) {
-      if (idlURL == null) {
+      if (idlURL != null) {
+        return AnchorSourceGenerator.fetchIDL(rpcClient.httpClient(), idlURL).join();
+      } else if (idlFile != null) {
+        try {
+          return AnchorIDL.parseIDL(Files.readAllBytes(idlFile));
+        } catch (final IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      } else {
         final var idl = AnchorSourceGenerator.fetchIDLForProgram(programAddress, rpcClient).join();
         if (idl == null) {
           logger.log(WARNING, String.format(
-              "Failed to find an IDL for %s using a program address %s at the IDL address %s.",
-              name, programAddress, idlAddress
-          ));
+                  "Failed to find an IDL for %s using a program address %s at the IDL address %s.",
+                  name, programAddress, idlAddress
+              )
+          );
           return null;
         } else {
           return idl;
         }
-      } else {
-        return AnchorSourceGenerator.fetchIDL(rpcClient.httpClient(), idlURL).join();
       }
     }
 
@@ -179,6 +187,8 @@ public final class Entrypoint extends Thread {
         builder.programAddress = PublicKeyEncoding.parseBase58Encoded(ji);
       } else if (fieldEquals("idlURL", buf, offset, len)) {
         builder.idlURL = java.net.URI.create(ji.readString());
+      } else if (fieldEquals("idlFile", buf, offset, len)) {
+        builder.idlFile = Path.of(ji.readString());
       } else {
         ji.skip();
       }
@@ -191,6 +201,7 @@ public final class Entrypoint extends Thread {
       private String packageName;
       private PublicKey programAddress;
       private URI idlURL;
+      private Path idlFile;
 
       private Builder() {
       }
@@ -201,7 +212,8 @@ public final class Entrypoint extends Thread {
             requireNonNullElse(packageName, name.toLowerCase(Locale.ENGLISH)),
             programAddress,
             AnchorUtil.createIdlAddress(programAddress),
-            idlURL
+            idlURL,
+            idlFile
         );
       }
     }
@@ -241,8 +253,7 @@ public final class Entrypoint extends Thread {
           );
 
           final var exports = new ConcurrentSkipListSet<String>();
-          final var threads = IntStream.range(0, numThreads)
-              .mapToObj(_ -> new Entrypoint(
+          final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
                   semaphore, tasks, errorCount, baseDelayMillis, latestCall,
                   rpcClient,
                   sourceDirectory, basePackageName,
