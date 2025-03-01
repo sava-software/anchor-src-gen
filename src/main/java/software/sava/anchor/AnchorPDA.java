@@ -8,10 +8,7 @@ import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static software.sava.core.accounts.PublicKey.PUBLIC_KEY_LENGTH;
@@ -33,7 +30,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
 
     String varName(final GenSrcContext genSrcContext);
 
-    String fieldName(final GenSrcContext genSrcContext);
+    String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown);
   }
 
   public record AccountSeed(AnchorType type,
@@ -47,7 +44,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext) {
+    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
       return String.format(
           "final %s %sAccount",
           type.javaType().getSimpleName(),
@@ -79,7 +76,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext) {
+    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
       // TODO: generate more convenient methods based on type.
       return String.format(
           "final %s %s",
@@ -210,7 +207,8 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
       if (isReadable) {
         genSrcContext.addUS_ASCII_Import();
         return String.format("""
-            "%s".getBytes(US_ASCII)""", str);
+            "%s".getBytes(US_ASCII)""", str
+        );
       } else if (maybeKnownPublicKey != null) {
         final var knownAccountRef = genSrcContext.accountMethods().get(maybeKnownPublicKey);
         if (knownAccountRef != null) {
@@ -224,15 +222,20 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext) {
+    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
       if (isReadable) {
         return null;
       } else if (maybeKnownPublicKey != null) {
         final var knownAccountRef = genSrcContext.accountMethods().get(maybeKnownPublicKey);
         if (knownAccountRef != null) {
           final var accountsClas = knownAccountRef.clas();
-          genSrcContext.addImport(accountsClas);
-          return String.format("final %s %s", accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false));
+          final var field = String.format("final %s %s", accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false));
+          if (deDuplicateKnown.add(field)) {
+            genSrcContext.addImport(accountsClas);
+            return field;
+          } else {
+            return null;
+          }
         } else {
           return "final PublicKey " + maybeKnownPublicKey.toBase58();
         }
@@ -392,8 +395,9 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     out.append("""
         final PublicKey program""");
 
+    final var deduplicateKnown = HashSet.<String>newHashSet(seeds.size());
     final var fieldsList = seeds.stream()
-        .map(seed -> seed.fieldName(genSrcContext))
+        .map(seed -> seed.fieldName(genSrcContext, deduplicateKnown))
         .filter(Objects::nonNull)
         .toList();
     if (fieldsList.isEmpty()) {
