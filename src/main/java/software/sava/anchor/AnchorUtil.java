@@ -79,8 +79,14 @@ public final class AnchorUtil {
     }
     final int len = notSnakeCased.length();
     final char[] buf = new char[len << 1];
-    int i = 0, s = 0;
-    for (char c; i < len; ++i, ++s) {
+    char c = notSnakeCased.charAt(0);
+    if (Character.isUpperCase(c)) {
+      buf[0] = upperCase ? c : Character.toLowerCase(c);
+    } else {
+      buf[0] = upperCase ? Character.toUpperCase(c) : c;
+    }
+    int s = 1;
+    for (int i = 1; i < len; ++i, ++s) {
       c = notSnakeCased.charAt(i);
       if (Character.isUpperCase(c)) {
         buf[s] = '_';

@@ -37,6 +37,7 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 public final class Entrypoint extends Thread {
 
   private static final System.Logger logger = System.getLogger(Entrypoint.class.getName());
+  private static final LongBinaryOperator MAX = Long::max;
 
   private final Semaphore semaphore;
   private final ConcurrentLinkedQueue<ProgramConfig> tasks;
@@ -70,9 +71,6 @@ public final class Entrypoint extends Thread {
     this.exports = exports;
     this.tabLength = tabLength;
   }
-
-
-  private static final LongBinaryOperator MAX = Long::max;
 
   @Override
   public void run() {
