@@ -80,22 +80,56 @@ public final class AnchorUtil {
     final int len = notSnakeCased.length();
     final char[] buf = new char[len << 1];
     char c = notSnakeCased.charAt(0);
+    boolean changed = false;
+    boolean separate;
     if (Character.isUpperCase(c)) {
-      buf[0] = upperCase ? c : Character.toLowerCase(c);
+      separate = false;
+      if (upperCase) {
+        buf[0] = c;
+      } else {
+        buf[0] = Character.toLowerCase(c);
+        changed = c != buf[0];
+      }
+    } else if (c == '_') {
+      separate = false;
+      buf[0] = c;
     } else {
-      buf[0] = upperCase ? Character.toUpperCase(c) : c;
+      separate = true;
+      if (upperCase) {
+        buf[0] = Character.toUpperCase(c);
+        changed = c != buf[0];
+      } else {
+        buf[0] = c;
+      }
     }
     int s = 1;
     for (int i = 1; i < len; ++i, ++s) {
       c = notSnakeCased.charAt(i);
       if (Character.isUpperCase(c)) {
-        buf[s] = '_';
-        buf[++s] = upperCase ? c : Character.toLowerCase(c);
+        if (separate) {
+          buf[s++] = '_';
+          changed = true;
+        }
+        if (upperCase) {
+          buf[s] = c;
+        } else {
+          buf[s] = Character.toLowerCase(c);
+          changed = c != buf[s];
+        }
+      } else if (c == '_') {
+        separate = false;
+        buf[s] = c;
       } else {
-        buf[s] = upperCase ? Character.toUpperCase(c) : c;
+        separate = true;
+        if (upperCase) {
+          buf[s] = Character.toUpperCase(c);
+          changed = c != buf[s];
+        } else {
+          buf[s] = c;
+        }
       }
     }
-    return s == len ? notSnakeCased : new String(buf, 0, s);
+    return changed ? new String(buf, 0, s) : notSnakeCased;
   }
 
   public static String camelCase(final String maybeSnakeCase) {
