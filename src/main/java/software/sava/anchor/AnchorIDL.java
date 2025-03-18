@@ -228,7 +228,7 @@ public record AnchorIDL(PublicKey address,
           accounts == null ? Map.of() : accounts,
           types == null ? Map.of() : types,
           events == null ? List.of() : events,
-          errors,
+          errors == null ? List.of() : errors,
           metaData,
           docs == null ? NO_DOCS : docs,
           json

@@ -15,7 +15,9 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta> {
 
   static final Supplier<AnchorAccountMetaParser> FACTORY = AnchorAccountMetaParser::new;
+  private static final List<AnchorAccountMeta> NO_NESTED_ACCOUNTS = List.of();
 
+  private final String parentName;
   private PublicKey address;
   private String name;
   private boolean writable;
@@ -25,15 +27,20 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
   private List<String> docs;
   private AnchorPDA pda;
   private List<String> relations;
-  private List<AnchorAccountMeta> accounts;
+  private List<AnchorAccountMeta> nestedAccounts;
+
+  AnchorAccountMetaParser(final String parentName) {
+    this.parentName = parentName;
+  }
 
   AnchorAccountMetaParser() {
+    this.parentName = null;
   }
 
   @Override
   public AnchorAccountMeta create() {
     return new AnchorAccountMeta(
-        accounts,
+        nestedAccounts == null ? NO_NESTED_ACCOUNTS : nestedAccounts,
         address,
         name,
         writable,
@@ -46,16 +53,20 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     );
   }
 
+  private static String firstUpper(final String name) {
+    final var charArray = name.toCharArray();
+    charArray[0] = Character.toUpperCase(charArray[0]);
+    return new String(charArray);
+  }
+
   @Override
   public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
     if (fieldEquals("accounts", buf, offset, len)) {
-      final var accounts = new ArrayList<AnchorAccountMeta>();
-      for (AnchorAccountMetaParser parser; ji.readArray(); ) {
-        parser = new AnchorAccountMetaParser();
-        ji.testObject(parser);
-        accounts.add(parser.create());
+      final var parentName = this.parentName == null ? name : this.parentName + firstUpper(name);
+      this.nestedAccounts = ElementFactory.parseList(ji, () -> new AnchorAccountMetaParser(parentName));
+      if (this.nestedAccounts.isEmpty()) {
+        throw new IllegalStateException("Nested accounts must be defined");
       }
-      this.accounts = accounts;
     } else if (fieldEquals("address", buf, offset, len)) {
       this.address = PublicKeyEncoding.parseBase58Encoded(ji);
     } else if (fieldEquals("desc", buf, offset, len)) {
@@ -73,7 +84,9 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     } else if (fieldEquals("isSigner", buf, offset, len) || fieldEquals("signer", buf, offset, len)) {
       this.signer = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {
-      this.name = AnchorUtil.camelCase(ji.readString(), false);
+      this.name = parentName == null
+          ? AnchorUtil.camelCase(ji.readString(), false)
+          : parentName + AnchorUtil.camelCase(ji.readString(), true);
     } else if (fieldEquals("pda", buf, offset, len)) {
       this.pda = AnchorPDA.parsePDA(ji);
     } else if (fieldEquals("relations", buf, offset, len)) {

@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.lang.System.Logger.Level.ERROR;
 import static java.nio.file.StandardOpenOption.*;
 
 public record AnchorSourceGenerator(Path sourceDirectory,
@@ -31,24 +32,24 @@ public record AnchorSourceGenerator(Path sourceDirectory,
   }
 
   public static CompletableFuture<AnchorIDL> fetchIDL(final PublicKey idlAddress, final SolanaRpcClient rpcClient) {
-    return rpcClient.getAccountInfo(idlAddress, OnChainIDL.FACTORY)
-        .thenApply(idlAccountInfo -> {
-          final var idl = idlAccountInfo.data();
-          if (idl == null) {
-            return null;
-          } else {
-            final byte[] json = idl.json();
+    return rpcClient.getAccountInfo(idlAddress, OnChainIDL.FACTORY).thenApply(idlAccountInfo -> {
+      final var idl = idlAccountInfo.data();
+      if (idl == null) {
+        return null;
+      } else {
+        final byte[] json = idl.json();
 //            try {
-//              Files.write(Path.of(idlAddress + "_idl.json"), json, CREATE, TRUNCATE_EXISTING, WRITE);
+//              Files.write(Path.of(idlAddress + "_idl.json"), json, CREATE, WRITE, TRUNCATE_EXISTING);
 //            } catch (final IOException e) {
 //              throw new UncheckedIOException(e);
 //            }
-            return AnchorIDL.parseIDL(json);
-          }
-        });
+        return AnchorIDL.parseIDL(json);
+      }
+    });
   }
 
-  public static CompletableFuture<AnchorIDL> fetchIDLForProgram(final PublicKey programAddress, final SolanaRpcClient rpcClient) {
+  public static CompletableFuture<AnchorIDL> fetchIDLForProgram(final PublicKey programAddress,
+                                                                final SolanaRpcClient rpcClient) {
     final var idlAddress = AnchorUtil.createIdlAddress(programAddress);
     return fetchIDL(idlAddress, rpcClient);
   }
@@ -92,7 +93,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     clearAndReCreateDirectory(fullSrcDir);
 
     try {
-      Files.write(fullSrcDir.resolve("idl.json"), idl.json(), CREATE, TRUNCATE_EXISTING, WRITE);
+      Files.write(fullSrcDir.resolve("idl.json"), idl.json(), CREATE, WRITE, TRUNCATE_EXISTING);
     } catch (final IOException e) {
       throw new UncheckedIOException("Failed to write idl json file.", e);
     }
@@ -131,41 +132,59 @@ public record AnchorSourceGenerator(Path sourceDirectory,
         accountMethods
     );
 
-    final var programSource = idl.generateSource(genSrcContext);
     try {
+      final var programSource = idl.generateSource(genSrcContext);
       Files.writeString(fullSrcDir.resolve(programName + "Program.java"), programSource, CREATE, TRUNCATE_EXISTING, WRITE);
+    } catch (final RuntimeException ex) {
+      logger.log(ERROR, "Failed to generate source for " + idl.name());
+      throw ex;
     } catch (final IOException e) {
       throw new UncheckedIOException("Failed to write Program source code file.", e);
     }
 
     genSrcContext.clearImports();
-    final var pdaSource = idl.generatePDASource(genSrcContext);
-    if (pdaSource != null && !pdaSource.isBlank()) {
-      try {
-        Files.writeString(fullSrcDir.resolve(programName + "PDAs.java"), pdaSource, CREATE, TRUNCATE_EXISTING, WRITE);
-      } catch (final IOException e) {
-        throw new UncheckedIOException("Failed to write PDA source code file.", e);
+    try {
+      final var pdaSource = idl.generatePDASource(genSrcContext);
+      if (pdaSource != null && !pdaSource.isBlank()) {
+        try {
+          Files.writeString(fullSrcDir.resolve(programName + "PDAs.java"), pdaSource, CREATE, TRUNCATE_EXISTING, WRITE);
+        } catch (final IOException e) {
+          throw new UncheckedIOException("Failed to write PDA source code file.", e);
+        }
       }
+    } catch (final RuntimeException ex) {
+      logger.log(ERROR, "Failed to generate PDA source for " + idl.name());
+      throw ex;
     }
 
     genSrcContext.clearImports();
-    final var constantsSource = idl.generateConstantsSource(genSrcContext);
-    if (constantsSource != null && !constantsSource.isBlank()) {
-      try {
-        Files.writeString(fullSrcDir.resolve(programName + "Constants.java"), constantsSource, CREATE, TRUNCATE_EXISTING, WRITE);
-      } catch (final IOException e) {
-        throw new UncheckedIOException("Failed to write Constants source code file.", e);
+    try {
+      final var constantsSource = idl.generateConstantsSource(genSrcContext);
+      if (constantsSource != null && !constantsSource.isBlank()) {
+        try {
+          Files.writeString(fullSrcDir.resolve(programName + "Constants.java"), constantsSource, CREATE, TRUNCATE_EXISTING, WRITE);
+        } catch (final IOException e) {
+          throw new UncheckedIOException("Failed to write Constants source code file.", e);
+        }
       }
+    } catch (final RuntimeException ex) {
+      logger.log(ERROR, "Failed to generate constants source for " + idl.name());
+      throw ex;
     }
 
     genSrcContext.clearImports();
-    final var errorSource = idl.generateErrorSource(genSrcContext);
-    if (errorSource != null && !errorSource.isBlank()) {
-      try {
-        Files.writeString(fullSrcDir.resolve(programName + "Error.java"), errorSource, CREATE, TRUNCATE_EXISTING, WRITE);
-      } catch (final IOException e) {
-        throw new UncheckedIOException("Failed to write error source code file.", e);
+    try {
+      final var errorSource = idl.generateErrorSource(genSrcContext);
+      if (errorSource != null && !errorSource.isBlank()) {
+        try {
+          Files.writeString(fullSrcDir.resolve(programName + "Error.java"), errorSource, CREATE, TRUNCATE_EXISTING, WRITE);
+        } catch (final IOException e) {
+          throw new UncheckedIOException("Failed to write error source code file.", e);
+        }
       }
+    } catch (final RuntimeException ex) {
+      logger.log(ERROR, "Failed to generate error source for " + idl.name());
+      throw ex;
     }
 
     final var types = idl.types();
@@ -177,9 +196,12 @@ public record AnchorSourceGenerator(Path sourceDirectory,
           : account;
       accounts.add(namedType.name());
       if (namedType.type() instanceof AnchorStruct struct) {
-        final var sourceCode = struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, true, account);
         try {
+          final var sourceCode = struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, true, account);
           Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+        } catch (final RuntimeException ex) {
+          logger.log(ERROR, String.format("Failed to generate account %s source for %s.", namedType.name(), idl.name()));
+          throw ex;
         } catch (final IOException e) {
           throw new UncheckedIOException("Failed to write Account source code file.", e);
         }
@@ -193,22 +215,27 @@ public record AnchorSourceGenerator(Path sourceDirectory,
         continue;
       }
       genSrcContext.clearImports();
-      final var sourceCode = switch (namedType.type()) {
-        case AnchorStruct struct ->
-            struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, false, null);
-        case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType);
-        case AnchorVector anchorVector -> {
-          logger.log(System.Logger.Level.WARNING, "Ignoring defined vector type: " + anchorVector);
-          yield null;
+      try {
+        final var sourceCode = switch (namedType.type()) {
+          case AnchorStruct struct ->
+              struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, false, null);
+          case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType);
+          case AnchorVector anchorVector -> {
+            logger.log(System.Logger.Level.WARNING, "Ignoring defined vector type: " + anchorVector);
+            yield null;
+          }
+          case null, default -> throw new IllegalStateException("Unexpected anchor defined type " + namedType);
+        };
+        if (sourceCode != null) {
+          try {
+            Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+          } catch (final IOException e) {
+            throw new UncheckedIOException("Failed to write source code file.", e);
+          }
         }
-        case null, default -> throw new IllegalStateException("Unexpected anchor defined type " + namedType);
-      };
-      if (sourceCode != null) {
-        try {
-          Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
-        } catch (final IOException e) {
-          throw new UncheckedIOException("Failed to write source code file.", e);
-        }
+      } catch (final RuntimeException ex) {
+        logger.log(ERROR, String.format("Failed to generate type %s source for %s.", namedType.name(), idl.name()));
+        throw ex;
       }
     }
 
@@ -219,8 +246,13 @@ public record AnchorSourceGenerator(Path sourceDirectory,
           : event;
       try {
         if (namedType.type() instanceof AnchorStruct struct) {
-          final var sourceCode = struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, false, null);
-          Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+          try {
+            final var sourceCode = struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, false, null);
+            Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+          } catch (final RuntimeException ex) {
+            logger.log(ERROR, String.format("Failed to generate event %s source for %s.", namedType.name(), idl.name()));
+            throw ex;
+          }
         } else {
           throw new IllegalStateException("Unexpected anchor defined event " + namedType);
         }

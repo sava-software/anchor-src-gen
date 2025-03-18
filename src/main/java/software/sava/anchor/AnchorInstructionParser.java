@@ -4,6 +4,7 @@ import software.sava.core.programs.Discriminator;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.factory.ElementFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -21,8 +22,44 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
   AnchorInstructionParser() {
   }
 
+  private static void accumulateNestedAccounts(final List<AnchorAccountMeta> parentAccounts,
+                                               final List<AnchorAccountMeta> accounts) {
+    for (final var account : parentAccounts) {
+      final var nestedAccounts = account.nestedAccounts();
+      if (nestedAccounts.isEmpty()) {
+        accounts.add(account);
+      } else {
+        accumulateNestedAccounts(nestedAccounts, accounts);
+      }
+    }
+  }
+
+  private ArrayList<AnchorAccountMeta> accumulateNestedAccounts() {
+    final var accounts = new ArrayList<AnchorAccountMeta>();
+    for (final var account : this.accounts) {
+      final var nestedAccounts = account.nestedAccounts();
+      if (nestedAccounts.isEmpty()) {
+        accounts.add(account);
+      } else {
+        accumulateNestedAccounts(nestedAccounts, accounts);
+      }
+    }
+    return accounts;
+  }
+
   @Override
   public AnchorInstruction create() {
+    for (final var account : accounts) {
+      final var nestedAccounts = account.nestedAccounts();
+      if (!nestedAccounts.isEmpty()) {
+        return new AnchorInstruction(
+            discriminator,
+            name,
+            accumulateNestedAccounts(),
+            args
+        );
+      }
+    }
     return new AnchorInstruction(
         discriminator,
         name,

@@ -4,7 +4,7 @@ import software.sava.core.accounts.PublicKey;
 
 import java.util.List;
 
-public record AnchorAccountMeta(List<AnchorAccountMeta> accounts,
+public record AnchorAccountMeta(List<AnchorAccountMeta> nestedAccounts,
                                 PublicKey address,
                                 String name,
                                 boolean writable,
