@@ -2,6 +2,7 @@ package software.sava.anchor;
 
 import software.sava.core.borsh.Borsh;
 import software.sava.core.rpc.Filter;
+import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.ContextFieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
@@ -9,16 +10,38 @@ import systems.comodal.jsoniter.ValueType;
 import java.util.Map;
 
 import static software.sava.anchor.AnchorNamedTypeParser.cleanName;
+import static software.sava.anchor.AnchorType.*;
 import static software.sava.anchor.AnchorUtil.camelCase;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public record AnchorDefined(String typeName) implements AnchorReferenceTypeContext {
 
+  private static final CharBufferFunction<AnchorTypeContext> SHANK_DEFINED_TYPE_PARSER = (buf, offset, len) -> {
+    if (fieldEquals("PodBool", buf, offset, len)) {
+      return new AnchorPrimitive(bool);
+    } else if (fieldEquals("PodU16", buf, offset, len)) {
+      return new AnchorPrimitive(u16);
+    } else if (fieldEquals("PodU32", buf, offset, len)) {
+      return new AnchorPrimitive(u32);
+    } else if (fieldEquals("PodU64", buf, offset, len)) {
+      return new AnchorPrimitive(u64);
+    } else if (fieldEquals("PodU128", buf, offset, len)) {
+      return new AnchorPrimitive(u128);
+    } else if (fieldEquals("PodU256", buf, offset, len)) {
+      return new AnchorPrimitive(u256);
+    } else {
+      return new AnchorDefined(cleanName(new String(buf, offset, len), true));
+    }
+  };
 
-  static AnchorDefined parseDefined(final JsonIterator ji) {
-    return ji.whatIsNext() == ValueType.STRING
-        ? new AnchorDefined(cleanName(ji.readString(), true))
-        : ji.testObject(new Builder(), PARSER).create();
+  static AnchorTypeContext parseDefined(final IDLType idlType, final JsonIterator ji) {
+    if (idlType == IDLType.SHANK) {
+      return ji.applyChars(SHANK_DEFINED_TYPE_PARSER);
+    } else if (ji.whatIsNext() == ValueType.STRING) {
+      return new AnchorDefined(cleanName(ji.readString(), true));
+    } else {
+      return ji.testObject(new Builder(), PARSER).create();
+    }
   }
 
   private static final ContextFieldBufferPredicate<Builder> PARSER = (builder, buf, offset, len, ji) -> {
@@ -38,7 +61,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
     private Builder() {
     }
 
-    private AnchorDefined create() {
+    private AnchorTypeContext create() {
       return new AnchorDefined(name);
     }
   }
@@ -49,12 +72,16 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType context, final boolean optional) {
+  public String generateRecordField(final GenSrcContext genSrcContext,
+                                    final AnchorNamedType context,
+                                    final boolean optional) {
     return String.format("%s%s %s", context.docComments(), typeName, context.name());
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                           final String varName,
+                                           final boolean optional) {
     return String.format("%s %s", typeName, varName);
   }
 
@@ -102,7 +129,8 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
           public int ordinal() {
             return %d;
           }
-        }""", name, typeName, enumTypeName, name, name, typeName, ordinal);
+        }""", name, typeName, enumTypeName, name, name, typeName, ordinal
+    );
   }
 
   @Override

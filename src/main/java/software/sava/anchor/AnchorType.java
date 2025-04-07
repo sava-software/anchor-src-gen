@@ -157,7 +157,7 @@ public enum AnchorType {
     this(null, -1);
   }
 
-  static AnchorTypeContext parseContextType(final JsonIterator ji) {
+  static AnchorTypeContext parseContextType(final IDLType idlType, final JsonIterator ji) {
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
       return ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
@@ -168,16 +168,16 @@ public enum AnchorType {
       }
       return switch (anchorType) {
         case alias -> {
-          final var typeContext = parseContextType(ji.skipUntil("value"));
+          final var typeContext = parseContextType(idlType, ji.skipUntil("value"));
           ji.closeObj();
           yield typeContext;
         }
-        case array -> AnchorArray.parseArray(ji);
-        case defined -> AnchorDefined.parseDefined(ji);
-        case _enum -> AnchorEnum.parseEnum(ji);
-        case option -> AnchorOption.parseOption(ji);
-        case struct -> AnchorStruct.parseStruct(ji);
-        case vec -> AnchorVector.parseVector(ji);
+        case array -> AnchorArray.parseArray(idlType, ji);
+        case defined -> AnchorDefined.parseDefined(idlType, ji);
+        case _enum -> AnchorEnum.parseEnum(idlType, ji);
+        case option -> AnchorOption.parseOption(idlType, ji);
+        case struct -> AnchorStruct.parseStruct(idlType, ji);
+        case vec -> AnchorVector.parseVector(idlType, ji);
         default -> throw new IllegalStateException("Unexpected value: " + anchorType);
       };
     } else {

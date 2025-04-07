@@ -17,7 +17,8 @@ public record AnchorIdlMetadata(String name,
                                 List<AnchorIdlDependency> dependencies,
                                 String contact,
                                 List<AnchorIdlDeployments> deployments,
-                                PublicKey address) {
+                                PublicKey address,
+                                String origin) {
 
   static AnchorIdlMetadata parseMetadata(final JsonIterator ji) {
     final var parser = new Parser();
@@ -36,6 +37,7 @@ public record AnchorIdlMetadata(String name,
     private String contact;
     private List<AnchorIdlDeployments> deployments;
     private PublicKey address;
+    private String origin;
 
     private Parser() {
     }
@@ -50,7 +52,8 @@ public record AnchorIdlMetadata(String name,
           dependencies,
           contact,
           deployments,
-          address
+          address,
+          origin
       );
     }
 
@@ -74,6 +77,8 @@ public record AnchorIdlMetadata(String name,
         this.deployments = AnchorIdlDeployments.parseDeployments(ji);
       } else if (fieldEquals("address", buf, offset, len)) {
         this.address = PublicKeyEncoding.parseBase58Encoded(ji);
+      } else if (fieldEquals("origin", buf, offset, len)) {
+        this.origin = ji.readString();
       } else {
         throw new IllegalStateException("Unhandled AnchorIdlMetadata field [" + new String(buf, offset, len) + ']');
       }

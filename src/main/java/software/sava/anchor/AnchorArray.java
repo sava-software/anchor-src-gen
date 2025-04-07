@@ -53,18 +53,17 @@ public record AnchorArray(AnchorTypeContext genericType,
     return String.format("%s%s %s", typeName, depthCode, context);
   }
 
-  static String generateNewInstanceField(final AnchorTypeContext genericType,
-                                         final String varName) {
+  static String generateNewInstanceField(final AnchorTypeContext genericType, final String varName) {
     return genericType.type() == string
         ? String.format("%s, Borsh.getBytes(%s)", varName, varName)
         : varName;
   }
 
-  static AnchorArray parseArray(final JsonIterator ji) {
+  static AnchorArray parseArray(final IDLType idlType, final JsonIterator ji) {
     for (int depth = 1; ; ) {
       final var jsonType = ji.whatIsNext();
       if (jsonType == ValueType.ARRAY) {
-        final var genericType = AnchorType.parseContextType(ji.openArray());
+        final var genericType = AnchorType.parseContextType(idlType, ji.openArray());
         if (genericType instanceof AnchorDefined || genericType instanceof AnchorArray) {
           ji.closeObj();
         }
@@ -127,12 +126,16 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType varName, final boolean optional) {
+  public String generateRecordField(final GenSrcContext genSrcContext,
+                                    final AnchorNamedType varName,
+                                    final boolean optional) {
     return generateRecordField(genSrcContext, genericType, depth, varName);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                           final String varName,
+                                           final boolean optional) {
     return generateStaticFactoryField(genSrcContext, genericType, depth, varName);
   }
 

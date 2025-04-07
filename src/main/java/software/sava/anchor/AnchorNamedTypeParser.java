@@ -8,7 +8,6 @@ import systems.comodal.jsoniter.factory.ElementFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static software.sava.anchor.AnchorType.ANCHOR_TYPE_PARSER;
 import static software.sava.anchor.AnchorUtil.camelCase;
@@ -16,9 +15,7 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, CharBufferFunction<AnchorNamedType> {
 
-  static final Supplier<AnchorNamedTypeParser> UPPER_FACTORY = () -> new AnchorNamedTypeParser(true);
-  static final Supplier<AnchorNamedTypeParser> LOWER_FACTORY = () -> new AnchorNamedTypeParser(false);
-
+  private final IDLType idlType;
   private final boolean firstUpper;
   private Discriminator discriminator;
   private String name;
@@ -28,26 +25,27 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
   private List<String> docs;
   private boolean index;
 
-  AnchorNamedTypeParser(final boolean firstUpper) {
+  AnchorNamedTypeParser(final IDLType idlType, final boolean firstUpper) {
+    this.idlType = idlType;
     this.firstUpper = firstUpper;
   }
 
-  static List<AnchorNamedType> parseLowerList(final JsonIterator ji) {
+  static List<AnchorNamedType> parseLowerList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
-    return ElementFactory.parseList(ji, LOWER_FACTORY);
+    return ElementFactory.parseList(ji, idlType.lowerFactory());
   }
 
-  static List<AnchorNamedType> parseUpperList(final JsonIterator ji) {
+  static List<AnchorNamedType> parseUpperList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
-    return ElementFactory.parseList(ji, UPPER_FACTORY);
+    return ElementFactory.parseList(ji, idlType.upperFactory());
   }
 
-  private static AnchorTypeContext parseTypeContext(final JsonIterator ji) {
+  private static AnchorTypeContext parseTypeContext(final IDLType idlType, final JsonIterator ji) {
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
       return ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
     } else if (jsonType == ValueType.OBJECT) {
-      final var type = AnchorType.parseContextType(ji);
+      final var type = AnchorType.parseContextType(idlType, ji);
       ji.closeObj();
       return type;
     } else {
@@ -97,20 +95,20 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
       }
       this.docs = docs;
     } else if (fieldEquals("fields", buf, offset, len)) {
-      this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, LOWER_FACTORY, this));
+      this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, idlType.lowerFactory(), this));
     } else if (fieldEquals("index", buf, offset, len)) {
       this.index = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {
       this.name = cleanName(ji.readString(), firstUpper);
       // System.out.println(name);
     } else if (fieldEquals("option", buf, offset, len)) {
-      this.type = new AnchorOption(parseTypeContext(ji));
+      this.type = new AnchorOption(parseTypeContext(idlType, ji));
     } else if (fieldEquals("type", buf, offset, len)) {
-      this.type = parseTypeContext(ji);
+      this.type = parseTypeContext(idlType, ji);
     } else if (fieldEquals("array", buf, offset, len)) {
-      this.type = AnchorArray.parseArray(ji);
+      this.type = AnchorArray.parseArray(idlType, ji);
     } else if (fieldEquals("defined", buf, offset, len)) {
-      this.type = AnchorDefined.parseDefined(ji);
+      this.type = AnchorDefined.parseDefined(idlType, ji);
     } else if (fieldEquals("serialization", buf, offset, len)) {
       this.serialization = AnchorSerialization.valueOf(ji.readString());
     } else if (fieldEquals("repr", buf, offset, len)) {

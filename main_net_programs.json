@@ -1,7 +1,8 @@
 [
   {
-    "name": "Glam",
-    "program": "GLAMbTqav9N9witRjswJ8enwp9vv5G8bsSJ2kPJ4rcyc",
-    "idlURL": "https://raw.githubusercontent.com/glamsystems/glam/refs/heads/main/anchor/target/idl/glam.json"
+    "name": "Jito Tip Router",
+    "program": "RouterBmuRBkPUbgEDMtdvTZ75GBdSREZR5uGUxxxpb",
+    "package": "jito.tip_router",
+    "idlURL": "https://raw.githubusercontent.com/jito-foundation/jito-tip-router/refs/heads/master/idl/jito_tip_router.json"
   }
 ]

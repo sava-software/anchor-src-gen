@@ -252,14 +252,13 @@ public final class Entrypoint extends Thread {
 
           final var exports = new ConcurrentSkipListSet<String>();
           final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
-                  semaphore, tasks, errorCount, baseDelayMillis, latestCall,
-                  rpcClient,
-                  sourceDirectory, basePackageName,
-                  exports,
-                  tabLength
-              ))
-              .peek(Thread::start)
-              .toList();
+              semaphore, tasks, errorCount, baseDelayMillis, latestCall,
+              rpcClient,
+              sourceDirectory, basePackageName,
+              exports,
+              tabLength
+          )).toList();
+          threads.forEach(Thread::start);
 
           final Path moduleFilePath;
           final StringBuilder moduleFileBuilder;

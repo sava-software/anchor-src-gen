@@ -32,9 +32,18 @@ public record AnchorIDL(PublicKey address,
                         byte[] json) {
 
   public static AnchorIDL parseIDL(final byte[] json) {
-    final var parser = new Parser();
     try (final var ji = JsonIterator.parse(json)) {
-      ji.testObject(parser);
+      final int mark = ji.mark();
+      final IDLType idlType;
+      if (ji.skipUntil("metadata") != null
+          && ji.skipUntil("origin") != null
+          && "shank".equals(ji.readString())) {
+        idlType = IDLType.SHANK;
+      } else {
+        idlType = IDLType.ANCHOR;
+      }
+      final var parser = new Parser(idlType);
+      ji.reset(mark).testObject(parser);
       return parser.createIDL(json);
     } catch (final IOException e) {
       throw new RuntimeException(e);
@@ -61,7 +70,8 @@ public record AnchorIDL(PublicKey address,
     out.append(String.format("""
         public final class %s {
         
-        """, className));
+        """, className
+    ));
     out.append(constantsBuilder);
 
     return closeClass(genSrcContext, className, out);
@@ -108,7 +118,8 @@ public record AnchorIDL(PublicKey address,
         
         public final class %s {
         
-        """, className));
+        """, className
+    ));
     out.append(pdaBuilder);
     return closeClass(genSrcContext, className, out);
   }
@@ -132,7 +143,8 @@ public record AnchorIDL(PublicKey address,
     out.append(String.format("""
         
         public sealed interface %s extends ProgramError permits
-        """, className));
+        """, className
+    ));
 
     final var tab = genSrcContext.tab();
     final var iterator = errors.iterator();
@@ -157,7 +169,8 @@ public record AnchorIDL(PublicKey address,
     out.append(tab).append(tab).append(tab);
     out.append(String.format("""
         default -> throw new IllegalStateException("Unexpected %s error code: " + errorCode);
-        """, genSrcContext.programName()));
+        """, genSrcContext.programName()
+    ));
     out.append(tab).append(tab).append("};\n");
     out.append(tab).append("}\n");
     out.append(errorClassBuilder.toString().indent(genSrcContext.tabLength()));
@@ -187,7 +200,8 @@ public record AnchorIDL(PublicKey address,
     builder.append(String.format("""
         
         public final class %s {
-        """, className));
+        """, className
+    ));
     builder.append(ixBuilder).append('\n');
     return closeClass(genSrcContext, className, builder);
   }
@@ -197,12 +211,14 @@ public record AnchorIDL(PublicKey address,
                             final StringBuilder builder) {
     builder.append(String.format("""
         private %s() {
-        }""", className).indent(genSrcContext.tabLength()));
+        }""", className
+    ).indent(genSrcContext.tabLength()));
     return removeBlankLines(builder.append('}').toString());
   }
 
   private static final class Parser implements FieldBufferPredicate {
 
+    private final IDLType idlType;
     private PublicKey address;
     private String version;
     private String name;
@@ -215,7 +231,8 @@ public record AnchorIDL(PublicKey address,
     private AnchorIdlMetadata metaData;
     private List<String> docs;
 
-    private Parser() {
+    private Parser(final IDLType idlType) {
+      this.idlType = idlType;
     }
 
     private AnchorIDL createIDL(final byte[] json) {
@@ -246,15 +263,15 @@ public record AnchorIDL(PublicKey address,
       } else if (fieldEquals("constants", buf, offset, len)) {
         this.constants = parseList(ji, AnchorConstantParser.FACTORY);
       } else if (fieldEquals("instructions", buf, offset, len)) {
-        this.instructions = parseList(ji, AnchorInstructionParser.FACTORY);
+        this.instructions = parseList(ji, idlType.instructionParserFactory());
       } else if (fieldEquals("accounts", buf, offset, len)) {
-        this.accounts = parseList(ji, AnchorNamedTypeParser.UPPER_FACTORY).stream()
+        this.accounts = parseList(ji, idlType.upperFactory()).stream()
             .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
       } else if (fieldEquals("types", buf, offset, len)) {
-        this.types = parseList(ji, AnchorNamedTypeParser.UPPER_FACTORY).stream()
+        this.types = parseList(ji, idlType.upperFactory()).stream()
             .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
       } else if (fieldEquals("events", buf, offset, len)) {
-        this.events = parseList(ji, AnchorNamedTypeParser.UPPER_FACTORY).stream().map(nt -> {
+        this.events = parseList(ji, idlType.upperFactory()).stream().map(nt -> {
           if (nt.type() instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
             return new AnchorNamedType(
                 null,

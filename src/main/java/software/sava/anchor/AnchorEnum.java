@@ -13,8 +13,8 @@ import static software.sava.anchor.AnchorStruct.generateRecord;
 
 public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedTypeContext {
 
-  static AnchorEnum parseEnum(final JsonIterator ji) {
-    return new AnchorEnum(parseUpperList(ji));
+  static AnchorEnum parseEnum(final IDLType idlType, final JsonIterator ji) {
+    return new AnchorEnum(parseUpperList(idlType, ji));
   }
 
   @Override
@@ -61,11 +61,13 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
     final int tabLength = genSrcContext.tabLength();
     final var name = context.name();
     builder.append(String.format("""
-        import software.sava.core.borsh.Borsh;
-        
-        %spublic enum %s implements Borsh.Enum {
-        
-        """, context.docComments(), name));
+            import software.sava.core.borsh.Borsh;
+            
+            %spublic enum %s implements Borsh.Enum {
+            
+            """,
+        context.docComments(), name
+    ));
     final var iterator = values.iterator();
     for (AnchorNamedType next; ; ) {
       next = iterator.next();
@@ -75,7 +77,8 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
         builder.append(",\n");
       } else {
         builder.append(";\n\n").append(String.format("""
-            public static %s read(final byte[] _data, final int offset) {""", name).indent(tabLength));
+            public static %s read(final byte[] _data, final int offset) {""", name
+        ).indent(tabLength));
         builder.append(tab).append(tab).append(String.format("return Borsh.read(%s.values(), _data, offset);", name));
         builder.append('\n').append(tab);
         return builder.append("}\n}").toString();
@@ -113,11 +116,13 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
       }
 
       builder.append(String.format("""
-          
-          static %s read(final byte[] _data, final int offset) {
-          %sfinal int ordinal = _data[offset] & 0xFF;
-          %sfinal int i = offset + 1;
-          %sreturn switch (ordinal) {""", name, tab, tab, tab).indent(tabLength));
+              
+              static %s read(final byte[] _data, final int offset) {
+              %sfinal int ordinal = _data[offset] & 0xFF;
+              %sfinal int i = offset + 1;
+              %sreturn switch (ordinal) {""",
+          name, tab, tab, tab
+      ).indent(tabLength));
 
       int ordinal = 0;
       for (final var entry : values) {
@@ -133,7 +138,8 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
       builder.append(tab).append(tab).append(tab).append("default -> throw new IllegalStateException(java.lang.String.format(\n");
       builder.append(tab).append(tab).append(tab).append(tab).append(tab).append(String.format("""
           "Unexpected ordinal [%%d] for enum [%s]", ordinal
-          """, name));
+          """, name
+      ));
       builder.append(tab).append(tab).append(tab).append("));\n");
       builder.append(tab).append(tab).append("};\n").append(tab).append("}\n");
 
@@ -142,15 +148,18 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
         final var type = entry.type();
         if (type == null) {
           builder.append('\n').append(String.format("""
-              record %s() implements EnumNone, %s {""", entry.name(), name).indent(tabLength));
+              record %s() implements EnumNone, %s {""", entry.name(), name
+          ).indent(tabLength));
           builder.append(String.format("""
-              
-              public static final %s INSTANCE = new %s();
-              
-              @Override
-              public int ordinal() {
-              %sreturn %d;
-              }""", entry.name(), entry.name(), tab, ordinal).indent(tabLength << 1));
+                  
+                  public static final %s INSTANCE = new %s();
+                  
+                  @Override
+                  public int ordinal() {
+                  %sreturn %d;
+                  }""",
+              entry.name(), entry.name(), tab, ordinal
+          ).indent(tabLength << 1));
           builder.append(tab).append('}').append('\n');
         } else if (type instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
           builder.append('\n');

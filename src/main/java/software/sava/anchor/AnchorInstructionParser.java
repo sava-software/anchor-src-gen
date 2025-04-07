@@ -6,20 +6,19 @@ import systems.comodal.jsoniter.factory.ElementFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class AnchorInstructionParser implements ElementFactory<AnchorInstruction> {
 
-  static final Supplier<AnchorInstructionParser> FACTORY = AnchorInstructionParser::new;
-
+  private final IDLType idlType;
   private Discriminator discriminator;
   private String name;
   private List<AnchorAccountMeta> accounts;
   private List<AnchorNamedType> args;
 
-  AnchorInstructionParser() {
+  AnchorInstructionParser(final IDLType idlType) {
+    this.idlType = idlType;
   }
 
   private static void accumulateNestedAccounts(final List<AnchorAccountMeta> parentAccounts,
@@ -73,7 +72,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
     if (fieldEquals("accounts", buf, offset, len)) {
       this.accounts = ElementFactory.parseList(ji, AnchorAccountMetaParser.FACTORY);
     } else if (fieldEquals("args", buf, offset, len)) {
-      this.args = ElementFactory.parseList(ji, AnchorNamedTypeParser.LOWER_FACTORY);
+      this.args = ElementFactory.parseList(ji, idlType.lowerFactory());
     } else if (fieldEquals("discriminator", buf, offset, len)) {
       this.discriminator = AnchorUtil.parseDiscriminator(ji);
     } else if (fieldEquals("name", buf, offset, len)) {

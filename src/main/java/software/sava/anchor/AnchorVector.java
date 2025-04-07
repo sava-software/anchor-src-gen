@@ -12,7 +12,7 @@ import static software.sava.anchor.AnchorType.*;
 
 public record AnchorVector(AnchorTypeContext genericType, int depth) implements AnchorReferenceTypeContext {
 
-  static AnchorVector parseVector(final JsonIterator ji) {
+  static AnchorVector parseVector(final IDLType idlType, final JsonIterator ji) {
     for (int depth = 1; ; ) {
       final var jsonType = ji.whatIsNext();
       if (jsonType == ValueType.STRING) {
@@ -29,11 +29,11 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
           continue;
         }
         final var genericType = switch (anchorType) {
-          case array -> AnchorArray.parseArray(ji);
-          case defined -> AnchorDefined.parseDefined(ji);
-          case _enum -> AnchorEnum.parseEnum(ji);
-          case option -> AnchorOption.parseOption(ji);
-          case struct -> AnchorStruct.parseStruct(ji);
+          case array -> AnchorArray.parseArray(idlType, ji);
+          case defined -> AnchorDefined.parseDefined(idlType, ji);
+          case _enum -> AnchorEnum.parseEnum(idlType, ji);
+          case option -> AnchorOption.parseOption(idlType, ji);
+          case struct -> AnchorStruct.parseStruct(idlType, ji);
           default -> throw new IllegalStateException("Unexpected value: " + anchorType);
         };
         closeObjects(ji, depth);
@@ -61,12 +61,16 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType context, final boolean optional) {
+  public String generateRecordField(final GenSrcContext genSrcContext,
+                                    final AnchorNamedType context,
+                                    final boolean optional) {
     return AnchorArray.generateRecordField(genSrcContext, genericType, depth, context);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                           final String varName,
+                                           final boolean optional) {
     return AnchorArray.generateStaticFactoryField(genSrcContext, genericType, depth, varName);
   }
 
@@ -88,8 +92,10 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
     switch (genericType) {
       case AnchorDefined _ -> {
         final var borshMethodName = depth == 1 ? "readVector" : "readMultiDimensionVector";
-        readLine = String.format("final var %s = Borsh.%s(%s.class, %s::read, _data, %s);",
-            varName, borshMethodName, genericType.typeName(), genericType.typeName(), offsetVarName);
+        readLine = String.format(
+            "final var %s = Borsh.%s(%s.class, %s::read, _data, %s);",
+            varName, borshMethodName, genericType.typeName(), genericType.typeName(), offsetVarName
+        );
       }
       case AnchorArray array -> {
         final var next = array.genericType();
@@ -134,7 +140,8 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
             ? String.format("read%sVector", javaType)
             : String.format("readMultiDimension%sVector", javaType);
         readLine = String.format("final var %s = Borsh.%s(_data, %s);",
-            varName, borshMethodName, offsetVarName);
+            varName, borshMethodName, offsetVarName
+        );
       }
     }
     return hasNext

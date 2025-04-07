@@ -49,13 +49,13 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     };
   }
 
-  static AnchorOption parseOption(final JsonIterator ji) {
+  static AnchorOption parseOption(final IDLType idlType, final JsonIterator ji) {
     final AnchorTypeContext genericType;
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
       genericType = ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
     } else if (jsonType == ValueType.OBJECT) {
-      genericType = AnchorType.parseContextType(ji);
+      genericType = AnchorType.parseContextType(idlType, ji);
       ji.closeObj();
     } else {
       throw new IllegalStateException(String.format("TODO: Support %s Anchor types", jsonType));
@@ -69,12 +69,16 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType varName, final boolean optional) {
+  public String generateRecordField(final GenSrcContext genSrcContext,
+                                    final AnchorNamedType varName,
+                                    final boolean optional) {
     return genericType.generateRecordField(genSrcContext, varName, true);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                           final String varName,
+                                           final boolean optional) {
     return genericType.generateStaticFactoryField(genSrcContext, varName, true);
   }
 
@@ -193,7 +197,8 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
                 _%sLen = 5 + _%s.length;
               }
               """,
-          varName, varName, varName, varName, varName, varName, varName, varName, varName, varName));
+          varName, varName, varName, varName, varName, varName, varName, varName, varName, varName
+      ));
       dataLengthBuilder.append(String.format(" + _%sLen", varName));
     } else {
       final var optionalType = type.optionalJavaType();
@@ -227,21 +232,23 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     if (type == string) {
       genSrcContext.addUTF_8Import();
       return String.format("""
-          record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
-          
-            public static %s createRecord(final java.lang.String val) {
-              return val == null ? null : new %s(val.getBytes(UTF_8), val);
-            }
-          
-            public static %s read(final byte[] data, final int offset) {
-              return data[i++] == 0 ? null : createRecord(Borsh.string(data + 1, offset));
-            }
-          
-            @Override
-            public int ordinal() {
-              return %d;
-            }
-          }""", name, enumTypeName, name, name, name, ordinal);
+              record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
+              
+                public static %s createRecord(final java.lang.String val) {
+                  return val == null ? null : new %s(val.getBytes(UTF_8), val);
+                }
+              
+                public static %s read(final byte[] data, final int offset) {
+                  return data[i++] == 0 ? null : createRecord(Borsh.string(data + 1, offset));
+                }
+              
+                @Override
+                public int ordinal() {
+                  return %d;
+                }
+              }""",
+          name, enumTypeName, name, name, name, ordinal
+      );
     } else if (type == defined || type == array || type == vec) {
       return genericType.generateEnumRecord(genSrcContext, enumTypeName, enumName, ordinal);
     } else {
