@@ -32,12 +32,12 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
 
   static List<AnchorNamedType> parseLowerList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
-    return ElementFactory.parseList(ji, idlType.lowerFactory());
+    return ElementFactory.parseList(ji, idlType.lowerTypeParserFactory());
   }
 
   static List<AnchorNamedType> parseUpperList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
-    return ElementFactory.parseList(ji, idlType.upperFactory());
+    return ElementFactory.parseList(ji, idlType.upperTypeParserFactory());
   }
 
   private static AnchorTypeContext parseTypeContext(final IDLType idlType, final JsonIterator ji) {
@@ -95,7 +95,7 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
       }
       this.docs = docs;
     } else if (fieldEquals("fields", buf, offset, len)) {
-      this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, idlType.lowerFactory(), this));
+      this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, idlType.lowerTypeParserFactory(), this));
     } else if (fieldEquals("index", buf, offset, len)) {
       this.index = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {

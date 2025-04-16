@@ -265,13 +265,13 @@ public record AnchorIDL(PublicKey address,
       } else if (fieldEquals("instructions", buf, offset, len)) {
         this.instructions = parseList(ji, idlType.instructionParserFactory());
       } else if (fieldEquals("accounts", buf, offset, len)) {
-        this.accounts = parseList(ji, idlType.upperFactory()).stream()
+        this.accounts = parseList(ji, idlType.upperTypeParserFactory()).stream()
             .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
       } else if (fieldEquals("types", buf, offset, len)) {
-        this.types = parseList(ji, idlType.upperFactory()).stream()
+        this.types = parseList(ji, idlType.upperTypeParserFactory()).stream()
             .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
       } else if (fieldEquals("events", buf, offset, len)) {
-        this.events = parseList(ji, idlType.upperFactory()).stream().map(nt -> {
+        this.events = parseList(ji, idlType.upperTypeParserFactory()).stream().map(nt -> {
           if (nt.type() instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
             return new AnchorNamedType(
                 null,

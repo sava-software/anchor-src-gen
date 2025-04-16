@@ -72,7 +72,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
     if (fieldEquals("accounts", buf, offset, len)) {
       this.accounts = ElementFactory.parseList(ji, AnchorAccountMetaParser.FACTORY);
     } else if (fieldEquals("args", buf, offset, len)) {
-      this.args = ElementFactory.parseList(ji, idlType.lowerFactory());
+      this.args = ElementFactory.parseList(ji, idlType.lowerTypeParserFactory());
     } else if (fieldEquals("discriminator", buf, offset, len)) {
       this.discriminator = AnchorUtil.parseDiscriminator(ji);
     } else if (fieldEquals("name", buf, offset, len)) {

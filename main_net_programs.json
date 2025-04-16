@@ -1,8 +1,7 @@
 [
   {
-    "name": "Jito Tip Router",
-    "program": "RouterBmuRBkPUbgEDMtdvTZ75GBdSREZR5uGUxxxpb",
-    "package": "jito.tip_router",
-    "idlURL": "https://raw.githubusercontent.com/jito-foundation/jito-tip-router/refs/heads/master/idl/jito_tip_router.json"
+    "name": "GLAM Policy Program",
+    "program": "po1iCYakK3gHCLbuju4wGzFowTMpAJxkqK1iwUqMonY",
+    "package": "glam.policy"
   }
 ]
