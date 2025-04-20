@@ -46,10 +46,12 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
         case bool ->
             String.format("return Filter.createMemCompFilter(%s, new byte[]{(byte) 1, (byte) (%s ? 1 : 0)});", offsetVarName, varName);
         case bytes -> String.format("""
-            final byte[] _data = new byte[5 + %s.length];
-            _data[0] = 1;
-            Borsh.writeVector(%s, _data, 1);
-            return Filter.createMemCompFilter(%s, _data);""", varName, varName, offsetVarName);
+                final byte[] _data = new byte[5 + %s.length];
+                _data[0] = 1;
+                Borsh.writeVector(%s, _data, 1);
+                return Filter.createMemCompFilter(%s, _data);""",
+            varName, varName, offsetVarName
+        );
         case i8, u8 ->
             String.format("return Filter.createMemCompFilter(%s, new byte[]{(byte) 1, (byte) %s});", offsetVarName, varName);
         case f32, f64, i16, u16, i32, u32, i64, u64, usize, i128, u128, i256, u256 -> String.format("""
@@ -57,18 +59,23 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
                 _data[0] = 1;
                 %s
                 return Filter.createMemCompFilter(%s, _data);""",
-            1 + type.dataLength(), generateWrite(varName).replaceFirst("i", "1"), offsetVarName);
+            1 + type.dataLength(), generateWrite(varName).replaceFirst("i", "1"), offsetVarName
+        );
         case publicKey -> String.format("""
-            final byte[] _data = new byte[33];
-            _data[0] = 1;
-            %s.write(_data, 1);
-            return Filter.createMemCompFilter(%s, _data);""", varName, offsetVarName);
+                final byte[] _data = new byte[33];
+                _data[0] = 1;
+                %s.write(_data, 1);
+                return Filter.createMemCompFilter(%s, _data);""",
+            varName, offsetVarName
+        );
         case string -> String.format("""
-            final byte[] bytes = %s.getBytes(UTF_8);
-            final byte[] _data = new byte[5 + bytes.length];
-            _data[0] = 1;
-            Borsh.writeVector(bytes, _data, 1);
-            return Filter.createMemCompFilter(%s, _data);""", varName, offsetVarName);
+                final byte[] bytes = %s.getBytes(UTF_8);
+                final byte[] _data = new byte[5 + bytes.length];
+                _data[0] = 1;
+                Borsh.writeVector(bytes, _data, 1);
+                return Filter.createMemCompFilter(%s, _data);""",
+            varName, offsetVarName
+        );
         default -> throw new IllegalStateException("Unexpected type: " + type);
       };
     } else {
@@ -76,21 +83,27 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
         case bool ->
             String.format("return Filter.createMemCompFilter(%s, new byte[]{(byte) (%s ? 1 : 0)});", offsetVarName, varName);
         case bytes -> String.format("""
-            final byte[] _data = new byte[4 + %s.length];
-            Borsh.writeVector(%s, _data, i);
-            return Filter.createMemCompFilter(%s, _data);""", varName, varName, offsetVarName);
+                final byte[] _data = new byte[4 + %s.length];
+                Borsh.writeVector(%s, _data, i);
+                return Filter.createMemCompFilter(%s, _data);""",
+            varName, varName, offsetVarName
+        );
         case i8, u8 ->
             String.format("return Filter.createMemCompFilter(%s, new byte[]{(byte) %s});", offsetVarName, varName);
         case f32, f64, i16, u16, i32, u32, i64, u64, usize, i128, u128, i256, u256 -> String.format("""
-            final byte[] _data = new byte[%d];
-            %s
-            return Filter.createMemCompFilter(%s, _data);""", type.dataLength(), generateWrite(varName).replaceFirst("i", "0"), offsetVarName);
+                final byte[] _data = new byte[%d];
+                %s
+                return Filter.createMemCompFilter(%s, _data);""",
+            type.dataLength(), generateWrite(varName).replaceFirst("i", "0"), offsetVarName
+        );
         case publicKey -> String.format("return Filter.createMemCompFilter(%s, %s);", offsetVarName, varName);
         case string -> String.format("""
-            final byte[] bytes = %s.getBytes(UTF_8);
-            final byte[] _data = new byte[4 + bytes.length];
-            Borsh.writeVector(bytes, _data, 0);
-            return Filter.createMemCompFilter(%s, _data);""", varName, offsetVarName);
+                final byte[] bytes = %s.getBytes(UTF_8);
+                final byte[] _data = new byte[4 + bytes.length];
+                Borsh.writeVector(bytes, _data, 0);
+                return Filter.createMemCompFilter(%s, _data);""",
+            varName, offsetVarName
+        );
         default -> throw new IllegalStateException("Unexpected type: " + type);
       };
     }
@@ -121,7 +134,9 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType context, final boolean optional) {
+  public String generateRecordField(final GenSrcContext genSrcContext,
+                                    final AnchorNamedType context,
+                                    final boolean optional) {
     final var varName = context.name();
     final var typeName = optional ? optionalTypeName() : typeName();
     if (type == string) {
@@ -142,7 +157,9 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                           final String varName,
+                                           final boolean optional) {
     return String.format("%s %s", optional ? optionalTypeName() : typeName(), varName);
   }
 
@@ -205,7 +222,8 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
       return hasNext
           ? readLine + String.format("""
           
-          i += Borsh.lenVector(%s);""", varName)
+          i += Borsh.lenVector(%s);""", varName
+      )
           : readLine;
     } else {
       final var read = generateRead(genSrcContext, offsetVarName);
@@ -225,18 +243,19 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
 
   private String generateWrite(final String varName) {
     return String.format(switch (type) {
-      case bool -> "_data[i] = (byte) (%s ? 1 : 0);";
-      case f32 -> "putFloat32LE(_data, i, %s);";
-      case f64 -> "putFloat64LE(_data, i, %s);";
-      case i8, u8 -> "_data[i] = (byte) %s;";
-      case i16, u16 -> "putInt16LE(_data, i, %s);";
-      case i32, u32 -> "putInt32LE(_data, i, %s);";
-      case i64, u64, usize -> "putInt64LE(_data, i, %s);";
-      case i128, u128 -> "putInt128LE(_data, i, %s);";
-      case i256, u256 -> "putInt256LE(_data, i, %s);";
-      case publicKey -> "%s.write(_data, i);";
-      default -> throw new IllegalStateException("Unexpected type: " + type);
-    }, varName);
+          case bool -> "_data[i] = (byte) (%s ? 1 : 0);";
+          case f32 -> "putFloat32LE(_data, i, %s);";
+          case f64 -> "putFloat64LE(_data, i, %s);";
+          case i8, u8 -> "_data[i] = (byte) %s;";
+          case i16, u16 -> "putInt16LE(_data, i, %s);";
+          case i32, u32 -> "putInt32LE(_data, i, %s);";
+          case i64, u64, usize -> "putInt64LE(_data, i, %s);";
+          case i128, u128 -> "putInt128LE(_data, i, %s);";
+          case i256, u256 -> "putInt256LE(_data, i, %s);";
+          case publicKey -> "%s.write(_data, i);";
+          default -> throw new IllegalStateException("Unexpected type: " + type);
+        }, varName
+    );
   }
 
   @Override
@@ -280,22 +299,25 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
     final var name = enumName.name();
     if (type == string) {
       genSrcContext.addUTF_8Import();
+      genSrcContext.addImport(Borsh.class);
       return String.format("""
-          record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
-          
-            public static %s createRecord(final java.lang.String val) {
-              return new %s(val.getBytes(UTF_8), val);
-            }
-          
-            public static %s read(final byte[] data, final int offset) {
-              return createRecord(Borsh.string(data, offset));
-            }
-          
-            @Override
-            public int ordinal() {
-              return %d;
-            }
-          }""", name, enumTypeName, name, name, name, ordinal);
+              record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
+              
+                public static %s createRecord(final java.lang.String val) {
+                  return new %s(val.getBytes(UTF_8), val);
+                }
+              
+                public static %s read(final byte[] data, final int offset) {
+                  return createRecord(Borsh.string(data, offset));
+                }
+              
+                @Override
+                public int ordinal() {
+                  return %d;
+                }
+              }""",
+          name, enumTypeName, name, name, name, ordinal
+      );
     }
     final var enumType = switch (type) {
       case bool -> RustEnum.EnumBool.class;

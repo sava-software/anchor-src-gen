@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import static software.sava.core.accounts.PublicKey.PUBLIC_KEY_LENGTH;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public record AnchorPDA(List<Seed> seeds, PublicKey program) {
+public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
 
   static AnchorPDA parsePDA(final JsonIterator ji) {
     final var parser = new Parser();
@@ -22,21 +22,10 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     return parser.createPDA();
   }
 
-  public sealed interface Seed permits AccountSeed, ArgSeed, ConstSeed {
-
-    int index();
-
-    AnchorType type();
-
-    String varName(final GenSrcContext genSrcContext);
-
-    String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown);
-  }
-
   public record AccountSeed(AnchorType type,
                             int index,
                             String path,
-                            String camelPath) implements Seed {
+                            String camelPath) implements Seed, ProgramSeed {
 
     @Override
     public String varName(final GenSrcContext genSrcContext) {
@@ -65,6 +54,11 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     @Override
     public int hashCode() {
       return path.hashCode();
+    }
+
+    @Override
+    public String varName() {
+      return camelPath;
     }
   }
 
@@ -196,10 +190,15 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
                           int index,
                           byte[] seed, String str,
                           boolean isReadable,
-                          PublicKey maybeKnownPublicKey) implements Seed {
+                          PublicKey maybeKnownPublicKey) implements Seed, ProgramSeed {
 
     static boolean isReadable(final String decoded) {
       return decoded.chars().allMatch(c -> c < 0x7F);
+    }
+
+    @Override
+    public String varName() {
+      return "program";
     }
 
     @Override
@@ -289,30 +288,48 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     private SeedParser() {
     }
 
+    private AccountSeed createAccountSeed(final int index) {
+      return new AccountSeed(
+          Objects.requireNonNullElse(type, AnchorType.publicKey),
+          index,
+          path,
+          AnchorUtil.camelCase(path, false)
+      );
+    }
+
+    private ArgSeed createArgSeed(final int index) {
+      return new ArgSeed(
+          type,
+          index,
+          path,
+          AnchorUtil.camelCase(path.replace('.', '_'), false)
+      );
+    }
+
+    private ConstSeed createConstSeed(final int index) {
+      final var str = new String(value);
+      return new ConstSeed(
+          type,
+          index,
+          value, str,
+          ConstSeed.isReadable(str),
+          value.length == PUBLIC_KEY_LENGTH ? PublicKey.createPubKey(value) : null
+      );
+    }
+
     Seed createSeed(final int index) {
       return switch (kind) {
-        case account -> new AccountSeed(
-            Objects.requireNonNullElse(type, AnchorType.publicKey),
-            index,
-            path,
-            AnchorUtil.camelCase(path, false)
-        );
-        case arg -> new ArgSeed(
-            type,
-            index,
-            path,
-            AnchorUtil.camelCase(path.replace('.', '_'), false)
-        );
-        case _const -> {
-          final var str = new String(value);
-          yield new ConstSeed(
-              type,
-              index,
-              value, str,
-              ConstSeed.isReadable(str),
-              value.length == PUBLIC_KEY_LENGTH ? PublicKey.createPubKey(value) : null
-          );
-        }
+        case account -> createAccountSeed(index);
+        case arg -> createArgSeed(index);
+        case _const -> createConstSeed(index);
+      };
+    }
+
+    ProgramSeed createProgramSeed() {
+      return switch (kind) {
+        case account -> createAccountSeed(0);
+        case _const -> createConstSeed(0);
+        default -> throw new IllegalStateException("Unexpected PDA program kind: " + kind);
       };
     }
 
@@ -352,7 +369,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
   private static final class Parser implements FieldBufferPredicate {
 
     private List<Seed> seeds;
-    private PublicKey program;
+    private ProgramSeed program;
 
     private Parser() {
     }
@@ -372,13 +389,9 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
         }
         this.seeds = List.copyOf(seeds);
       } else if (fieldEquals("program", buf, offset, len)) {
-        final byte[] program = new byte[PUBLIC_KEY_LENGTH];
-        int i = 0;
-        for (ji.skipUntil("value"); ji.readArray(); ++i) {
-          program[i] = (byte) ji.readInt();
-        }
-        ji.skipRestOfObject();
-        this.program = PublicKey.createPubKey(program);
+        final var parser = new SeedParser();
+        ji.testObject(parser);
+        this.program = parser.createProgramSeed();
       } else {
         throw new IllegalStateException("Unhandled AnchorPDA field " + new String(buf, offset, len));
       }
@@ -392,8 +405,9 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
     final var tab = genSrcContext.tab();
     final var signatureLine = tab + String.format("public static ProgramDerivedAddress %sPDA(", name);
     out.append(signatureLine);
-    out.append("""
-        final PublicKey program""");
+    out.append("final PublicKey ");
+    final var programFieldName = program == null ? "program" : program.varName();
+    out.append(programFieldName);
 
     final var deduplicateKnown = HashSet.<String>newHashSet(seeds.size());
     final var fieldsList = seeds.stream()
@@ -422,7 +436,7 @@ public record AnchorPDA(List<Seed> seeds, PublicKey program) {
         return PublicKey.findProgramAddress(List.of(
         """);
     out.append(paramRefs.indent(genSrcContext.tabLength() + (genSrcContext.tabLength() << 1)));
-    out.append(tab).append(tab).append("), program);\n");
+    out.append(tab).append(tab).append("), ").append(programFieldName).append(");\n");
     out.append(tab).append("}\n");
   }
 }
