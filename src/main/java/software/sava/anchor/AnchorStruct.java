@@ -469,8 +469,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
     return serializedLength;
   }
 
-  public String generateSource(final GenSrcContext genSrcContext,
-                               final AnchorNamedType context) {
+  public String generateSource(final GenSrcContext genSrcContext, final AnchorNamedType context) {
     final var builder = new StringBuilder(4_096);
     genSrcContext.addImport(Borsh.class);
     final var recordSource = generatePublicRecord(genSrcContext, context, fields, false, null, true);

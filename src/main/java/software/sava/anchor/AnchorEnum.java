@@ -86,6 +86,20 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
     }
   }
 
+  private boolean wrappedType(final Map<String, AnchorNamedType> definedTypes, final AnchorNamedType enumEntry) {
+    final var typeName = enumEntry.name();
+    final var type = enumEntry.type();
+    if (type instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
+      if (fields.size() == 1) {
+        final var field = fields.getFirst();
+        if (field.type() instanceof AnchorDefined(String _typeName) && _typeName.equals(typeName)) {
+          return definedTypes.get(typeName).type() instanceof AnchorStruct;
+        }
+      }
+    }
+    return false;
+  }
+
   public String generateSource(final GenSrcContext genSrcContext, final AnchorNamedType context) {
     final var header = new StringBuilder(2_048);
     header.append("package ").append(genSrcContext.typePackage()).append(";\n\n");

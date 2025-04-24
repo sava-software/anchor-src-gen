@@ -118,18 +118,25 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
                                    final AnchorNamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
+    final var valTypeName = enumName.name().equals(typeName)
+        ? genSrcContext.typePackage() + '.' + typeName
+        : typeName;
     return String.format("""
-        record %s(%s val) implements BorshEnum, %s {
-        
-          public static %s read(final byte[] _data, final int offset) {
-            return new %s(%s.read(_data, offset));
-          }
-        
-          @Override
-          public int ordinal() {
-            return %d;
-          }
-        }""", name, typeName, enumTypeName, name, name, typeName, ordinal
+            record %s(%s val) implements BorshEnum, %s {
+            
+              public static %s read(final byte[] _data, final int offset) {
+                return new %s(%s.read(_data, offset));
+              }
+            
+              @Override
+              public int ordinal() {
+                return %d;
+              }
+            }""",
+        name, valTypeName, enumTypeName,
+        name,
+        name, valTypeName,
+        ordinal
     );
   }
 
