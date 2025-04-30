@@ -5,7 +5,7 @@ import software.sava.core.tx.Instruction;
 import software.sava.rpc.json.PublicKeyEncoding;
 import software.sava.rpc.json.http.SolanaNetwork;
 import software.sava.rpc.json.http.client.SolanaRpcClient;
-import systems.comodal.jsoniter.ContextFieldBufferPredicate;
+import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.io.IOException;
@@ -114,6 +114,7 @@ public final class Entrypoint extends Thread {
       final var generator = new AnchorSourceGenerator(
           sourceDirectory,
           packageName,
+          task.exportPackages(),
           tabLength,
           idl
       );
@@ -136,6 +137,7 @@ public final class Entrypoint extends Thread {
 
   private record ProgramConfig(String name,
                                String packageName,
+                               boolean exportPackages,
                                PublicKey programAddress,
                                PublicKey idlAddress,
                                URI idlURL,
@@ -169,50 +171,59 @@ public final class Entrypoint extends Thread {
       }
     }
 
-    public static void parseConfigs(final Collection<ProgramConfig> configs, final JsonIterator ji) {
+    public static void parseConfigs(final boolean exportPackages,
+                                    final Collection<ProgramConfig> configs,
+                                    final JsonIterator ji) {
       while (ji.readArray()) {
-        final var config = ji.testObject(new Builder(), CONFIG_PARSER).createConfig();
-        configs.add(config);
+        final var parser = new Parser(exportPackages);
+        ji.testObject(parser);
+        configs.add(parser.createConfig());
       }
     }
 
-    private static final ContextFieldBufferPredicate<Builder> CONFIG_PARSER = (builder, buf, offset, len, ji) -> {
-      if (fieldEquals("name", buf, offset, len)) {
-        builder.name = ji.readString();
-      } else if (fieldEquals("package", buf, offset, len)) {
-        builder.packageName = ji.readString();
-      } else if (fieldEquals("program", buf, offset, len)) {
-        builder.programAddress = PublicKeyEncoding.parseBase58Encoded(ji);
-      } else if (fieldEquals("idlURL", buf, offset, len)) {
-        builder.idlURL = java.net.URI.create(ji.readString());
-      } else if (fieldEquals("idlFile", buf, offset, len)) {
-        builder.idlFile = Path.of(ji.readString());
-      } else {
-        ji.skip();
-      }
-      return true;
-    };
-
-    private static final class Builder {
+    private static final class Parser implements FieldBufferPredicate {
 
       private String name;
       private String packageName;
+      private boolean exportPackages;
       private PublicKey programAddress;
       private URI idlURL;
       private Path idlFile;
 
-      private Builder() {
+      private Parser(boolean exportPackages) {
+        this.exportPackages = exportPackages;
       }
 
       private ProgramConfig createConfig() {
         return new ProgramConfig(
             name,
             requireNonNullElse(packageName, name.toLowerCase(Locale.ENGLISH)),
+            exportPackages,
             programAddress,
             AnchorUtil.createIdlAddress(programAddress),
             idlURL,
             idlFile
         );
+      }
+
+      @Override
+      public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
+        if (fieldEquals("name", buf, offset, len)) {
+          name = ji.readString();
+        } else if (fieldEquals("package", buf, offset, len)) {
+          packageName = ji.readString();
+        } else if (fieldEquals("exportPackages", buf, offset, len)) {
+          exportPackages = ji.readBoolean();
+        } else if (fieldEquals("program", buf, offset, len)) {
+          programAddress = PublicKeyEncoding.parseBase58Encoded(ji);
+        } else if (fieldEquals("idlURL", buf, offset, len)) {
+          idlURL = java.net.URI.create(ji.readString());
+        } else if (fieldEquals("idlFile", buf, offset, len)) {
+          idlFile = Path.of(ji.readString());
+        } else {
+          ji.skip();
+        }
+        return true;
       }
     }
   }
@@ -227,6 +238,7 @@ public final class Entrypoint extends Thread {
     final var sourceDirectory = Path.of(propertyOrElse(moduleName + ".sourceDirectory", "anchor-programs/src/main/java")).toAbsolutePath();
     final var outputModuleName = propertyOrElse(moduleName + ".moduleName", moduleName);
     final var basePackageName = propertyOrElse(moduleName + ".basePackageName", clas.getPackageName());
+    final var exportPackages = Boolean.parseBoolean(propertyOrElse(moduleName + ".exportPackages", "true"));
     final var rpcEndpoint = System.getProperty(moduleName + ".rpc");
     final var programsJsonFile = mandatoryProperty(moduleName + ".programs");
     final int numThreads = Integer.parseInt(propertyOrElse(moduleName + ".numThreads", "5"));
@@ -234,7 +246,7 @@ public final class Entrypoint extends Thread {
 
     final var tasks = new ConcurrentLinkedQueue<ProgramConfig>();
     try (final var ji = JsonIterator.parse(Files.readAllBytes(Path.of(programsJsonFile)))) {
-      ProgramConfig.parseConfigs(tasks, ji);
+      ProgramConfig.parseConfigs(exportPackages, tasks, ji);
     }
 
     try {

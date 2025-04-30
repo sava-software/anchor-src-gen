@@ -22,6 +22,7 @@ tabLength=2;
 sourceDirectory="src/main/java";
 outputModuleName="";
 basePackageName="$package";
+exportPackages="true";
 rpc="";
 programs="./main_net_programs.json";
 numThreads=5;
@@ -61,6 +62,7 @@ do
 
       bdm | baseDelayMillis) baseDelayMillis="$val";;
       bp | basePackageName) basePackageName="$val";;
+      ep | exportPackages) exportPackages="$val";;
       mn | moduleName) outputModuleName="$val";;
       nt | numThreads) numThreads="$val";;
       p | programs) programs="$val";;
@@ -93,6 +95,7 @@ readonly javaExe="$projectDirectory/build/anchor-src-gen/bin/java"
 javaArgs+=(
   "-D$moduleName.baseDelayMillis=$baseDelayMillis"
   "-D$moduleName.basePackageName=$basePackageName"
+  "-D$moduleName.exportPackages=$exportPackages"
   "-D$moduleName.moduleName=$outputModuleName"
   "-D$moduleName.numThreads=$numThreads"
   "-D$moduleName.programs=$programs"

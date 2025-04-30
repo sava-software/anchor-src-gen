@@ -20,6 +20,7 @@ import static java.nio.file.StandardOpenOption.*;
 
 public record AnchorSourceGenerator(Path sourceDirectory,
                                     String packageName,
+                                    boolean exportPackages,
                                     int tabLength,
                                     AnchorIDL idl) implements Runnable {
 
@@ -263,9 +264,11 @@ public record AnchorSourceGenerator(Path sourceDirectory,
   }
 
   public void addExports(final Set<String> exports) {
-    exports.add(String.format("exports %s;", packageName));
-    if (!idl.accounts().isEmpty() || !idl.types().isEmpty() || !idl.events().isEmpty()) {
-      exports.add(String.format("exports %s.types;", packageName));
+    if (exportPackages) {
+      exports.add(String.format("exports %s;", packageName));
+      if (!idl.accounts().isEmpty() || !idl.types().isEmpty() || !idl.events().isEmpty()) {
+        exports.add(String.format("exports %s.types;", packageName));
+      }
     }
   }
 }
