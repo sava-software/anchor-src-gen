@@ -198,7 +198,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
         final var sourceCode = switch (namedType.type()) {
           case AnchorStruct struct ->
               struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, true, account);
-          case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType);
+          case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType, true);
           case null, default -> throw new IllegalStateException("Unexpected anchor defined type " + namedType);
         };
         Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);

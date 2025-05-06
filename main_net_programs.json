@@ -2,7 +2,7 @@
   {
     "name": "Serum Dex",
     "program": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
-    "package": "serum",
+    "package": "serum.staging",
     "idlURL": "https://raw.githubusercontent.com/bitquery/solana-idl-lib/refs/heads/main/serum/dex.json"
   }
 ]

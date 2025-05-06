@@ -101,6 +101,12 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
   }
 
   public String generateSource(final GenSrcContext genSrcContext, final AnchorNamedType context) {
+    return generateSource(genSrcContext, context, false);
+  }
+
+  public String generateSource(final GenSrcContext genSrcContext,
+                               final AnchorNamedType context,
+                               final boolean isAccount) {
     final var header = new StringBuilder(2_048);
     header.append("package ").append(genSrcContext.typePackage()).append(";\n\n");
 
@@ -181,7 +187,8 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
             final var field = fields.getFirst();
             builder.append(field.type().generateEnumRecord(genSrcContext, name, entry, ordinal).indent(tabLength));
           } else {
-            builder.append(generateRecord(genSrcContext, entry, fields, "", name, ordinal).indent(tabLength));
+            final var recordSrc = generateRecord(genSrcContext, entry, fields, "", name, ordinal, isAccount, entry, isAccount);
+            builder.append(recordSrc.indent(tabLength));
           }
         } else {
           throw new IllegalStateException("Expected AnchorTypeContextList, not: " + type);
