@@ -192,22 +192,21 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     final var accounts = new HashSet<String>();
     for (final var account : idl.accounts().values()) {
       genSrcContext.clearImports();
-      final var namedType = account.type() == null
-          ? types.get(account.name())
-          : account;
+      final var namedType = account.type() == null ? types.get(account.name()) : account;
       accounts.add(namedType.name());
-      if (namedType.type() instanceof AnchorStruct struct) {
-        try {
-          final var sourceCode = struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, true, account);
-          Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
-        } catch (final RuntimeException ex) {
-          logger.log(ERROR, String.format("Failed to generate account %s source for %s.", namedType.name(), idl.name()));
-          throw ex;
-        } catch (final IOException e) {
-          throw new UncheckedIOException("Failed to write Account source code file.", e);
-        }
-      } else {
-        throw new IllegalStateException("Unexpected anchor account type " + namedType);
+      try {
+        final var sourceCode = switch (namedType.type()) {
+          case AnchorStruct struct ->
+              struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, true, account);
+          case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType);
+          case null, default -> throw new IllegalStateException("Unexpected anchor defined type " + namedType);
+        };
+        Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+      } catch (final RuntimeException ex) {
+        logger.log(ERROR, String.format("Failed to generate account %s source for %s.", namedType.name(), idl.name()));
+        throw ex;
+      } catch (final IOException e) {
+        throw new UncheckedIOException("Failed to write Account source code file.", e);
       }
     }
 

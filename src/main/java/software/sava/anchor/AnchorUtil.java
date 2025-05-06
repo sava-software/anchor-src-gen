@@ -103,8 +103,12 @@ public final class AnchorUtil {
       }
     }
     int s = 1;
-    for (int i = 1; i < len; ++i, ++s) {
+    for (int i = 1; i < len; ++i) {
       c = notSnakeCased.charAt(i);
+      if (Character.isWhitespace(c)) {
+        changed = true;
+        continue;
+      }
       if (Character.isUpperCase(c)) {
         if (separate) {
           buf[s++] = '_';
@@ -128,6 +132,7 @@ public final class AnchorUtil {
           buf[s] = c;
         }
       }
+      ++s;
     }
     return changed ? new String(buf, 0, s) : notSnakeCased;
   }
@@ -165,8 +170,11 @@ public final class AnchorUtil {
     }
 
     int c = 1;
-    for (; i < len; ++i, ++c) {
+    for (; i < len; ++i) {
       chr = maybeSnakeCase.charAt(i);
+      if (Character.isWhitespace(chr)) {
+        continue;
+      }
       if (chr == '_') {
         if (++i == len) {
           break;
@@ -175,6 +183,7 @@ public final class AnchorUtil {
       } else {
         buf[c] = chr;
       }
+      ++c;
     }
 
     return !changedFirst && c == len ? maybeSnakeCase : new String(buf, 0, c);

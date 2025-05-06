@@ -79,6 +79,8 @@ public record AnchorIdlMetadata(String name,
         this.address = PublicKeyEncoding.parseBase58Encoded(ji);
       } else if (fieldEquals("origin", buf, offset, len)) {
         this.origin = ji.readString();
+      } else if (fieldEquals("instruction_selector_type", buf, offset, len)) {
+        ji.skip();
       } else {
         throw new IllegalStateException("Unhandled AnchorIdlMetadata field [" + new String(buf, offset, len) + ']');
       }

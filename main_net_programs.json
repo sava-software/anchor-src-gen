@@ -1,7 +1,8 @@
 [
   {
-    "name": "Glam Protocol Program",
-    "program": "GLAMbTqav9N9witRjswJ8enwp9vv5G8bsSJ2kPJ4rcyc",
-    "package": "glam"
+    "name": "Serum Dex",
+    "program": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+    "package": "serum",
+    "idlURL": "https://raw.githubusercontent.com/bitquery/solana-idl-lib/refs/heads/main/serum/dex.json"
   }
 ]
