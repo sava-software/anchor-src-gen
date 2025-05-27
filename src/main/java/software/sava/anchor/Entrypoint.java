@@ -263,7 +263,7 @@ public final class Entrypoint extends Thread {
           );
 
           final var exports = new ConcurrentSkipListSet<String>();
-          final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
+          final var threads = IntStream.range(0, numThreads).mapToObj(t -> new Entrypoint(
               semaphore, tasks, errorCount, baseDelayMillis, latestCall,
               rpcClient,
               sourceDirectory, basePackageName,

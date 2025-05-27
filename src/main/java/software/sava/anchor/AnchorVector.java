@@ -90,7 +90,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
     }
     final String readLine;
     switch (genericType) {
-      case AnchorDefined _ -> {
+      case AnchorDefined t -> {
         final var borshMethodName = depth == 1 ? "readVector" : "readMultiDimensionVector";
         readLine = String.format(
             "final var %s = Borsh.%s(%s.class, %s::read, _data, %s);",
