@@ -44,7 +44,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
 //            } catch (final IOException e) {
 //              throw new UncheckedIOException(e);
 //            }
-        return AnchorIDL.parseIDL(json);
+        return IDL.parseIDL(json);
       }
     });
   }
@@ -58,7 +58,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
   public static CompletableFuture<AnchorIDL> fetchIDL(final HttpClient httpClient, final URI idlURL) {
     final var idlRequest = HttpRequest.newBuilder().uri(idlURL).GET().build();
     return httpClient.sendAsync(idlRequest, HttpResponse.BodyHandlers.ofByteArray())
-        .thenApply(response -> AnchorIDL.parseIDL(response.body()));
+        .thenApply(response -> IDL.parseIDL(response.body()));
   }
 
   private static void createDirectories(final Path path) {
@@ -110,7 +110,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     final var accountMethods = HashMap.<PublicKey, AccountReferenceCall>newHashMap(1_024);
     AccountReferenceCall.generateMainNetNativeAccounts(accountMethods);
 
-    final var definedTypes = HashMap.<String, AnchorNamedType>newHashMap(idl.types().size() + idl.accounts().size());
+    final var definedTypes = HashMap.<String, NamedType>newHashMap(idl.types().size() + idl.accounts().size());
     definedTypes.putAll(idl.types());
     for (final var entry : idl.accounts().entrySet()) {
       final var namedType = entry.getValue();

@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public record AnchorTypeContextList(List<AnchorNamedType> fields) implements AnchorDefinedTypeContext {
+public record AnchorTypeContextList(List<NamedType> fields) implements AnchorDefinedTypeContext {
 
-  public static AnchorTypeContextList createList(final List<AnchorNamedType> fields) {
+  public static AnchorTypeContextList createList(final List<NamedType> fields) {
     final var fieldNames = HashSet.<String>newHashSet(fields.size());
     int i = 0;
     for (final var field : fields) {
@@ -19,16 +19,13 @@ public record AnchorTypeContextList(List<AnchorNamedType> fields) implements Anc
     if (i == fields.size()) {
       return new AnchorTypeContextList(fields);
     } else {
-      final var distinctFields = new ArrayList<AnchorNamedType>(fields.size());
+      final var distinctFields = new ArrayList<NamedType>(fields.size());
       fields.stream().limit(i).forEach(distinctFields::add);
 
       var field = fields.get(i);
       distinctFields.add(field.rename(field.name() + i));
 
-      for (; ; ) {
-        if (++i == fields.size()) {
-          break;
-        }
+      while (++i != fields.size()) {
         field = fields.get(i);
         if (!fieldNames.add(field.name())) {
           distinctFields.add(field.rename(field.name() + i));

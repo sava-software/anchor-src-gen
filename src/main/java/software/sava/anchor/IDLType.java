@@ -7,8 +7,8 @@ public enum IDLType {
   ANCHOR,
   SHANK;
 
-  private final Supplier<AnchorNamedTypeParser> upperTypeParserFactory;
-  private final Supplier<AnchorNamedTypeParser> lowerTypeParserFactory;
+  private final Supplier<NamedTypeParser> upperTypeParserFactory;
+  private final Supplier<NamedTypeParser> lowerTypeParserFactory;
   private final Supplier<AnchorInstructionParser> instructionParserFactory;
 
   IDLType() {
@@ -17,11 +17,11 @@ public enum IDLType {
     this.instructionParserFactory = () -> new AnchorInstructionParser(this);
   }
 
-  Supplier<AnchorNamedTypeParser> upperTypeParserFactory() {
+  Supplier<NamedTypeParser> upperTypeParserFactory() {
     return upperTypeParserFactory;
   }
 
-  Supplier<AnchorNamedTypeParser> lowerTypeParserFactory() {
+  Supplier<NamedTypeParser> lowerTypeParserFactory() {
     return lowerTypeParserFactory;
   }
 

@@ -16,6 +16,6 @@ public record AnchorAccountMeta(List<AnchorAccountMeta> nestedAccounts,
                                 List<String> relations) {
 
   public String docComments() {
-    return AnchorNamedType.formatComments(this.docs);
+    return NamedType.formatComments(this.docs);
   }
 }

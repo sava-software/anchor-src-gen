@@ -152,7 +152,7 @@ public final class Entrypoint extends Thread {
         return AnchorSourceGenerator.fetchIDL(rpcClient.httpClient(), idlURL).join();
       } else if (idlFile != null) {
         try {
-          return AnchorIDL.parseIDL(Files.readAllBytes(idlFile));
+          return IDL.parseIDL(Files.readAllBytes(idlFile));
         } catch (final IOException e) {
           throw new UncheckedIOException(e);
         }

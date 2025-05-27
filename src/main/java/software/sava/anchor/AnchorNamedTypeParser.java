@@ -1,7 +1,6 @@
 package software.sava.anchor;
 
 import software.sava.core.programs.Discriminator;
-import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 import systems.comodal.jsoniter.factory.ElementFactory;
@@ -10,32 +9,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static software.sava.anchor.AnchorType.ANCHOR_TYPE_PARSER;
-import static software.sava.anchor.AnchorUtil.camelCase;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, CharBufferFunction<AnchorNamedType> {
+final class AnchorNamedTypeParser extends BaseNamedTypeParser {
 
   private final IDLType idlType;
-  private final boolean firstUpper;
   private Discriminator discriminator;
-  private String name;
-  private AnchorSerialization serialization;
   private AnchorRepresentation representation;
-  private AnchorTypeContext type;
-  private List<String> docs;
   private boolean index;
 
   AnchorNamedTypeParser(final IDLType idlType, final boolean firstUpper) {
+    super(firstUpper);
     this.idlType = idlType;
-    this.firstUpper = firstUpper;
   }
 
-  static List<AnchorNamedType> parseLowerList(final IDLType idlType, final JsonIterator ji) {
+  static List<NamedType> parseLowerList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
     return ElementFactory.parseList(ji, idlType.lowerTypeParserFactory());
   }
 
-  static List<AnchorNamedType> parseUpperList(final IDLType idlType, final JsonIterator ji) {
+  static List<NamedType> parseUpperList(final IDLType idlType, final JsonIterator ji) {
     ji.skipObjField();
     return ElementFactory.parseList(ji, idlType.upperTypeParserFactory());
   }
@@ -54,34 +47,8 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
   }
 
   @Override
-  public AnchorNamedType create() {
-    return AnchorNamedType.createType(discriminator, name, serialization, representation, type, docs, index);
-  }
-
-  static String cleanName(final String name, final boolean firstUpper) {
-    int nameSpace = name.indexOf(':');
-    if (nameSpace < 0) {
-      return camelCase(name, firstUpper);
-    } else {
-      // Convert to snake case, then camel case.
-      final char[] chars = new char[name.length()];
-      for (int srcBegin = 0, destBegin = 0; ; ) {
-        name.getChars(srcBegin, nameSpace, chars, destBegin);
-
-        destBegin += nameSpace - srcBegin;
-        chars[destBegin] = '_';
-        ++destBegin;
-
-        srcBegin = nameSpace + 2;
-        nameSpace = name.indexOf(':', srcBegin);
-        if (nameSpace < 0) {
-          nameSpace = chars.length;
-          name.getChars(srcBegin, nameSpace, chars, destBegin);
-          destBegin += nameSpace - srcBegin;
-          return camelCase(new String(chars, 0, destBegin), firstUpper);
-        }
-      }
-    }
+  public NamedType create() {
+    return NamedType.createType(discriminator, name, serialization, representation, type, docs, index);
   }
 
   @Override
@@ -99,7 +66,7 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
     } else if (fieldEquals("index", buf, offset, len)) {
       this.index = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {
-      this.name = cleanName(ji.readString(), firstUpper);
+      this.name = NamedTypeParser.cleanName(ji.readString(), firstUpper);
       // System.out.println(name);
     } else if (fieldEquals("option", buf, offset, len)) {
       this.type = new AnchorOption(parseTypeContext(idlType, ji));
@@ -120,8 +87,8 @@ final class AnchorNamedTypeParser implements ElementFactory<AnchorNamedType>, Ch
   }
 
   @Override
-  public AnchorNamedType apply(final char[] chars, final int offset, final int len) {
+  public NamedType apply(final char[] chars, final int offset, final int len) {
     final var primitiveType = ANCHOR_TYPE_PARSER.apply(chars, offset, len).primitiveType();
-    return AnchorNamedType.createType(null, null, primitiveType);
+    return NamedType.createType(null, null, primitiveType);
   }
 }

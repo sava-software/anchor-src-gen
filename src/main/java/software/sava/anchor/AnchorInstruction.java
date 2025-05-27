@@ -16,7 +16,7 @@ import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 public record AnchorInstruction(Discriminator discriminator,
                                 String name,
                                 List<AnchorAccountMeta> accounts,
-                                List<AnchorNamedType> args) {
+                                List<NamedType> args) {
 
   static String replaceNewLinesIfLessThan(final String lines, final int numLines, final int limit) {
     return numLines < limit && !lines.contains("//") ? lines.replaceAll("\n +", " ") : lines;

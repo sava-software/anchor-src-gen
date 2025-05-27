@@ -1,8 +1,7 @@
 [
   {
-    "name": "Serum Dex",
-    "program": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
-    "package": "serum.staging",
-    "idlURL": "https://raw.githubusercontent.com/bitquery/solana-idl-lib/refs/heads/main/serum/dex.json"
+    "name": "Marinade Native Proxy",
+    "program": "mnspJQyF1KdDEs5c6YJPocYdY1esBgVQFufM2dY9oDk",
+    "package": "staging.marinade.native_proxy"
   }
 ]

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static software.sava.anchor.AnchorNamedType.NO_DOCS;
+import static software.sava.anchor.IDL.NO_DOCS;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta> {

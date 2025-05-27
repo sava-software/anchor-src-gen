@@ -9,7 +9,6 @@ import systems.comodal.jsoniter.ValueType;
 
 import java.util.Map;
 
-import static software.sava.anchor.AnchorNamedTypeParser.cleanName;
 import static software.sava.anchor.AnchorType.*;
 import static software.sava.anchor.AnchorUtil.camelCase;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
@@ -30,7 +29,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
     } else if (fieldEquals("PodU256", buf, offset, len)) {
       return new AnchorPrimitive(u256);
     } else {
-      return new AnchorDefined(cleanName(new String(buf, offset, len), true));
+      return new AnchorDefined(NamedTypeParser.cleanName(new String(buf, offset, len), true));
     }
   };
 
@@ -38,7 +37,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
     if (idlType == IDLType.SHANK) {
       return ji.applyChars(SHANK_DEFINED_TYPE_PARSER);
     } else if (ji.whatIsNext() == ValueType.STRING) {
-      return new AnchorDefined(cleanName(ji.readString(), true));
+      return new AnchorDefined(NamedTypeParser.cleanName(ji.readString(), true));
     } else {
       return ji.testObject(new Builder(), PARSER).create();
     }
@@ -46,7 +45,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
 
   private static final ContextFieldBufferPredicate<Builder> PARSER = (builder, buf, offset, len, ji) -> {
     if (fieldEquals("name", buf, offset, len)) {
-      builder.name = cleanName(ji.readString(), true);
+      builder.name = NamedTypeParser.cleanName(ji.readString(), true);
     } else {
       // https://github.com/coral-xyz/anchor/blob/020a3046582944030f17b6524006eeaf26951cb8/ts/packages/anchor/src/idl.ts#L255
       throw new IllegalStateException("Unhandled defined type field " + new String(buf, offset, len));
@@ -73,7 +72,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
 
   @Override
   public String generateRecordField(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType context,
+                                    final NamedType context,
                                     final boolean optional) {
     return String.format("%s%s %s", context.docComments(), typeName, context.name());
   }
@@ -115,7 +114,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   @Override
   public String generateEnumRecord(final GenSrcContext genSrcContext,
                                    final String enumTypeName,
-                                   final AnchorNamedType enumName,
+                                   final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     final var valTypeName = enumName.name().equals(typeName)
@@ -148,7 +147,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
 
   @Override
   public int generateIxSerialization(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
+                                     final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,
@@ -165,7 +164,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     final var definedType = definedTypes.get(typeName);
     if (definedType == null) {
       throw new IllegalStateException("Failed to find defined type " + typeName);

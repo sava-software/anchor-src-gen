@@ -15,7 +15,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
   private Discriminator discriminator;
   private String name;
   private List<AnchorAccountMeta> accounts;
-  private List<AnchorNamedType> args;
+  private List<NamedType> args;
 
   AnchorInstructionParser(final IDLType idlType) {
     this.idlType = idlType;

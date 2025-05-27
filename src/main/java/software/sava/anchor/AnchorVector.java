@@ -62,7 +62,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
 
   @Override
   public String generateRecordField(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType context,
+                                    final NamedType context,
                                     final boolean optional) {
     return AnchorArray.generateRecordField(genSrcContext, genericType, depth, context);
   }
@@ -166,12 +166,12 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   @Override
   public String generateEnumRecord(final GenSrcContext genSrcContext,
                                    final String enumTypeName,
-                                   final AnchorNamedType enumName,
+                                   final NamedType enumName,
                                    final int ordinal) {
     return generateRecord(
         genSrcContext,
         enumName,
-        List.of(AnchorNamedType.createType(null, "val", this)),
+        List.of(NamedType.createType(null, "val", this)),
         "",
         enumTypeName,
         ordinal
@@ -188,7 +188,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
 
   @Override
   public int generateIxSerialization(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
+                                     final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,

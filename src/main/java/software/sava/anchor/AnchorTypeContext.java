@@ -7,7 +7,7 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
 
   AnchorType type();
 
-  default boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  default boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     return false;
   }
 
@@ -74,15 +74,19 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
     throw throwInvalidDataType();
   }
 
-  default List<AnchorNamedType> values() {
+  default List<NamedType> values() {
     throw throwInvalidDataType();
   }
 
-  default String generateRecordField(final GenSrcContext genSrcContext, final AnchorNamedType varName, final boolean optional) {
+  default String generateRecordField(final GenSrcContext genSrcContext,
+                                     final NamedType varName,
+                                     final boolean optional) {
     throw throwInvalidDataType();
   }
 
-  default String generateStaticFactoryField(final GenSrcContext genSrcContext, final String varName, final boolean optional) {
+  default String generateStaticFactoryField(final GenSrcContext genSrcContext,
+                                            final String varName,
+                                            final boolean optional) {
     throw throwInvalidDataType();
   }
 
@@ -111,7 +115,7 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
 
   default String generateEnumRecord(final GenSrcContext genSrcContext,
                                     final String enumTypeName,
-                                    final AnchorNamedType enumName,
+                                    final NamedType enumName,
                                     final int ordinal) {
     throw throwInvalidDataType();
   }
@@ -121,7 +125,7 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
   }
 
   default int generateIxSerialization(final GenSrcContext genSrcContext,
-                                      final AnchorNamedType context,
+                                      final NamedType context,
                                       final StringBuilder paramsBuilder,
                                       final StringBuilder dataBuilder,
                                       final StringBuilder stringsBuilder,

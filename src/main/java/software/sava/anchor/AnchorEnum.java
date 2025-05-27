@@ -11,7 +11,7 @@ import static software.sava.anchor.AnchorNamedTypeParser.parseUpperList;
 import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 import static software.sava.anchor.AnchorStruct.generateRecord;
 
-public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedTypeContext {
+public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeContext {
 
   static AnchorEnum parseEnum(final IDLType idlType, final JsonIterator ji) {
     return new AnchorEnum(parseUpperList(idlType, ji));
@@ -28,7 +28,7 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     return values.stream().noneMatch(t -> t.type() != null);
   }
 
@@ -55,7 +55,7 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
   }
 
   private String generateSimpleEnum(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType context,
+                                    final NamedType context,
                                     final StringBuilder builder) {
     final var tab = genSrcContext.tab();
     final int tabLength = genSrcContext.tabLength();
@@ -69,7 +69,7 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
         context.docComments(), name
     ));
     final var iterator = values.iterator();
-    for (AnchorNamedType next; ; ) {
+    for (NamedType next; ; ) {
       next = iterator.next();
       builder.append(next.docComments().indent(tabLength).stripTrailing());
       builder.append(tab).append(next.name());
@@ -86,10 +86,10 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
     }
   }
 
-  private boolean wrappedType(final Map<String, AnchorNamedType> definedTypes, final AnchorNamedType enumEntry) {
+  private boolean wrappedType(final Map<String, NamedType> definedTypes, final NamedType enumEntry) {
     final var typeName = enumEntry.name();
     final var type = enumEntry.type();
-    if (type instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
+    if (type instanceof AnchorTypeContextList(final List<NamedType> fields)) {
       if (fields.size() == 1) {
         final var field = fields.getFirst();
         if (field.type() instanceof AnchorDefined(String _typeName) && _typeName.equals(typeName)) {
@@ -100,12 +100,12 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
     return false;
   }
 
-  public String generateSource(final GenSrcContext genSrcContext, final AnchorNamedType context) {
+  public String generateSource(final GenSrcContext genSrcContext, final NamedType context) {
     return generateSource(genSrcContext, context, false);
   }
 
   public String generateSource(final GenSrcContext genSrcContext,
-                               final AnchorNamedType context,
+                               final NamedType context,
                                final boolean isAccount) {
     final var header = new StringBuilder(2_048);
     header.append("package ").append(genSrcContext.typePackage()).append(";\n\n");
@@ -123,7 +123,7 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
       builder.append(String.format("public sealed interface %s extends RustEnum permits\n", name));
 
       final var iterator = values.iterator();
-      for (AnchorNamedType next; ; ) {
+      for (NamedType next; ; ) {
         next = iterator.next();
         builder.append(next.docComments().indent(tabLength).stripTrailing());
         builder.append(tab).append(name).append('.').append(next.name());
@@ -181,7 +181,7 @@ public record AnchorEnum(List<AnchorNamedType> values) implements AnchorDefinedT
               entry.name(), entry.name(), tab, ordinal
           ).indent(tabLength << 1));
           builder.append(tab).append('}').append('\n');
-        } else if (type instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
+        } else if (type instanceof AnchorTypeContextList(final List<NamedType> fields)) {
           builder.append('\n');
           if (fields.size() == 1) {
             final var field = fields.getFirst();

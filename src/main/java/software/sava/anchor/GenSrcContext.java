@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 public record GenSrcContext(Set<String> accounts,
-                            Map<String, AnchorNamedType> definedTypes,
+                            Map<String, NamedType> definedTypes,
                             Set<String> imports,
                             Set<String> staticImports,
                             String tab,

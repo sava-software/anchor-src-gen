@@ -70,7 +70,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
 
   @Override
   public String generateRecordField(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType varName,
+                                    final NamedType varName,
                                     final boolean optional) {
     return genericType.generateRecordField(genSrcContext, varName, true);
   }
@@ -173,7 +173,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
 
   @Override
   public int generateIxSerialization(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
+                                     final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,
@@ -225,7 +225,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
   @Override
   public String generateEnumRecord(final GenSrcContext genSrcContext,
                                    final String enumTypeName,
-                                   final AnchorNamedType enumName,
+                                   final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     final var type = type();

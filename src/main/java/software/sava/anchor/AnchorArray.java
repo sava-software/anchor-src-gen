@@ -32,7 +32,7 @@ public record AnchorArray(AnchorTypeContext genericType,
   static String generateRecordField(final GenSrcContext genSrcContext,
                                     final AnchorTypeContext genericType,
                                     final int depth,
-                                    final AnchorNamedType context) {
+                                    final NamedType context) {
     addImports(genSrcContext, genericType);
     final var docs = context.docComments();
     final var varName = context.name();
@@ -95,7 +95,7 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     return genericType.isFixedLength(definedTypes);
   }
 
@@ -127,7 +127,7 @@ public record AnchorArray(AnchorTypeContext genericType,
 
   @Override
   public String generateRecordField(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType varName,
+                                    final NamedType varName,
                                     final boolean optional) {
     return generateRecordField(genSrcContext, genericType, depth, varName);
   }
@@ -228,12 +228,12 @@ public record AnchorArray(AnchorTypeContext genericType,
   @Override
   public String generateEnumRecord(final GenSrcContext genSrcContext,
                                    final String enumTypeName,
-                                   final AnchorNamedType enumName,
+                                   final NamedType enumName,
                                    final int ordinal) {
     return generateRecord(
         genSrcContext,
         enumName,
-        List.of(AnchorNamedType.createType(null, "val", this)),
+        List.of(NamedType.createType(null, "val", this)),
         "",
         enumTypeName,
         ordinal
@@ -248,7 +248,7 @@ public record AnchorArray(AnchorTypeContext genericType,
 
   @Override
   public int generateIxSerialization(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
+                                     final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,

@@ -2,11 +2,8 @@ package software.sava.anchor;
 
 import software.sava.core.programs.Discriminator;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public record AnchorNamedType(Discriminator discriminator,
                               String name,
@@ -14,50 +11,15 @@ public record AnchorNamedType(Discriminator discriminator,
                               AnchorRepresentation representation,
                               AnchorTypeContext type,
                               List<String> docs,
-                              boolean index) {
+                              boolean index) implements NamedType {
 
-  static final List<String> NO_DOCS = List.of();
-  private static final Set<String> RESERVED_NAMES = Set.of(
+  static final Set<String> RESERVED_NAMES = Set.of(
       "new",
       "offset"
   );
 
-  public static AnchorNamedType createType(final Discriminator discriminator,
-                                           final String name,
-                                           final AnchorSerialization serialization,
-                                           final AnchorRepresentation representation,
-                                           final AnchorTypeContext type,
-                                           final List<String> docs,
-                                           final boolean index) {
-    if (name == null) {
-      return new AnchorNamedType(
-          discriminator, '_' + type.type().name(),
-          serialization == null ? AnchorSerialization.borsh : serialization,
-          representation,
-          type,
-          docs == null ? NO_DOCS : docs,
-          index
-      );
-    } else {
-      return new AnchorNamedType(
-          discriminator,
-          RESERVED_NAMES.contains(name) ? '_' + name : name,
-          serialization == null ? AnchorSerialization.borsh : serialization,
-          representation,
-          type,
-          docs == null ? NO_DOCS : docs,
-          index
-      );
-    }
-  }
-
-  public static AnchorNamedType createType(final Discriminator discriminator,
-                                           final String name,
-                                           final AnchorTypeContext type) {
-    return createType(discriminator, name, null, null, type, NO_DOCS, false);
-  }
-
-  public AnchorNamedType rename(final String newName) {
+  @Override
+  public NamedType rename(final String newName) {
     return new AnchorNamedType(
         discriminator,
         newName,
@@ -69,18 +31,12 @@ public record AnchorNamedType(Discriminator discriminator,
     );
   }
 
-  private static final Pattern NEW_LINE_PATTERN = Pattern.compile("\n");
-
-  public static String formatComments(final Collection<String> docs) {
-    return docs.stream()
-        .map(doc -> String.format("// %s\n", NEW_LINE_PATTERN.matcher(doc).replaceAll("\n//")))
-        .collect(Collectors.joining());
-  }
-
+  @Override
   public String docComments() {
-    return formatComments(this.docs);
+    return NamedType.formatComments(this.docs);
   }
 
+  @Override
   public int generateSerialization(final GenSrcContext genSrcContext,
                                    final StringBuilder paramsBuilder,
                                    final StringBuilder dataBuilder,
@@ -90,22 +46,27 @@ public record AnchorNamedType(Discriminator discriminator,
     return type.generateIxSerialization(genSrcContext, this, paramsBuilder, dataBuilder, stringsBuilder, dataLengthBuilder, hasNext);
   }
 
+  @Override
   public String generateRecordField(final GenSrcContext genSrcContext) {
     return type.generateRecordField(genSrcContext, this, false);
   }
 
+  @Override
   public String generateStaticFactoryField(final GenSrcContext genSrcContext) {
     return type.generateStaticFactoryField(genSrcContext, name, false);
   }
 
+  @Override
   public String generateNewInstanceField(final GenSrcContext genSrcContext) {
     return type.generateNewInstanceField(genSrcContext, name);
   }
 
+  @Override
   public String generateWrite(final GenSrcContext genSrcContext, final boolean hasNext) {
     return type.generateWrite(genSrcContext, name, hasNext);
   }
 
+  @Override
   public String generateRead(final GenSrcContext genSrcContext,
                              final boolean hasNext,
                              final boolean singleField,
@@ -113,10 +74,12 @@ public record AnchorNamedType(Discriminator discriminator,
     return type.generateRead(genSrcContext, name, hasNext, singleField, offsetVarName);
   }
 
+  @Override
   public String generateLength(final GenSrcContext genSrcContext) {
     return type.generateLength(name, genSrcContext);
   }
 
+  @Override
   public void generateMemCompFilter(final GenSrcContext genSrcContext,
                                     final StringBuilder builder,
                                     final String offsetVarName) {

@@ -6,50 +6,78 @@ import software.sava.rpc.json.PublicKeyEncoding;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static software.sava.anchor.AnchorNamedType.NO_DOCS;
 import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 import static systems.comodal.jsoniter.factory.ElementFactory.parseList;
 
 // https://github.com/acheroncrypto/anchor/blob/fix-idl/lang/syn/src/idl/types.rs
 // https://github.com/coral-xyz/anchor/blob/master/ts/packages/anchor/src/idl.ts
-public record AnchorIDL(PublicKey address,
-                        String version,
-                        String name,
-                        List<AnchorConstant> constants,
-                        List<AnchorInstruction> instructions,
-                        Map<String, AnchorNamedType> accounts,
-                        Map<String, AnchorNamedType> types,
-                        List<AnchorNamedType> events,
-                        List<AnchorErrorRecord> errors,
-                        AnchorIdlMetadata metaData,
-                        List<String> docs,
-                        byte[] json) {
+public final class AnchorIDL extends RootIDL implements IDL {
 
-  public static AnchorIDL parseIDL(final byte[] json) {
-    try (final var ji = JsonIterator.parse(json)) {
-      final int mark = ji.mark();
-      final IDLType idlType;
-      if (ji.skipUntil("metadata") != null
-          && ji.skipUntil("origin") != null
-          && "shank".equals(ji.readString())) {
-        idlType = IDLType.SHANK;
-      } else {
-        idlType = IDLType.ANCHOR;
-      }
-      final var parser = new Parser(idlType);
-      ji.reset(mark).testObject(parser);
-      return parser.createIDL(json);
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
-    }
+  private final List<AnchorConstant> constants;
+  private final List<AnchorInstruction> instructions;
+  private final Map<String, NamedType> accounts;
+  private final Map<String, NamedType> types;
+  private final List<NamedType> events;
+  private final List<AnchorErrorRecord> errors;
+  private final AnchorIdlMetadata metaData;
+
+  AnchorIDL(final PublicKey address,
+            final String version,
+            final String name,
+            final String origin,
+            final List<AnchorConstant> constants,
+            final List<AnchorInstruction> instructions,
+            final Map<String, NamedType> accounts,
+            final Map<String, NamedType> types,
+            final List<NamedType> events,
+            final List<AnchorErrorRecord> errors,
+            final AnchorIdlMetadata metaData,
+            final List<String> docs,
+            final byte[] json) {
+    super(address, version, name, origin, docs, json);
+    this.constants = constants;
+    this.instructions = instructions;
+    this.accounts = accounts;
+    this.types = types;
+    this.events = events;
+    this.errors = errors;
+    this.metaData = metaData;
   }
 
+  public List<AnchorConstant> constants() {
+    return constants;
+  }
+
+  public List<AnchorInstruction> instructions() {
+    return instructions;
+  }
+
+  public Map<String, NamedType> accounts() {
+    return accounts;
+  }
+
+  public Map<String, NamedType> types() {
+    return types;
+  }
+
+  public List<NamedType> events() {
+    return events;
+  }
+
+  public List<AnchorErrorRecord> errors() {
+    return errors;
+  }
+
+  public AnchorIdlMetadata metaData() {
+    return metaData;
+  }
+
+  @Override
   public String generateConstantsSource(final GenSrcContext genSrcContext) {
     if (constants == null || constants.isEmpty()) {
       return null;
@@ -77,6 +105,7 @@ public record AnchorIDL(PublicKey address,
     return closeClass(genSrcContext, className, out);
   }
 
+  @Override
   public String generatePDASource(final GenSrcContext genSrcContext) {
     final var pdaAccounts = new TreeMap<String, AnchorPDA>();
     final var distinct = new HashSet<AnchorPDA>();
@@ -124,6 +153,7 @@ public record AnchorIDL(PublicKey address,
     return closeClass(genSrcContext, className, out);
   }
 
+  @Override
   public String generateErrorSource(final GenSrcContext genSrcContext) {
     if (errors.isEmpty()) {
       return null;
@@ -178,6 +208,7 @@ public record AnchorIDL(PublicKey address,
     return removeBlankLines(out.toString());
   }
 
+  @Override
   public String generateSource(final GenSrcContext genSrcContext) {
     final var pdaAccounts = HashMap.newHashMap(instructions.size() << 1);
     final var ixBuilder = new StringBuilder();
@@ -206,40 +237,33 @@ public record AnchorIDL(PublicKey address,
     return closeClass(genSrcContext, className, builder);
   }
 
-  private String closeClass(final GenSrcContext genSrcContext,
-                            final String className,
-                            final StringBuilder builder) {
-    builder.append(String.format("""
-        private %s() {
-        }""", className
-    ).indent(genSrcContext.tabLength()));
-    return removeBlankLines(builder.append('}').toString());
-  }
 
-  private static final class Parser implements FieldBufferPredicate {
+  static final class Parser implements FieldBufferPredicate {
 
     private final IDLType idlType;
     private PublicKey address;
     private String version;
     private String name;
+    private String origin;
     private List<AnchorConstant> constants;
     private List<AnchorInstruction> instructions;
-    private Map<String, AnchorNamedType> accounts;
-    private Map<String, AnchorNamedType> types;
-    private List<AnchorNamedType> events;
+    private Map<String, NamedType> accounts;
+    private Map<String, NamedType> types;
+    private List<NamedType> events;
     private List<AnchorErrorRecord> errors;
     private AnchorIdlMetadata metaData;
     private List<String> docs;
 
-    private Parser(final IDLType idlType) {
+    Parser(final IDLType idlType) {
       this.idlType = idlType;
     }
 
-    private AnchorIDL createIDL(final byte[] json) {
+    AnchorIDL createIDL(final byte[] json) {
       return new AnchorIDL(
           address,
           version == null ? metaData.version() : version,
           name == null ? metaData.name() : name,
+          origin == null ? metaData == null? null: metaData.origin() : origin,
           constants,
           instructions,
           accounts == null ? Map.of() : accounts,
@@ -260,19 +284,21 @@ public record AnchorIDL(PublicKey address,
         this.version = ji.readString();
       } else if (fieldEquals("name", buf, offset, len)) {
         this.name = ji.readString();
+      } else if (fieldEquals("origin", buf, offset, len)) {
+        this.origin = ji.readString();
       } else if (fieldEquals("constants", buf, offset, len)) {
         this.constants = parseList(ji, AnchorConstantParser.FACTORY);
       } else if (fieldEquals("instructions", buf, offset, len)) {
         this.instructions = parseList(ji, idlType.instructionParserFactory());
       } else if (fieldEquals("accounts", buf, offset, len)) {
         this.accounts = parseList(ji, idlType.upperTypeParserFactory()).stream()
-            .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
+            .collect(Collectors.toUnmodifiableMap(NamedType::name, Function.identity()));
       } else if (fieldEquals("types", buf, offset, len)) {
         this.types = parseList(ji, idlType.upperTypeParserFactory()).stream()
-            .collect(Collectors.toUnmodifiableMap(AnchorNamedType::name, Function.identity()));
+            .collect(Collectors.toUnmodifiableMap(NamedType::name, Function.identity()));
       } else if (fieldEquals("events", buf, offset, len)) {
         this.events = parseList(ji, idlType.upperTypeParserFactory()).stream().map(nt -> {
-          if (nt.type() instanceof AnchorTypeContextList(final List<AnchorNamedType> fields)) {
+          if (nt.type() instanceof AnchorTypeContextList(final List<NamedType> fields)) {
             return new AnchorNamedType(
                 null,
                 nt.name(),

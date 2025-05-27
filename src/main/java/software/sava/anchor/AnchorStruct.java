@@ -20,7 +20,7 @@ import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 import static software.sava.anchor.AnchorType.string;
 import static software.sava.core.rpc.Filter.MAX_MEM_COMP_LENGTH;
 
-public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefinedTypeContext {
+public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeContext {
 
   private static final String LENGTH_ADD_ALIGN_TAB = " ".repeat("retur".length());
 
@@ -30,8 +30,8 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
   }
 
   static String generateRecord(final GenSrcContext genSrcContext,
-                               final AnchorNamedType context,
-                               final List<AnchorNamedType> fields,
+                               final NamedType context,
+                               final List<NamedType> fields,
                                final String recordAccessModifier,
                                final String interfaceName,
                                final int ordinal) {
@@ -39,13 +39,13 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
   }
 
   static String generateRecord(final GenSrcContext genSrcContext,
-                               final AnchorNamedType context,
-                               final List<AnchorNamedType> fields,
+                               final NamedType context,
+                               final List<NamedType> fields,
                                final String recordAccessModifier,
                                final String interfaceName,
                                final int ordinal,
                                final boolean isAccount,
-                               final AnchorNamedType account,
+                               final NamedType account,
                                final boolean hasDiscriminator) {
     final var tab = genSrcContext.tab();
     final int tabLength = tab.length();
@@ -102,7 +102,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
     }
     int byteLength = hasDiscriminator ? AnchorUtil.DISCRIMINATOR_LENGTH : 0;
     var fieldIterator = fields.iterator();
-    for (AnchorNamedType field; ; ) {
+    for (NamedType field; ; ) {
       field = fieldIterator.next();
       if (byteLength >= 0) {
         final var type = field.type();
@@ -206,7 +206,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
         factoryMethodBuilder.append("final Discriminator discriminator,\n");
       }
       fieldIterator = fields.iterator();
-      for (AnchorNamedType field; ; ) {
+      for (NamedType field; ; ) {
         field = fieldIterator.next();
         factoryMethodBuilder.append("final ").append(field.generateStaticFactoryField(genSrcContext));
         if (fieldIterator.hasNext()) {
@@ -232,7 +232,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
         newInstanceBuilder.append("discriminator,\n");
       }
       fieldIterator = fields.iterator();
-      for (AnchorNamedType field; ; ) {
+      for (NamedType field; ; ) {
         field = fieldIterator.next();
         newInstanceBuilder.append(field.generateNewInstanceField(genSrcContext));
         if (fieldIterator.hasNext()) {
@@ -253,7 +253,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
     final boolean singleField = !hasDiscriminator && fields.size() == 1;
     final var offsetVarName = singleField ? "offset" : "i";
     fieldIterator = fields.iterator();
-    for (AnchorNamedType field; ; ) {
+    for (NamedType field; ; ) {
       field = fieldIterator.next();
       final boolean hasNext = fieldIterator.hasNext();
       readBuilder.append(field.generateRead(genSrcContext, hasNext, singleField, offsetVarName)).append('\n');
@@ -318,7 +318,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
       newInstanceBuilder.append("discriminator,\n");
     }
     fieldIterator = fields.iterator();
-    for (AnchorNamedType field; ; ) {
+    for (NamedType field; ; ) {
       field = fieldIterator.next();
       newInstanceBuilder.append(field.generateNewInstanceField(genSrcContext));
       if (fieldIterator.hasNext()) {
@@ -359,7 +359,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
 
     final var lengthBuilder = new StringBuilder(4_096);
     fieldIterator = fields.iterator();
-    for (AnchorNamedType field; ; ) {
+    for (NamedType field; ; ) {
       field = fieldIterator.next();
       lengthBuilder.append(field.generateLength(genSrcContext));
       if (fieldIterator.hasNext()) {
@@ -412,10 +412,10 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
   }
 
   static String generatePublicRecord(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
-                                     final List<AnchorNamedType> fields,
+                                     final NamedType context,
+                                     final List<NamedType> fields,
                                      final boolean isAccount,
-                                     final AnchorNamedType account,
+                                     final NamedType account,
                                      final boolean hasDiscriminator) {
     return generateRecord(genSrcContext, context, fields, "public", "Borsh", -1, isAccount, account, hasDiscriminator);
   }
@@ -431,9 +431,9 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     return fields.stream()
-        .map(AnchorNamedType::type)
+        .map(NamedType::type)
         .allMatch(type -> type.isFixedLength(definedTypes));
   }
 
@@ -469,7 +469,7 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
     return serializedLength;
   }
 
-  public String generateSource(final GenSrcContext genSrcContext, final AnchorNamedType context) {
+  public String generateSource(final GenSrcContext genSrcContext, final NamedType context) {
     final var builder = new StringBuilder(4_096);
     genSrcContext.addImport(Borsh.class);
     final var recordSource = generatePublicRecord(genSrcContext, context, fields, false, null, true);
@@ -478,9 +478,9 @@ public record AnchorStruct(List<AnchorNamedType> fields) implements AnchorDefine
 
   public String generateSource(final GenSrcContext genSrcContext,
                                final String packageName,
-                               final AnchorNamedType context,
+                               final NamedType context,
                                final boolean isAccount,
-                               final AnchorNamedType account) {
+                               final NamedType account) {
     final var builder = new StringBuilder(4_096);
     builder.append("package ").append(packageName).append(";\n\n");
 

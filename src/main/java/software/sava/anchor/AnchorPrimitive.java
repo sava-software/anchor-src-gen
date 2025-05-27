@@ -25,7 +25,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, AnchorNamedType> definedTypes) {
+  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
     return type.dataLength() > 0;
   }
 
@@ -135,7 +135,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
 
   @Override
   public String generateRecordField(final GenSrcContext genSrcContext,
-                                    final AnchorNamedType context,
+                                    final NamedType context,
                                     final boolean optional) {
     final var varName = context.name();
     final var typeName = optional ? optionalTypeName() : typeName();
@@ -294,7 +294,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   @Override
   public String generateEnumRecord(final GenSrcContext genSrcContext,
                                    final String enumTypeName,
-                                   final AnchorNamedType enumName,
+                                   final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     if (type == string) {
@@ -414,7 +414,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
 
   @Override
   public int generateIxSerialization(final GenSrcContext genSrcContext,
-                                     final AnchorNamedType context,
+                                     final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,

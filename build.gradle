@@ -29,7 +29,7 @@ plugins.withType(JavaPlugin).configureEach {
 
 repositories {
   maven {
-    url = "https://maven.pkg.github.com/comodal/json-iterator"
+    url = "https://maven.pkg.github.com/sava-software/json-iterator"
     credentials {
       username = GPR_USER
       password = GPR_TOKEN
@@ -54,7 +54,7 @@ repositories {
 
 dependencies {
   implementation libs.bouncycastle
-  implementation libs.json.iterator
+  implementation libs.sava.json.iterator
   implementation libs.sava.core
   implementation libs.sava.rpc
 
