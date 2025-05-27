@@ -54,7 +54,7 @@ repositories {
 
 dependencies {
   implementation libs.bouncycastle
-  implementation libs.json.iterator
+  implementation libs.sava.json.iterator
   implementation libs.sava.core
   implementation libs.sava.rpc
 
