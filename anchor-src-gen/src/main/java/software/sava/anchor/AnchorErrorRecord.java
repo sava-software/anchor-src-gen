@@ -12,7 +12,7 @@ public record AnchorErrorRecord(int code,
     return new AnchorErrorRecord(code, name, msg, className);
   }
 
-  String generateSource(final GenSrcContext genSrcContext, final StringBuilder out) {
+  void generateSource(final GenSrcContext genSrcContext, final StringBuilder out) {
     final var tab = genSrcContext.tab();
     out.append(String.format("""
             
@@ -28,7 +28,5 @@ public record AnchorErrorRecord(int code,
         , "%s"
         """, msg));
     out.append(tab).append(");\n}\n");
-
-    return out.toString();
   }
 }

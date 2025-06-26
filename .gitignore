@@ -21,7 +21,6 @@ hs_err_pid*
 *.secret
 .DS_Store
 out/
-gradle.properties
 ignore
 anchor-src-gen/src/main/java/software/sava/anchor/gen
 /idls/

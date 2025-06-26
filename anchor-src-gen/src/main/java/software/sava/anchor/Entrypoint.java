@@ -5,6 +5,7 @@ import software.sava.core.tx.Instruction;
 import software.sava.rpc.json.PublicKeyEncoding;
 import software.sava.rpc.json.http.SolanaNetwork;
 import software.sava.rpc.json.http.client.SolanaRpcClient;
+import software.sava.rpc.json.http.response.AccountInfo;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
@@ -14,10 +15,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
@@ -45,6 +43,7 @@ public final class Entrypoint extends Thread {
   private final long baseDelayMillis;
   private final AtomicLong latestCall;
   private final SolanaRpcClient rpcClient;
+  private final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
   private final Path sourceDirectory;
   private final String basePackageName;
   private final Set<String> exports;
@@ -56,6 +55,7 @@ public final class Entrypoint extends Thread {
                      final long baseDelayMillis,
                      final AtomicLong latestCall,
                      final SolanaRpcClient rpcClient,
+                     final Map<PublicKey, AccountInfo<byte[]>> idlAccounts,
                      final Path sourceDirectory,
                      final String basePackageName,
                      final Set<String> exports,
@@ -66,6 +66,7 @@ public final class Entrypoint extends Thread {
     this.baseDelayMillis = baseDelayMillis;
     this.latestCall = latestCall;
     this.rpcClient = rpcClient;
+    this.idlAccounts = idlAccounts;
     this.sourceDirectory = sourceDirectory;
     this.basePackageName = basePackageName;
     this.exports = exports;
@@ -95,7 +96,7 @@ public final class Entrypoint extends Thread {
         if (task == null) {
           return;
         }
-        idl = task.fetchIDL(rpcClient);
+        idl = task.fetchIDL(rpcClient.httpClient(), idlAccounts);
         if (idl == null) {
           continue;
         }
@@ -147,9 +148,9 @@ public final class Entrypoint extends Thread {
       return String.format("%s.%s.anchor", basePackageName, packageName);
     }
 
-    AnchorIDL fetchIDL(final SolanaRpcClient rpcClient) {
+    AnchorIDL fetchIDL(final HttpClient httpClient, final Map<PublicKey, AccountInfo<byte[]>> idlAccounts) {
       if (idlURL != null) {
-        return AnchorSourceGenerator.fetchIDL(rpcClient.httpClient(), idlURL).join();
+        return AnchorSourceGenerator.fetchIDL(httpClient, idlURL).join();
       } else if (idlFile != null) {
         try {
           return IDL.parseIDL(Files.readAllBytes(idlFile));
@@ -157,8 +158,8 @@ public final class Entrypoint extends Thread {
           throw new UncheckedIOException(e);
         }
       } else {
-        final var idl = AnchorSourceGenerator.fetchIDLForProgram(programAddress, rpcClient).join();
-        if (idl == null) {
+        final var accountInfo = idlAccounts.get(idlAddress);
+        if (accountInfo == null) {
           logger.log(WARNING, String.format(
                   "Failed to find an IDL for %s using a program address %s at the IDL address %s.",
                   name, programAddress, idlAddress
@@ -166,7 +167,8 @@ public final class Entrypoint extends Thread {
           );
           return null;
         } else {
-          return idl;
+          final var onChainIDL = OnChainIDL.FACTORY.apply(accountInfo.pubKey(), accountInfo.data());
+          return IDL.parseIDL(onChainIDL.json());
         }
       }
     }
@@ -249,6 +251,13 @@ public final class Entrypoint extends Thread {
       ProgramConfig.parseConfigs(exportPackages, tasks, ji);
     }
 
+    final var idlAccountKeys = tasks.stream().<PublicKey>mapMulti((programConfig, downstream) -> {
+      final var idlAddress = programConfig.idlAddress();
+      if (idlAddress != null) {
+        downstream.accept(idlAddress);
+      }
+    }).toList();
+
     try {
       final var semaphore = new Semaphore(numThreads, false);
 
@@ -262,10 +271,25 @@ public final class Entrypoint extends Thread {
               httpClient
           );
 
+          final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
+          if (idlAccountKeys.isEmpty()) {
+            idlAccounts = Map.of();
+          } else {
+            idlAccounts = HashMap.newHashMap(idlAccountKeys.size());
+            // TODO: Support retries.
+            final var accountInfoList = rpcClient.getAccounts(idlAccountKeys).join();
+            for (final var accountInfo : accountInfoList) {
+              if (accountInfo != null) {
+                idlAccounts.put(accountInfo.pubKey(), accountInfo);
+              }
+            }
+          }
+
           final var exports = new ConcurrentSkipListSet<String>();
           final var threads = IntStream.range(0, numThreads).mapToObj(t -> new Entrypoint(
               semaphore, tasks, errorCount, baseDelayMillis, latestCall,
               rpcClient,
+              idlAccounts,
               sourceDirectory, basePackageName,
               exports,
               tabLength
@@ -280,11 +304,11 @@ public final class Entrypoint extends Thread {
           } else {
             moduleFileBuilder = new StringBuilder(2_048);
             exports.add(String.format("requires %s;", HttpClient.class.getModule().getName()));
-            exports.add(String.format("requires %s;", JsonIterator.class.getModule().getName()));
-            exports.add(String.format("requires %s;", Instruction.class.getModule().getName()));
-            exports.add(String.format("requires %s;", SolanaRpcClient.class.getModule().getName()));
+            exports.add(String.format("requires transitive %s;", JsonIterator.class.getModule().getName()));
+            exports.add(String.format("requires transitive %s;", Instruction.class.getModule().getName()));
+            exports.add(String.format("requires transitive %s;", SolanaRpcClient.class.getModule().getName()));
             exports.add(String.format("requires %s;", System.class.getModule().getName()));
-            exports.add(String.format("requires %s;", AnchorSourceGenerator.class.getModule().getName()));
+            exports.add(String.format("requires transitive %s;", AnchorSourceGenerator.class.getModule().getName()));
             moduleFilePath = sourceDirectory.resolve("module-info.java");
             if (Files.exists(moduleFilePath)) {
               try (final var moduleFileLines = Files.lines(moduleFilePath)) {

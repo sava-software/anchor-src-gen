@@ -263,7 +263,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
           address,
           version == null ? metaData.version() : version,
           name == null ? metaData.name() : name,
-          origin == null ? metaData == null? null: metaData.origin() : origin,
+          origin == null ? metaData == null ? null : metaData.origin() : origin,
           constants,
           instructions,
           accounts == null ? Map.of() : accounts,
@@ -314,6 +314,28 @@ public final class AnchorIDL extends RootIDL implements IDL {
         }).toList();
       } else if (fieldEquals("errors", buf, offset, len)) {
         this.errors = parseList(ji, AnchorErrorParser.FACTORY);
+        if (!errors.isEmpty()) {
+          final var deduplicatedNames = new ArrayList<AnchorErrorRecord>(errors.size());
+          final var duplicates = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
+          int numDuplicates = 0;
+          for (final var error : errors) {
+            final int numInstances = duplicates.compute(error.className(), (name, count) -> count == null ? 1 : count + 1);
+            if (numInstances > 1) {
+              deduplicatedNames.add(new AnchorErrorRecord(
+                  error.code(),
+                  error.name(),
+                  error.msg(),
+                  error.className() + numInstances
+              ));
+              ++numDuplicates;
+            } else {
+              deduplicatedNames.add(error);
+            }
+          }
+          if (numDuplicates > 0) {
+            this.errors = deduplicatedNames;
+          }
+        }
       } else if (fieldEquals("metadata", buf, offset, len)) {
         this.metaData = AnchorIdlMetadata.parseMetadata(ji);
       } else if (fieldEquals("docs", buf, offset, len)) {
