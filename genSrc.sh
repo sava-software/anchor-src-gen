@@ -88,9 +88,9 @@ if [[ "$javaVersion" -ne "$targetJavaVersion" ]]; then
   exit 3
 fi
 
-./gradlew --stacktrace "-PmainClassName=$mainClass" clean jlink
+./gradlew --stacktrace clean :anchor-src-gen:image
 
-readonly javaExe="$projectDirectory/build/anchor-src-gen/bin/java"
+readonly javaExe="$projectDirectory/anchor-src-gen/build/images/anchor-src-gen/bin/java"
 
 javaArgs+=(
   "-D$moduleName.baseDelayMillis=$baseDelayMillis"
