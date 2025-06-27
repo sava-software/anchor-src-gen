@@ -10,7 +10,7 @@ pluginManagement {
 }
 
 plugins {
-  id("software.sava.build") version "0.1.20"
+  id("software.sava.build") version "0.1.21"
 }
 
 rootProject.name = "anchor-src-gen"
