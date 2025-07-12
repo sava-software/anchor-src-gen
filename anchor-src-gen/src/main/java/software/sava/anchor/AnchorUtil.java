@@ -57,23 +57,27 @@ public final class AnchorUtil {
 
   public static Discriminator toDiscriminator(final String namespace, final String name) {
     return Discriminator.createDiscriminator(copyOfRange(
-        sha256(snakeCase(namespace + ':' + name).getBytes()),
+        sha256(snakeCase(namespace + ':' + name, false, false).getBytes()),
         0, DISCRIMINATOR_LENGTH
     ));
   }
 
   public static Discriminator toDiscriminator(final String name) {
     return Discriminator.createDiscriminator(copyOfRange(
-        sha256((GLOBAL_NAMESPACE + snakeCase(name)).getBytes()),
+        sha256((GLOBAL_NAMESPACE + snakeCase(name, false, false)).getBytes()),
         0, DISCRIMINATOR_LENGTH
     ));
   }
 
   public static String snakeCase(final String notSnakeCased) {
-    return snakeCase(notSnakeCased, false);
+    return snakeCase(notSnakeCased, false, true);
   }
 
   public static String snakeCase(final String notSnakeCased, final boolean upperCase) {
+    return snakeCase(notSnakeCased, upperCase, true);
+  }
+
+  public static String snakeCase(final String notSnakeCased, final boolean upperCase, final boolean splitDigits) {
     if (notSnakeCased == null || notSnakeCased.isBlank()) {
       return notSnakeCased;
     }
@@ -82,6 +86,8 @@ public final class AnchorUtil {
     char c = notSnakeCased.charAt(0);
     boolean changed = false;
     boolean separate;
+    int s = 1;
+    int i = 1;
     if (Character.isUpperCase(c)) {
       separate = false;
       if (upperCase) {
@@ -93,6 +99,18 @@ public final class AnchorUtil {
     } else if (c == '_') {
       separate = false;
       buf[0] = c;
+    } else if (splitDigits && Character.isDigit(c)) {
+      buf[0] = '_';
+      do {
+        buf[s++] = c;
+        if (i == len) {
+          return new String(buf, 0, s);
+        }
+      } while (Character.isDigit(notSnakeCased.charAt(i++)));
+      --s;
+      --i;
+      separate = true;
+      changed = true;
     } else {
       separate = true;
       if (upperCase) {
@@ -102,8 +120,7 @@ public final class AnchorUtil {
         buf[0] = c;
       }
     }
-    int s = 1;
-    for (int i = 1; i < len; ++i) {
+    for (; i < len; ++i) {
       c = notSnakeCased.charAt(i);
       if (Character.isWhitespace(c)) {
         changed = true;
@@ -123,11 +140,23 @@ public final class AnchorUtil {
       } else if (c == '_') {
         separate = false;
         buf[s] = c;
+      } else if (splitDigits && Character.isDigit(c)) {
+        buf[s++] = '_';
+        do {
+          buf[s++] = c;
+          if (++i == len) {
+            return new String(buf, 0, s);
+          }
+        } while (Character.isDigit(notSnakeCased.charAt(i)));
+        --s;
+        --i;
+        separate = true;
+        changed = true;
       } else {
         separate = true;
         if (upperCase) {
           buf[s] = Character.toUpperCase(c);
-          changed = c != buf[s];
+          changed = changed || c != buf[s];
         } else {
           buf[s] = c;
         }
