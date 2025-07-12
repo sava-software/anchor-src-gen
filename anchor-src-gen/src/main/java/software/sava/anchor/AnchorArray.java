@@ -100,6 +100,11 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
+  public String arrayLengthConstant(final String varName) {
+    return String.format("public static final int %s_LEN = %d;\n", AnchorUtil.snakeCase(varName, true), numElements);
+  }
+
+  @Override
   public int serializedLength(final GenSrcContext genSrcContext) {
     return genericType.isFixedLength(genSrcContext.definedTypes())
         ? (depth * numElements) * genericType.serializedLength(genSrcContext, genSrcContext.isAccount(genericType.typeName()))

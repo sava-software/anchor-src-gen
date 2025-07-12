@@ -89,4 +89,6 @@ public interface NamedType {
   void generateMemCompFilter(final GenSrcContext genSrcContext,
                              final StringBuilder builder,
                              final String offsetVarName);
+
+  String arrayLengthConstant();
 }

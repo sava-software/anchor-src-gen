@@ -9,11 +9,11 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import static java.util.Locale.ENGLISH;
 import static software.sava.anchor.AnchorInstruction.replaceNewLinesIfLessThan;
 import static software.sava.anchor.AnchorNamedTypeParser.parseLowerList;
 import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
@@ -113,8 +113,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
             byteLength = -1;
           }
         } else {
-          final var offsetVarName = AnchorUtil.snakeCase(field.name())
-              .toUpperCase(Locale.ENGLISH) + "_OFFSET";
+          final var offsetVarName = AnchorUtil.snakeCase(field.name()).toUpperCase(ENGLISH) + "_OFFSET";
           offsetsBuilder.append(String.format("""
                   public static final int %s = %d;
                   """,
@@ -160,6 +159,12 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
               """,
           byteLength
       ));
+    }
+    for (final var field : fields) {
+      final var fixedArrayLength = field.arrayLengthConstant();
+      if (fixedArrayLength != null) {
+        builder.append(tab).append(fixedArrayLength);
+      }
     }
     if (isAccount) {
       if (byteLength > 0) {

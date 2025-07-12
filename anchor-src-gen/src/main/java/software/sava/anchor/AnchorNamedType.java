@@ -85,4 +85,9 @@ public record AnchorNamedType(Discriminator discriminator,
                                     final String offsetVarName) {
     type.generateMemCompFilter(genSrcContext, builder, name, offsetVarName);
   }
+
+  @Override
+  public String arrayLengthConstant() {
+    return type.arrayLengthConstant(name);
+  }
 }

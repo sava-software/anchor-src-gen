@@ -133,4 +133,8 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
                                       final boolean hasNext) {
     throw throwInvalidDataType();
   }
+
+  default String arrayLengthConstant(final String varName) {
+    return null;
+  }
 }
