@@ -102,6 +102,8 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     );
     final int i = read.indexOf('=');
     final var readCall = read.substring(i + 2);
+
+    final var cutVarName = read.substring(0, i - 1);
     if (hasNext) {
       final int sizeLine = readCall.lastIndexOf('\n');
       return String.format("""
@@ -109,21 +111,39 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
               if (%s%s) {
               %s%s
               }""",
-          read.substring(0, i - 1),
+          cutVarName,
           notPresentCode(type()),
           presentCode(type(), readCall.substring(0, sizeLine - 1)),
           varName, presentCode(type()),
           genSrcContext.tab(),
           readCall.substring(sizeLine + 1)
       );
-    } else {
-      return String.format("%s = _data[%s] == 0 ? %s : %s;",
-          read.substring(0, i - 1),
-          singleField ? offsetVarName : offsetVarName + "++",
-          notPresentCode(type()),
-          presentCode(type(), readCall.substring(0, readCall.length() - 1))
-      );
     }
+    final var type = genericType.type();
+    if (type == array) {
+      final var constructAndRead = readCall.substring(0, readCall.length() - 1);
+      final int newLine = constructAndRead.indexOf('\n');
+      if (newLine > 0) {
+        return String.format("""
+                %s = _data[%s] == 0 ? null : %s
+                if (%s != null) {
+                %s%s;
+                }""",
+            cutVarName,
+            singleField ? offsetVarName : offsetVarName + "++",
+            constructAndRead.substring(0, newLine),
+            varName,
+            genSrcContext.tab(),
+            constructAndRead.substring(newLine + 1)
+        );
+      }
+    }
+    return String.format("%s = _data[%s] == 0 ? %s : %s;",
+        cutVarName,
+        singleField ? offsetVarName : offsetVarName + "++",
+        notPresentCode(type()),
+        presentCode(type(), readCall.substring(0, readCall.length() - 1))
+    );
   }
 
   @Override
