@@ -209,6 +209,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             "%s".getBytes(US_ASCII)""", str
         );
       } else if (maybeKnownPublicKey != null) {
+        // TODO: fix naming if starts with digit.
         final var knownAccountRef = genSrcContext.accountMethods().get(maybeKnownPublicKey);
         if (knownAccountRef != null) {
           return knownAccountRef.callReference() + ".toByteArray()";
@@ -354,7 +355,8 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
           throw new IllegalStateException("Unhandled AnchorPDA.Seed.value type " + next);
         }
       } else if (fieldEquals("path", buf, offset, len)) {
-        this.path = ji.readString();
+        final var path = ji.readString();
+        this.path = Character.isDigit(buf[offset]) ? '_' + path : path;
       } else if (fieldEquals("type", buf, offset, len)) {
         this.type = AnchorType.valueOf(ji.readString());
       } else if (fieldEquals("account", buf, offset, len)) {

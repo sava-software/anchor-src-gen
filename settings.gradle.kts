@@ -10,8 +10,10 @@ pluginManagement {
 }
 
 plugins {
-  id("software.sava.build") version "0.1.21"
+  id("software.sava.build") version "0.1.26"
 }
+
+apply(plugin = "software.sava.build.feature-jdk-provisioning")
 
 rootProject.name = "anchor-src-gen"
 

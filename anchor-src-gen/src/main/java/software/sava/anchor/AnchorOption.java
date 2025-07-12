@@ -142,6 +142,10 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
           String.format((hasNext ? "i += Borsh.writeOptionalbyte(%s, _data, i);" : "Borsh.writeOptionalbyte(%s, _data, i);"), varName);
       case i16, u16 ->
           String.format((hasNext ? "i += Borsh.writeOptionalshort(%s, _data, i);" : "Borsh.writeOptionalshort(%s, _data, i);"), varName);
+      case i128, u128 ->
+          String.format((hasNext ? "i += Borsh.write128Optional(%s, _data, i);" : "Borsh.write128Optional(%s, _data, i);"), varName);
+      case i256, u256 ->
+          String.format((hasNext ? "i += Borsh.write256Optional(%s, _data, i);" : "Borsh.write256Optional(%s, _data, i);"), varName);
       case array, vec -> String.format("""
               if (%s) {
               %s_data[i++] = 0;

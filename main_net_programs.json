@@ -1,7 +1,7 @@
 [
   {
-    "name": "Kamino Liquidity",
-    "program": "6LtLpnUFNByNXLyCoK9wA2MykKAmQNZKBdY8s47dehDc",
-    "package": "kamino.liquidity"
+    "name": "Kamino Vaults",
+    "program": "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+    "package": "kamino.vaults"
   }
 ]

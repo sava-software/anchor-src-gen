@@ -197,13 +197,19 @@ public record AnchorArray(AnchorTypeContext genericType,
         );
       }
     } else {
+      final var readMethodName = switch (genericType.type()) {
+        case u128, i128 -> "read128Array";
+        case u256, i256 -> "read256Array";
+        default -> "readArray";
+      };
       return String.format("""
               final var %s = new %s[%d];
-              %sBorsh.readArray(%s, _data, %s);""",
+              %sBorsh.%s(%s, _data, %s);""",
           varName,
           genericType.realTypeName(),
           numElements,
           incrementOffset,
+          readMethodName,
           varName,
           offsetVarName
       );
@@ -220,9 +226,12 @@ public record AnchorArray(AnchorTypeContext genericType,
                               final String varName,
                               final boolean hasNext) {
     genSrcContext.addImport(Borsh.class);
-    return hasNext
-        ? String.format("i += Borsh.writeArray(%s, _data, i);", varName)
-        : String.format("Borsh.writeArray(%s, _data, i);", varName);
+    final var write = switch (genericType.type()) {
+      case u128, i128 -> String.format("Borsh.write128Array(%s, _data, i);", varName);
+      case u256, i256 -> String.format("Borsh.write256Array(%s, _data, i);", varName);
+      default -> String.format("Borsh.writeArray(%s, _data, i);", varName);
+    };
+    return hasNext ? "i += " + write : write;
   }
 
   @Override
@@ -243,7 +252,11 @@ public record AnchorArray(AnchorTypeContext genericType,
   @Override
   public String generateLength(final String varName, final GenSrcContext genSrcContext) {
     genSrcContext.addImport(Borsh.class);
-    return String.format("Borsh.lenArray(%s)", varName);
+    return switch (genericType.type()) {
+      case u128, i128 -> String.format("Borsh.len128Array(%s)", varName);
+      case u256, i256 -> String.format("Borsh.len256Array(%s)", varName);
+      default -> String.format("Borsh.lenArray(%s)", varName);
+    };
   }
 
   @Override
@@ -258,8 +271,8 @@ public record AnchorArray(AnchorTypeContext genericType,
     final var varName = context.name();
     final var param = String.format("final %s%s %s,\n", genericType.realTypeName(), arrayDepthCode(depth), varName);
     paramsBuilder.append(param);
-    genSrcContext.addImport(Borsh.class);
-    dataLengthBuilder.append(String.format(" + Borsh.lenArray(%s)", varName));
+    dataLengthBuilder.append(" + ").append(generateLength(varName, genSrcContext));
+
     dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
     if (genericType instanceof AnchorDefined) {
       genSrcContext.addDefinedImport(genericType.typeName());
