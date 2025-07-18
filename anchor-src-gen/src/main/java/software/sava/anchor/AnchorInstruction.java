@@ -15,6 +15,7 @@ import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 
 public record AnchorInstruction(Discriminator discriminator,
                                 String name,
+                                List<String> docs,
                                 List<AnchorAccountMeta> accounts,
                                 List<NamedType> args) {
 
@@ -53,7 +54,8 @@ public record AnchorInstruction(Discriminator discriminator,
     return Arrays.stream(discriminator.toIntArray())
         .mapToObj(Integer::toString)
         .collect(Collectors.joining(", ",
-            String.format("  public static final Discriminator %s = toDiscriminator(", formatDiscriminatorReference(ixName)), ");"));
+            String.format("  public static final Discriminator %s = toDiscriminator(", formatDiscriminatorReference(ixName)), ");"
+        ));
   }
 
   public String generateFactorySource(final GenSrcContext genSrcContext, final String parentTab) {
@@ -90,7 +92,8 @@ public record AnchorInstruction(Discriminator discriminator,
         for (final var accountsClas : knownAccountClasses) {
           keyParamsBuilder.append(String.format("""
               final %s %s,
-              """, accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false)));
+              """, accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false)
+          ));
           genSrcContext.addImport(accountsClas);
         }
       }
@@ -175,6 +178,11 @@ public record AnchorInstruction(Discriminator discriminator,
       dataSerialization = dataBuilder.toString();
     }
 
+    if (docs != null && !docs.isEmpty()) {
+      for (final var doc : docs) {
+        builder.append(tab).append("// ").append(doc).append('\n');
+      }
+    }
     final var methodSignature = String.format("%spublic static Instruction %s(", tab, name);
     builder.append(methodSignature);
 
@@ -211,13 +219,15 @@ public record AnchorInstruction(Discriminator discriminator,
                 return Instruction.createInstruction(%s, keys, _data);
               }
               """,
-          programMetaReference).indent(parentTab.length()));
+          programMetaReference
+      ).indent(parentTab.length()));
     } else {
       builder.append(String.format("""          
                 return Instruction.createInstruction(%s, keys, %s);
               }
               """,
-          programMetaReference, discriminatorReference).indent(parentTab.length()));
+          programMetaReference, discriminatorReference
+      ).indent(parentTab.length()));
     }
     genSrcContext.addImport(Instruction.class);
 

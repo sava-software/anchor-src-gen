@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static software.sava.anchor.AnchorUtil.parseDocs;
 import static software.sava.anchor.IDL.NO_DOCS;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
@@ -72,11 +73,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     } else if (fieldEquals("desc", buf, offset, len)) {
       this.desc = ji.readString();
     } else if (fieldEquals("docs", buf, offset, len)) {
-      final var docs = new ArrayList<String>();
-      while (ji.readArray()) {
-        docs.add(ji.readString());
-      }
-      this.docs = docs;
+      this.docs = parseDocs(ji);
     } else if (fieldEquals("isMut", buf, offset, len) || fieldEquals("writable", buf, offset, len)) {
       this.writable = ji.readBoolean();
     } else if (fieldEquals("optional", buf, offset, len) || fieldEquals("isOptional", buf, offset, len)) {

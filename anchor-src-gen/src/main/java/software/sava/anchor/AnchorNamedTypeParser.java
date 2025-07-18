@@ -5,10 +5,10 @@ import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 import systems.comodal.jsoniter.factory.ElementFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static software.sava.anchor.AnchorType.ANCHOR_TYPE_PARSER;
+import static software.sava.anchor.AnchorUtil.parseDocs;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class AnchorNamedTypeParser extends BaseNamedTypeParser {
@@ -56,11 +56,7 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
     if (fieldEquals("discriminator", buf, offset, len)) {
       this.discriminator = AnchorUtil.parseDiscriminator(ji);
     } else if (fieldEquals("docs", buf, offset, len)) {
-      final var docs = new ArrayList<String>();
-      while (ji.readArray()) {
-        docs.add(ji.readString());
-      }
-      this.docs = docs;
+      this.docs = parseDocs(ji);
     } else if (fieldEquals("fields", buf, offset, len)) {
       this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, idlType.lowerTypeParserFactory(), this));
     } else if (fieldEquals("index", buf, offset, len)) {

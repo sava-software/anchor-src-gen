@@ -11,6 +11,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
+import static software.sava.anchor.AnchorUtil.parseDocs;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 import static systems.comodal.jsoniter.factory.ElementFactory.parseList;
 
@@ -339,11 +340,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
       } else if (fieldEquals("metadata", buf, offset, len)) {
         this.metaData = AnchorIdlMetadata.parseMetadata(ji);
       } else if (fieldEquals("docs", buf, offset, len)) {
-        final var docs = new ArrayList<String>();
-        while (ji.readArray()) {
-          docs.add(ji.readString());
-        }
-        this.docs = docs;
+        this.docs = parseDocs(ji);
       } else {
         throw new IllegalStateException("Unhandled AnchorIDL field " + new String(buf, offset, len));
       }

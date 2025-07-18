@@ -7,6 +7,7 @@ import systems.comodal.jsoniter.factory.ElementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static software.sava.anchor.AnchorUtil.parseDocs;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class AnchorInstructionParser implements ElementFactory<AnchorInstruction> {
@@ -14,6 +15,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
   private final IDLType idlType;
   private Discriminator discriminator;
   private String name;
+  private List<String> docs;
   private List<AnchorAccountMeta> accounts;
   private List<NamedType> args;
 
@@ -54,6 +56,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
         return new AnchorInstruction(
             discriminator,
             name,
+            docs,
             accumulateNestedAccounts(),
             args
         );
@@ -62,6 +65,7 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
     return new AnchorInstruction(
         discriminator,
         name,
+        docs,
         accounts,
         args
     );
@@ -77,6 +81,8 @@ final class AnchorInstructionParser implements ElementFactory<AnchorInstruction>
       this.discriminator = AnchorUtil.parseDiscriminator(ji);
     } else if (fieldEquals("name", buf, offset, len)) {
       this.name = AnchorUtil.camelCase(ji.readString(), false);
+    } else if (fieldEquals("docs", buf, offset, len)) {
+      this.docs = parseDocs(ji);
     } else {
       ji.skip();
     }
