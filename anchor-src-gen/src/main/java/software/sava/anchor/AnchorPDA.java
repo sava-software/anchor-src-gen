@@ -355,7 +355,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
           throw new IllegalStateException("Unhandled AnchorPDA.Seed.value type " + next);
         }
       } else if (fieldEquals("path", buf, offset, len)) {
-        final var path = ji.readString();
+        final var path = ji.readString().replace('.', '_');
         this.path = Character.isDigit(buf[offset]) ? '_' + path : path;
       } else if (fieldEquals("type", buf, offset, len)) {
         this.type = AnchorType.valueOf(ji.readString());
