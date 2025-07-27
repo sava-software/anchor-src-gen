@@ -56,6 +56,11 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
+  public int serializedLength(final GenSrcContext genSrcContext) {
+    return -1;
+  }
+
+  @Override
   public String typeName() {
     return genericType.realTypeName() + arrayDepthCode(depth);
   }
