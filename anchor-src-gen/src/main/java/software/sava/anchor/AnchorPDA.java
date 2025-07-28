@@ -214,11 +214,16 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
         if (knownAccountRef != null) {
           return knownAccountRef.callReference() + ".toByteArray()";
         } else {
-          return maybeKnownPublicKey.toBase58() + ".toByteArray()";
+          return pubKeyVarName() + ".toByteArray()";
         }
       } else {
         return "seed" + index;
       }
+    }
+
+    private String pubKeyVarName() {
+      final var base58 = maybeKnownPublicKey.toBase58();
+      return Character.isDigit(base58.charAt(0)) ? '_' + base58 : base58;
     }
 
     @Override
@@ -237,7 +242,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             return null;
           }
         } else {
-          return "final PublicKey " + maybeKnownPublicKey.toBase58();
+          return "final PublicKey " + pubKeyVarName();
         }
       } else {
         return "final byte[] unknownSeedConstant" + index;
@@ -309,12 +314,22 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
 
     private ConstSeed createConstSeed(final int index) {
       final var str = new String(value);
+      PublicKey maybePublicKey;
+      if (value.length == PUBLIC_KEY_LENGTH) {
+        try {
+          maybePublicKey = PublicKey.createPubKey(value);
+        } catch (final RuntimeException e) {
+          maybePublicKey = null;
+        }
+      } else {
+        maybePublicKey = null;
+      }
       return new ConstSeed(
           type,
           index,
           value, str,
           ConstSeed.isReadable(str),
-          value.length == PUBLIC_KEY_LENGTH ? PublicKey.createPubKey(value) : null
+          maybePublicKey
       );
     }
 
