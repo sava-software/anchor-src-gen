@@ -1,8 +1,7 @@
 [
   {
-    "name": "Loopscale",
-    "program": "1oopBoJG58DgkUVKkEzKgyG9dvRmpgeEm1AVjoHkF78",
-    "package": "loopscale",
-    "idlFile": "/Users/jim/src/anchor-src-gen/idls/loopscale.json"
+    "name": "Marginfi V2",
+    "program": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
+    "package": "marginfi.v2"
   }
 ]
