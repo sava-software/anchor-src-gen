@@ -187,7 +187,7 @@ public record AnchorArray(AnchorTypeContext genericType,
             fixedArray,
             incrementOffset,
             varName,
-            genericType.typeName(),
+            next.realTypeName(),
             offsetVarName
         );
       } else {

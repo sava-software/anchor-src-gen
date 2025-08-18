@@ -225,11 +225,23 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
       ));
       dataLengthBuilder.append(String.format(" + _%sLen", varName));
     } else {
-      final var optionalType = type.optionalJavaType();
+      var optionalType = type.optionalJavaType();
       if (optionalType != null) {
         genSrcContext.addImport(optionalType);
       } else if (type == defined) {
         genSrcContext.addDefinedImport(genericType.typeName());
+      } else if (genericType instanceof AnchorArray || genericType instanceof AnchorVector) {
+        AnchorTypeContext next;
+        do {
+          next = genericType.genericType();
+        } while (next instanceof AnchorArray || next instanceof AnchorVector);
+        final var actualType = next.type();
+        optionalType = actualType.optionalJavaType();
+        if (optionalType != null) {
+          genSrcContext.addImport(optionalType);
+        } else if (actualType == defined) {
+          genSrcContext.addDefinedImport(next.typeName());
+        }
       }
 
       final var tab = genSrcContext.tab();

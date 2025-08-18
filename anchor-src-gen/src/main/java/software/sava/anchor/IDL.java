@@ -10,6 +10,8 @@ import static software.sava.anchor.AnchorSourceGenerator.removeBlankLines;
 
 public interface IDL {
 
+  System.Logger logger = System.getLogger(IDL.class.getName());
+
   List<String> NO_DOCS = List.of();
 
   static AnchorIDL parseIDL(byte[] json) {
@@ -26,6 +28,9 @@ public interface IDL {
       final var parser = new AnchorIDL.Parser(idlType);
       ji.reset(mark).testObject(parser);
       return parser.createIDL(json);
+    } catch (final RuntimeException ex) {
+      logger.log(System.Logger.Level.ERROR, "Failed to parse IDL: \n" + new String(json));
+      throw ex;
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
