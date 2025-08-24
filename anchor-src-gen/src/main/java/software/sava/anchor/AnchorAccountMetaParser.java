@@ -20,6 +20,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
 
   private final String parentName;
   private PublicKey address;
+  private String actualName;
   private String name;
   private boolean writable;
   private boolean optional;
@@ -43,6 +44,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     return new AnchorAccountMeta(
         nestedAccounts == null ? NO_NESTED_ACCOUNTS : nestedAccounts,
         address,
+        actualName,
         name,
         writable,
         signer,
@@ -81,9 +83,11 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     } else if (fieldEquals("isSigner", buf, offset, len) || fieldEquals("signer", buf, offset, len)) {
       this.signer = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {
+      final var idlName = ji.readString();
+      this.actualName = AnchorUtil.camelCase(idlName, false);
       this.name = parentName == null
-          ? AnchorUtil.camelCase(ji.readString(), false)
-          : parentName + AnchorUtil.camelCase(ji.readString(), true);
+          ? actualName
+          : parentName + AnchorUtil.camelCase(idlName, true);
     } else if (fieldEquals("pda", buf, offset, len)) {
       this.pda = AnchorPDA.parsePDA(ji);
     } else if (fieldEquals("relations", buf, offset, len)) {

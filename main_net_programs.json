@@ -1,7 +1,8 @@
 [
   {
-    "name": "Marginfi V2",
-    "program": "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA",
-    "package": "marginfi.v2"
+    "name": "Heaven DEX",
+    "program": "HEAVENoP2qxoeuF8Dj2oT1GHEnu49U5mJYkdeC8BAX2o",
+    "package": "heaven",
+    "idlURL": "https://raw.githubusercontent.com/bitquery/solana-idl-lib/refs/heads/main/heaven/heaven.json"
   }
 ]

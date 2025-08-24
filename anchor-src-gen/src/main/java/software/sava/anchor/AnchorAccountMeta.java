@@ -6,6 +6,7 @@ import java.util.List;
 
 public record AnchorAccountMeta(List<AnchorAccountMeta> nestedAccounts,
                                 PublicKey address,
+                                String actualName,
                                 String name,
                                 boolean writable,
                                 boolean signer,

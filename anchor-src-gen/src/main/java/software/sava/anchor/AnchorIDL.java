@@ -2,6 +2,7 @@ package software.sava.anchor;
 
 import software.sava.core.accounts.ProgramDerivedAddress;
 import software.sava.core.accounts.PublicKey;
+import software.sava.core.tx.Transaction;
 import software.sava.rpc.json.PublicKeyEncoding;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
@@ -214,12 +215,14 @@ public final class AnchorIDL extends RootIDL implements IDL {
     final var pdaAccounts = HashMap.newHashMap(instructions.size() << 1);
     final var ixBuilder = new StringBuilder();
     for (final var ix : instructions) {
-      ixBuilder.append('\n').append(ix.generateFactorySource(genSrcContext, "  "));
       for (final var account : ix.accounts()) {
         final var pda = account.pda();
         if (pda != null) {
           pdaAccounts.put(account.name(), pda);
         }
+      }
+      if (ix.accounts().size() <= Transaction.MAX_ACCOUNTS) {
+        ixBuilder.append('\n').append(ix.generateFactorySource(genSrcContext, "  "));
       }
     }
 

@@ -41,9 +41,12 @@ public record AnchorInstruction(Discriminator discriminator,
     return replaceNewLinesIfLessThan(lines.toString(), limit);
   }
 
-  private static String formatKeyName(final AnchorAccountMeta accountMeta) {
-    final var name = accountMeta.name();
+  private static String formatKeyName(final String name) {
     return name.endsWith("Key") || name.endsWith("key") ? name : name + "Key";
+  }
+
+  private static String formatKeyName(final AnchorAccountMeta accountMeta) {
+    return formatKeyName(accountMeta.name());
   }
 
   private static String formatDiscriminatorReference(final String ixName) {
@@ -83,11 +86,12 @@ public record AnchorInstruction(Discriminator discriminator,
     } else {
       final var knownAccounts = genSrcContext.accountMethods();
       final var knownAccountClasses = accounts.stream()
-          .map(AnchorAccountMeta::address)
-          .map(knownAccounts::get)
-          .filter(Objects::nonNull)
-          .map(AccountReferenceCall::clas)
-          .collect(Collectors.toSet());
+          .<Class<?>>mapMulti((accountMeta, downstream) -> {
+            final var knownAccount = knownAccounts.get(accountMeta.address());
+            if (knownAccount != null) {
+              downstream.accept(knownAccount.clas());
+            }
+          }).collect(Collectors.toSet());
       if (!knownAccountClasses.isEmpty()) {
         for (final var accountsClas : knownAccountClasses) {
           keyParamsBuilder.append(String.format("""
@@ -98,11 +102,13 @@ public record AnchorInstruction(Discriminator discriminator,
         }
       }
 
-      accounts.stream()
-          .filter(account -> !knownAccounts.containsKey(account.address()))
-          .peek(context -> keyParamsBuilder.append(context.docComments()))
-          .map(AnchorInstruction::formatKeyName)
-          .forEach(name -> keyParamsBuilder.append("final PublicKey ").append(name).append(",\n"));
+      for (final var accountMeta : accounts) {
+        if (!knownAccounts.containsKey(accountMeta.address())) {
+          keyParamsBuilder.append(accountMeta.docComments());
+          final var formattedName = AnchorInstruction.formatKeyName(accountMeta);
+          keyParamsBuilder.append("final PublicKey ").append(formattedName).append(",\n");
+        }
+      }
 
       genSrcContext.addImport(PublicKey.class);
       genSrcContext.addImport(List.class);
@@ -153,6 +159,7 @@ public record AnchorInstruction(Discriminator discriminator,
         }
       }
     }
+
     final var paramsBuilder = new StringBuilder(keyParamsBuilder.length() << 1);
     paramsBuilder.append(keyParamsBuilder);
     final int numArgs = args.size();
