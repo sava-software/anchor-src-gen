@@ -85,7 +85,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext, final String offsetVarName) {
+  public String generateRead(final GenSrcContext genSrcContext, final String offsetVarName, final String varName) {
     return String.format("%s.read(_data, i);", typeName);
   }
 

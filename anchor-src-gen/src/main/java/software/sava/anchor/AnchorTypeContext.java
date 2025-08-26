@@ -95,7 +95,7 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
     throw throwInvalidDataType();
   }
 
-  default String generateRead(final GenSrcContext genSrcContext, final String offsetVarName) {
+  default String generateRead(final GenSrcContext genSrcContext, final String offsetVarName, final String varName) {
     throw throwInvalidDataType();
   }
 

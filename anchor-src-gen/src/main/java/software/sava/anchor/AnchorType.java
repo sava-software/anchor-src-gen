@@ -40,7 +40,6 @@ public enum AnchorType {
   usize(long.class, OptionalLong.class, Long.BYTES),
   u128(BigInteger.class, Long.BYTES << 1),
   u256(BigInteger.class, Long.BYTES << 2),
-  // u256(BigInteger.class, Long.BYTES << 2),
   vec;
 
   static final CharBufferFunction<AnchorType> ANCHOR_TYPE_PARSER = (buf, offset, len) -> {
@@ -111,6 +110,20 @@ public enum AnchorType {
     }
   };
 
+  private static AnchorTypeContext handleBytes(final AnchorType primitive) {
+    return primitive == bytes
+        ? new AnchorVector(AnchorType.u8.primitiveType, 1)
+        : primitive.primitiveType();
+  }
+
+  static AnchorTypeContext parsePrimitive(final JsonIterator ji) {
+    return handleBytes(ji.applyChars(ANCHOR_TYPE_PARSER));
+  }
+
+  static AnchorTypeContext parsePrimitive(final char[] chars, final int offset, final int len) {
+    return handleBytes(ANCHOR_TYPE_PARSER.apply(chars, offset, len));
+  }
+
   static final CharBufferFunction<AnchorType> ANCHOR_OBJECT_TYPE_PARSER = (buf, offset, len) -> {
     if (fieldEquals("kind", buf, offset, len)) {
       return null;
@@ -160,7 +173,7 @@ public enum AnchorType {
   static AnchorTypeContext parseContextType(final IDLType idlType, final JsonIterator ji) {
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
-      return ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
+      return AnchorType.parsePrimitive(ji);
     } else if (jsonType == ValueType.OBJECT) {
       var anchorType = ji.applyObjField(ANCHOR_OBJECT_TYPE_PARSER);
       if (anchorType == null) {

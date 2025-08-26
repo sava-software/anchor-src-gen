@@ -8,7 +8,6 @@ import systems.comodal.jsoniter.factory.ElementFactory;
 import java.util.List;
 
 import static java.lang.System.Logger.Level.ERROR;
-import static software.sava.anchor.AnchorType.ANCHOR_TYPE_PARSER;
 import static software.sava.anchor.AnchorUtil.parseDocs;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
@@ -40,7 +39,7 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
   private static AnchorTypeContext parseTypeContext(final IDLType idlType, final JsonIterator ji) {
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
-      return ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
+      return AnchorType.parsePrimitive(ji);
     } else if (jsonType == ValueType.OBJECT) {
       final var type = AnchorType.parseContextType(idlType, ji);
       ji.closeObj();
@@ -105,7 +104,7 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
 
   @Override
   public NamedType apply(final char[] chars, final int offset, final int len) {
-    final var primitiveType = ANCHOR_TYPE_PARSER.apply(chars, offset, len).primitiveType();
+    final var primitiveType = AnchorType.parsePrimitive(chars, offset, len);
     return NamedType.createType(null, null, primitiveType);
   }
 }

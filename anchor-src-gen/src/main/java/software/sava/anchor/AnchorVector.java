@@ -16,7 +16,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
     for (int depth = 1; ; ) {
       final var jsonType = ji.whatIsNext();
       if (jsonType == ValueType.STRING) {
-        final var genericType = ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
+        final var genericType = AnchorType.parsePrimitive(ji);
         closeObjects(ji, depth - 1);
         return new AnchorVector(genericType, depth);
       } else if (jsonType == ValueType.OBJECT) {

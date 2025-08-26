@@ -53,7 +53,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     final AnchorTypeContext genericType;
     final var jsonType = ji.whatIsNext();
     if (jsonType == ValueType.STRING) {
-      genericType = ji.applyChars(ANCHOR_TYPE_PARSER).primitiveType();
+      genericType = AnchorType.parsePrimitive(ji);
     } else if (jsonType == ValueType.OBJECT) {
       genericType = AnchorType.parseContextType(idlType, ji);
       ji.closeObj();
@@ -320,7 +320,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
               }""",
           name, recordSignature, enumType.getSimpleName(), enumTypeName,
           name,
-          name, notPresentCode(type), presentCode(type(), genericType.generateRead(genSrcContext, "i")),
+          name, notPresentCode(type), presentCode(type(), genericType.generateRead(genSrcContext, "i", name)),
           ordinal
       );
     }

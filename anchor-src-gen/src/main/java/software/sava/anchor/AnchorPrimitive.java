@@ -174,7 +174,9 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext, final String offsetVarName) {
+  public String generateRead(final GenSrcContext genSrcContext,
+                             final String offsetVarName,
+                             final String varName) {
     switch (type) {
       case f32 -> genSrcContext.addStaticImport(ByteUtil.class, "getFloat32LE");
       case f64 -> genSrcContext.addStaticImport(ByteUtil.class, "getFloat64LE");
@@ -197,7 +199,8 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
       case i128, u128 -> String.format("getInt128LE(_data, %s)", offsetVarName);
       case i256, u256 -> String.format("getInt256LE(_data, %s)", offsetVarName);
       case publicKey -> String.format("readPubKey(_data, %s)", offsetVarName);
-      default -> throw new IllegalStateException("Unexpected type: " + type);
+      default ->
+          throw new IllegalStateException("Unexpected type: " + type + " for var " + varName + " at offset " + offsetVarName);
     };
   }
 
@@ -226,7 +229,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
       )
           : readLine;
     } else {
-      final var read = generateRead(genSrcContext, offsetVarName);
+      final var read = generateRead(genSrcContext, offsetVarName, varName);
       final int dataLength = type.dataLength();
       final var readLine = String.format("final var %s = %s;", varName, read);
       if (dataLength == 1) {
@@ -375,7 +378,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
           name, name,
           name, name,
           name,
-          generateRead(genSrcContext, "i"), name, name,
+          generateRead(genSrcContext, "i", name), name, name,
           ordinal
       );
     } else {
@@ -393,7 +396,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
               }""",
           name, recordSignature, enumType.getSimpleName(), enumTypeName,
           name,
-          name, generateRead(genSrcContext, "i"),
+          name, generateRead(genSrcContext, "i", name),
           ordinal
       );
     }
