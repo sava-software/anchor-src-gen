@@ -30,6 +30,7 @@ import static java.lang.System.Logger.Level.WARNING;
 import static java.nio.file.StandardOpenOption.*;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public final class Entrypoint extends Thread {
@@ -79,22 +80,21 @@ public final class Entrypoint extends Thread {
     AnchorIDL idl;
     for (long delayMillis, latestCall, now, sleep; ; ) {
       try {
-        task = this.tasks.peek();
-        if (task == null) {
-          return;
-        }
-        this.semaphore.acquire();
-        delayMillis = this.baseDelayMillis * (this.errorCount.get() + 1);
-        latestCall = this.latestCall.get();
-        now = System.currentTimeMillis();
-        sleep = (latestCall + delayMillis) - now;
-        if (sleep > 0) {
-          MILLISECONDS.sleep(sleep);
-          now = System.currentTimeMillis();
-        }
         task = this.tasks.poll();
         if (task == null) {
           return;
+        }
+        if (task.remoteIDL()) {
+          this.semaphore.acquire();
+          delayMillis = this.baseDelayMillis * (this.errorCount.get() + 1);
+          latestCall = this.latestCall.get();
+          now = System.currentTimeMillis();
+          sleep = (latestCall + delayMillis) - now;
+          if (sleep > 0) {
+            MILLISECONDS.sleep(sleep);
+            now = System.currentTimeMillis();
+          }
+          this.latestCall.getAndAccumulate(now, MAX);
         }
         idl = task.fetchIDL(rpcClient.httpClient(), idlAccounts);
         if (idl == null) {
@@ -110,6 +110,7 @@ public final class Entrypoint extends Thread {
       } finally {
         this.semaphore.release();
       }
+      this.errorCount.getAndUpdate(x -> x > 0 ? x - 1 : x);
 
       final var packageName = task.formatPackage(basePackageName);
       final var generator = new AnchorSourceGenerator(
@@ -119,11 +120,8 @@ public final class Entrypoint extends Thread {
           tabLength,
           idl
       );
-      this.latestCall.getAndAccumulate(now, MAX);
       generator.run();
       generator.addExports(exports);
-      this.latestCall.getAndAccumulate(now + ((System.currentTimeMillis() - now) >> 1), MAX);
-      this.errorCount.getAndUpdate(x -> x > 0 ? x - 1 : x);
     }
   }
 
@@ -146,6 +144,10 @@ public final class Entrypoint extends Thread {
 
     String formatPackage(final String basePackageName) {
       return String.format("%s.%s.anchor", basePackageName, packageName);
+    }
+
+    boolean remoteIDL() {
+      return idlURL != null;
     }
 
     AnchorIDL fetchIDL(final HttpClient httpClient, final Map<PublicKey, AccountInfo<byte[]>> idlAccounts) {
@@ -259,10 +261,6 @@ public final class Entrypoint extends Thread {
     }).toList();
 
     try {
-      final var semaphore = new Semaphore(numThreads, false);
-
-      final var errorCount = new AtomicLong();
-      final var latestCall = new AtomicLong();
 
       try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {
         try (final var httpClient = HttpClient.newBuilder().executor(executor).build()) {
@@ -276,17 +274,32 @@ public final class Entrypoint extends Thread {
             idlAccounts = Map.of();
           } else {
             idlAccounts = HashMap.newHashMap(idlAccountKeys.size());
-            // TODO: Support retries.
-            final var accountInfoList = rpcClient.getAccounts(idlAccountKeys).join();
-            for (final var accountInfo : accountInfoList) {
-              if (accountInfo != null) {
-                idlAccounts.put(accountInfo.pubKey(), accountInfo);
+            for (long errorCount = 0; ; ) {
+              try {
+                final var accountInfoList = rpcClient.getAccounts(idlAccountKeys).join();
+                for (final var accountInfo : accountInfoList) {
+                  if (accountInfo != null) {
+                    idlAccounts.put(accountInfo.pubKey(), accountInfo);
+                  }
+                }
+                break;
+              } catch (final RuntimeException e) {
+                final long delay = Math.max(21, ++errorCount);
+                logger.log(ERROR, String.format(
+                        "Failed to fetch %d accounts %d times, retrying in %d seconds.",
+                        idlAccountKeys.size(), ++errorCount, delay
+                    ), e
+                );
+                SECONDS.sleep(delay);
               }
             }
           }
 
+          final var semaphore = new Semaphore(numThreads, false);
+          final var errorCount = new AtomicLong();
+          final var latestCall = new AtomicLong();
           final var exports = new ConcurrentSkipListSet<String>();
-          final var threads = IntStream.range(0, numThreads).mapToObj(t -> new Entrypoint(
+          final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
               semaphore, tasks, errorCount, baseDelayMillis, latestCall,
               rpcClient,
               idlAccounts,
