@@ -219,14 +219,6 @@ public final class AnchorUtil {
     return !changedFirst && c == len ? maybeSnakeCase : new String(buf, 0, c);
   }
 
-  static List<String> parseDocs(final JsonIterator ji) {
-    final var docs = new ArrayList<String>();
-    while (ji.readArray()) {
-      docs.add(ji.readString()); // .replace('`', '"')
-    }
-    return docs;
-  }
-
   private AnchorUtil() {
   }
 }

@@ -2,9 +2,9 @@
 
 set -e
 
-readonly moduleName="software.sava.anchor_src_gen"
+readonly moduleName="software.sava.idl_src_gen"
 readonly package="software.sava.anchor.gen"
-readonly mainClass="software.sava.anchor.Entrypoint"
+readonly mainClass="software.sava.idl.generator.Entrypoint"
 projectDirectory="$(pwd)"
 readonly projectDirectory
 
@@ -88,9 +88,9 @@ if [[ "$javaVersion" -ne "$targetJavaVersion" ]]; then
   exit 3
 fi
 
-./gradlew --stacktrace clean :anchor-src-gen:image
+./gradlew --stacktrace clean :idl-src-gen:image
 
-readonly javaExe="$projectDirectory/anchor-src-gen/build/images/anchor-src-gen/bin/java"
+readonly javaExe="$projectDirectory/idl-src-gen/build/images/idl-src-gen/bin/java"
 
 javaArgs+=(
   "-D$moduleName.baseDelayMillis=$baseDelayMillis"
@@ -110,5 +110,5 @@ if [[ "$screen" == 0 ]]; then
   "$javaExe" "${javaArgs[@]}"
 else
   set -x
-  screen -S "anchor-src-gen" "$javaExe" "${javaArgs[@]}"
+  screen -S "idl-src-gen" "$javaExe" "${javaArgs[@]}"
 fi
