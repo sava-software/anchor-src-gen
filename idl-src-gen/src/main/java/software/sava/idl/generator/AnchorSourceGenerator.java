@@ -21,6 +21,7 @@ import static java.nio.file.StandardOpenOption.*;
 
 public record AnchorSourceGenerator(Path sourceDirectory,
                                     String packageName,
+                                    String commonsPackage,
                                     boolean exportPackages,
                                     int tabLength,
                                     AnchorIDL idl) implements Runnable {
@@ -87,12 +88,14 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     createDirectories(path);
   }
 
-  public void run() {
-    var fullSrcDir = sourceDirectory;
-    for (final var pkgDirectory : packageName.split("\\.")) {
-      fullSrcDir = fullSrcDir.resolve(pkgDirectory);
-    }
+  public static Path resolveAndClearSourceDirectory(final Path sourceDirectory, final String packageName) {
+    final var fullSrcDir = sourceDirectory.resolve(packageName.replace(".", "/"));
     clearAndReCreateDirectory(fullSrcDir);
+    return fullSrcDir;
+  }
+
+  public void run() {
+    final var fullSrcDir = resolveAndClearSourceDirectory(sourceDirectory, packageName);
 
     try {
       Files.write(fullSrcDir.resolve("idl.json"), idl.json(), CREATE, WRITE, TRUNCATE_EXISTING);
@@ -129,6 +132,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
         staticImports,
         tab,
         packageName,
+        commonsPackage,
         typesPackage,
         programName,
         accountMethods

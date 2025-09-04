@@ -32,6 +32,7 @@ import static java.nio.file.StandardOpenOption.*;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static software.sava.idl.generator.AnchorSourceGenerator.resolveAndClearSourceDirectory;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public final class Entrypoint extends Thread {
@@ -48,6 +49,7 @@ public final class Entrypoint extends Thread {
   private final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
   private final Path sourceDirectory;
   private final String basePackageName;
+  private final String commonsPackage;
   private final Set<String> exports;
   private final int tabLength;
 
@@ -59,7 +61,7 @@ public final class Entrypoint extends Thread {
                      final SolanaRpcClient rpcClient,
                      final Map<PublicKey, AccountInfo<byte[]>> idlAccounts,
                      final Path sourceDirectory,
-                     final String basePackageName,
+                     final String basePackageName, final String commonsPackage,
                      final Set<String> exports,
                      final int tabLength) {
     this.semaphore = semaphore;
@@ -71,6 +73,7 @@ public final class Entrypoint extends Thread {
     this.idlAccounts = idlAccounts;
     this.sourceDirectory = sourceDirectory;
     this.basePackageName = basePackageName;
+    this.commonsPackage = commonsPackage;
     this.exports = exports;
     this.tabLength = tabLength;
   }
@@ -117,6 +120,7 @@ public final class Entrypoint extends Thread {
       final var generator = new AnchorSourceGenerator(
           sourceDirectory,
           packageName,
+          commonsPackage,
           task.exportPackages(),
           tabLength,
           idl
@@ -243,6 +247,7 @@ public final class Entrypoint extends Thread {
     final var sourceDirectory = Path.of(propertyOrElse(moduleName + ".sourceDirectory", "anchor-programs/src/main/java")).toAbsolutePath();
     final var outputModuleName = propertyOrElse(moduleName + ".moduleName", moduleName);
     final var basePackageName = propertyOrElse(moduleName + ".basePackageName", clas.getPackageName());
+    final var commonsPackage = basePackageName + "._commons";
     final var exportPackages = Boolean.parseBoolean(propertyOrElse(moduleName + ".exportPackages", "true"));
     final var rpcEndpoint = System.getProperty(moduleName + ".rpc");
     final var programsJsonFile = mandatoryProperty(moduleName + ".programs");
@@ -261,90 +266,102 @@ public final class Entrypoint extends Thread {
       }
     }).toList();
 
-    try {
+    try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      try (final var httpClient = HttpClient.newBuilder().executor(executor).build()) {
+        final var rpcClient = SolanaRpcClient.createClient(
+            rpcEndpoint == null || rpcEndpoint.isBlank() ? SolanaNetwork.MAIN_NET.getEndpoint() : URI.create(rpcEndpoint),
+            httpClient
+        );
 
-      try (final var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-        try (final var httpClient = HttpClient.newBuilder().executor(executor).build()) {
-          final var rpcClient = SolanaRpcClient.createClient(
-              rpcEndpoint == null || rpcEndpoint.isBlank() ? SolanaNetwork.MAIN_NET.getEndpoint() : URI.create(rpcEndpoint),
-              httpClient
-          );
-
-          final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
-          if (idlAccountKeys.isEmpty()) {
-            idlAccounts = Map.of();
-          } else {
-            idlAccounts = HashMap.newHashMap(idlAccountKeys.size());
-            for (long errorCount = 0; ; ) {
-              try {
-                final var accountInfoList = rpcClient.getAccounts(idlAccountKeys).join();
-                for (final var accountInfo : accountInfoList) {
-                  if (accountInfo != null) {
-                    idlAccounts.put(accountInfo.pubKey(), accountInfo);
-                  }
+        final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
+        if (idlAccountKeys.isEmpty()) {
+          idlAccounts = Map.of();
+        } else {
+          idlAccounts = HashMap.newHashMap(idlAccountKeys.size());
+          for (long errorCount = 0; ; ) {
+            try {
+              final var accountInfoList = rpcClient.getAccounts(idlAccountKeys).join();
+              for (final var accountInfo : accountInfoList) {
+                if (accountInfo != null) {
+                  idlAccounts.put(accountInfo.pubKey(), accountInfo);
                 }
-                break;
-              } catch (final RuntimeException e) {
-                final long delay = Math.max(21, ++errorCount);
-                logger.log(ERROR, String.format(
-                        "Failed to fetch %d accounts %d times, retrying in %d seconds.",
-                        idlAccountKeys.size(), ++errorCount, delay
-                    ), e
-                );
-                SECONDS.sleep(delay);
               }
+              break;
+            } catch (final RuntimeException e) {
+              final long delay = Math.max(21, ++errorCount);
+              logger.log(ERROR, String.format(
+                      "Failed to fetch %d accounts %d times, retrying in %d seconds.",
+                      idlAccountKeys.size(), ++errorCount, delay
+                  ), e
+              );
+              SECONDS.sleep(delay);
+            }
+          }
+        }
+
+        final var semaphore = new Semaphore(numThreads, false);
+        final var errorCount = new AtomicLong();
+        final var latestCall = new AtomicLong();
+        final var exports = new ConcurrentSkipListSet<String>();
+        final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
+            semaphore, tasks, errorCount, baseDelayMillis, latestCall,
+            rpcClient,
+            idlAccounts,
+            sourceDirectory, basePackageName, commonsPackage,
+            exports,
+            tabLength
+        )).toList();
+        threads.forEach(Thread::start);
+
+        final Path moduleFilePath;
+        final StringBuilder moduleFileBuilder;
+        if (outputModuleName.equals(moduleName)) {
+          moduleFileBuilder = null;
+          moduleFilePath = null;
+        } else {
+          moduleFileBuilder = new StringBuilder(2_048);
+          exports.add(String.format("exports %s;", commonsPackage));
+          exports.add(String.format("requires %s;", HttpClient.class.getModule().getName()));
+          exports.add(String.format("requires transitive %s;", JsonIterator.class.getModule().getName()));
+          exports.add(String.format("requires transitive %s;", Instruction.class.getModule().getName()));
+          exports.add(String.format("requires transitive %s;", SolanaRpcClient.class.getModule().getName()));
+          exports.add(String.format("requires %s;", System.class.getModule().getName()));
+          moduleFilePath = sourceDirectory.resolve("module-info.java");
+          if (Files.exists(moduleFilePath)) {
+            try (final var moduleFileLines = Files.lines(moduleFilePath)) {
+              moduleFileLines
+                  .map(String::strip)
+                  .filter(line -> !line.isBlank() && !line.startsWith("module") && !line.equals("}"))
+                  .forEach(exports::add);
             }
           }
 
-          final var semaphore = new Semaphore(numThreads, false);
-          final var errorCount = new AtomicLong();
-          final var latestCall = new AtomicLong();
-          final var exports = new ConcurrentSkipListSet<String>();
-          final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
-              semaphore, tasks, errorCount, baseDelayMillis, latestCall,
-              rpcClient,
-              idlAccounts,
-              sourceDirectory, basePackageName,
-              exports,
-              tabLength
-          )).toList();
-          threads.forEach(Thread::start);
+          moduleFileBuilder.append(String.format("module %s {%n", outputModuleName));
+        }
 
-          final Path moduleFilePath;
-          final StringBuilder moduleFileBuilder;
-          if (outputModuleName.equals(moduleName)) {
-            moduleFileBuilder = null;
-            moduleFilePath = null;
-          } else {
-            moduleFileBuilder = new StringBuilder(2_048);
-            exports.add(String.format("requires %s;", HttpClient.class.getModule().getName()));
-            exports.add(String.format("requires transitive %s;", JsonIterator.class.getModule().getName()));
-            exports.add(String.format("requires transitive %s;", Instruction.class.getModule().getName()));
-            exports.add(String.format("requires transitive %s;", SolanaRpcClient.class.getModule().getName()));
-            exports.add("requires transitive software.sava.anchor_src_gen;");
-            exports.add(String.format("requires %s;", System.class.getModule().getName()));
-            moduleFilePath = sourceDirectory.resolve("module-info.java");
-            if (Files.exists(moduleFilePath)) {
-              try (final var moduleFileLines = Files.lines(moduleFilePath)) {
-                moduleFileLines
-                    .map(String::strip)
-                    .filter(line -> !line.isBlank() && !line.startsWith("module") && !line.equals("}"))
-                    .forEach(exports::add);
-              }
-            }
+        final var commonsSrcDir = resolveAndClearSourceDirectory(sourceDirectory, commonsPackage);
+        Files.writeString(
+            commonsSrcDir.resolve("ProgramError.java"), String.format("""
+                package %s;
+                
+                public interface ProgramError {
+                
+                  int code();
+                
+                  String msg();
+                }
+                """, commonsPackage
+            ), CREATE, TRUNCATE_EXISTING, WRITE
+        );
 
-            moduleFileBuilder.append(String.format("module %s {%n", outputModuleName));
-          }
+        for (final var thread : threads) {
+          thread.join();
+        }
 
-          for (final var thread : threads) {
-            thread.join();
-          }
-
-          if (moduleFileBuilder != null) {
-            moduleFileBuilder.append(exports.stream().sorted(String::compareToIgnoreCase).collect(Collectors.joining("\n")).indent(tabLength));
-            moduleFileBuilder.append('}').append('\n');
-            Files.writeString(moduleFilePath, moduleFileBuilder.toString(), CREATE, TRUNCATE_EXISTING, WRITE);
-          }
+        if (moduleFileBuilder != null) {
+          moduleFileBuilder.append(exports.stream().sorted(String::compareToIgnoreCase).collect(Collectors.joining("\n")).indent(tabLength));
+          moduleFileBuilder.append('}').append('\n');
+          Files.writeString(moduleFilePath, moduleFileBuilder.toString(), CREATE, TRUNCATE_EXISTING, WRITE);
         }
       }
     } catch (final IOException e) {

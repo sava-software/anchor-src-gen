@@ -1,6 +1,5 @@
 package software.sava.idl.generator;
 
-import software.sava.anchor.ProgramError;
 import software.sava.core.accounts.ProgramDerivedAddress;
 import software.sava.core.accounts.PublicKey;
 import software.sava.core.tx.Transaction;
@@ -169,7 +168,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
     final var out = new StringBuilder(4_096);
     genSrcContext.appendPackage(out);
 
-    genSrcContext.addImport(ProgramError.class.getName());
+    genSrcContext.importCommons("ProgramError");
     genSrcContext.appendImports(out);
 
     final var className = genSrcContext.programName() + "Error";
@@ -324,7 +323,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
           final var duplicates = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER);
           int numDuplicates = 0;
           for (final var error : errors) {
-            final int numInstances = duplicates.compute(error.className(), (name, count) -> count == null ? 1 : count + 1);
+            final int numInstances = duplicates.compute(error.className(), (_, count) -> count == null ? 1 : count + 1);
             if (numInstances > 1) {
               deduplicatedNames.add(new AnchorErrorRecord(
                   error.code(),

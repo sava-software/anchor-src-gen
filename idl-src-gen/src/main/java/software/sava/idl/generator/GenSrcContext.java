@@ -12,6 +12,7 @@ public record GenSrcContext(Set<String> accounts,
                             Set<String> staticImports,
                             String tab,
                             String srcPackage,
+                            String commonsPackage,
                             String typePackage,
                             String programName,
                             Map<PublicKey, AccountReferenceCall> accountMethods) {
@@ -49,6 +50,10 @@ public record GenSrcContext(Set<String> accounts,
 
   public void addImport(final String className) {
     imports.add(className);
+  }
+
+  public void importCommons(final String simpleClassNane) {
+    imports.add(commonsPackage + '.' + simpleClassNane);
   }
 
   public void addImport(final Class<?> clas) {
