@@ -18,7 +18,7 @@ Usage: ./genSrc.sh [options]
 
 Generates Java sources for Anchor programs using the idl-src-gen tool.
 
-Options (long and short forms):
+Options:
   --baseDelayMillis=N, --bdm=N
       Base backoff delay in milliseconds for network calls. Default: 200
 
@@ -166,6 +166,16 @@ if [[ "$javaVersion" -ne "$targetJavaVersion" ]]; then
 fi
 
 readonly javaExe="$projectDirectory/idl-src-gen/build/images/idl-src-gen/bin/java"
+
+# Build the image only if the java executable doesn't exist yet
+if [[ ! -x "$javaExe" ]]; then
+  if [[ -x "$projectDirectory/compile.sh" ]]; then
+    ./compile.sh
+  else
+    echo "Missing generator image and compile.sh is not executable. Please run './gradlew :idl-src-gen:image' or make compile.sh executable." >&2
+    exit 4
+  fi
+fi
 
 javaArgs+=(
   "-D$moduleName.baseDelayMillis=$baseDelayMillis"
