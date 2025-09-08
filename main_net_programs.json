@@ -1,8 +1,7 @@
 [
   {
-    "name": "Heaven DEX",
-    "program": "HEAVENoP2qxoeuF8Dj2oT1GHEnu49U5mJYkdeC8BAX2o",
-    "package": "heaven",
-    "idlURL": "https://raw.githubusercontent.com/bitquery/solana-idl-lib/refs/heads/main/heaven/heaven.json"
+    "name": "Pyth Receiver",
+    "program": "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ",
+    "package": "pyth.receiver"
   }
 ]
