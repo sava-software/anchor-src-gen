@@ -65,10 +65,8 @@ Options (long and short forms):
   --targetJavaVersion=N, --tjv=N
       Required Java major version. Script exits if current Java version != N. Default: 24
 
-Notes:
-  - Java version must match --targetJavaVersion. The script checks "java -version" and exits if it differs.
-  - The script builds the generator image with Gradle before launching it.
-  - Example: ./genSrc.sh --bp=com.example.gen --programs=./programs.json --rpc=https://api.mainnet-beta.solana.com
+Example:
+  - ./genSrc.sh --bp=com.example.gen --programs=./programs.json --rpc=https://api.mainnet-beta.solana.com
 EOF
 }
 
