@@ -16,7 +16,7 @@ print_help() {
   cat <<'EOF'
 Usage: ./genSrc.sh [options]
 
-Generates Java sources for Anchor/Codama programs using the idl-src-gen tool.
+Generates Java sources for Anchor programs using the idl-src-gen tool.
 
 Options (long and short forms):
   --baseDelayMillis=N, --bdm=N
