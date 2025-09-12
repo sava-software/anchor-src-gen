@@ -6,7 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
-public record GenSrcContext(Set<String> accounts,
+public record GenSrcContext(IDLType idlType,
+                            boolean accountsHaveDiscriminators,
+                            Set<String> accounts,
                             Map<String, NamedType> definedTypes,
                             Set<String> imports,
                             Set<String> staticImports,
@@ -29,6 +31,18 @@ public record GenSrcContext(Set<String> accounts,
 
   public boolean isAccount(final String typeName) {
     return accounts.contains(typeName);
+  }
+
+  public boolean hasDiscriminator(final boolean isAccount, final boolean hasDiscriminator) {
+    if (isAccount) {
+      return accountsHaveDiscriminators;
+    } else {
+      return hasDiscriminator;
+    }
+  }
+
+  public boolean hasDiscriminator(final boolean isAccount) {
+    return isAccount && accountsHaveDiscriminators;
   }
 
   public int tabLength() {

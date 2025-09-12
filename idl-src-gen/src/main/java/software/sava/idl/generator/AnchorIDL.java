@@ -28,7 +28,8 @@ public final class AnchorIDL extends RootIDL implements IDL {
   private final List<AnchorErrorRecord> errors;
   private final AnchorIdlMetadata metaData;
 
-  AnchorIDL(final PublicKey address,
+  AnchorIDL(final IDLType idlType,
+            final PublicKey address,
             final String version,
             final String name,
             final String origin,
@@ -41,7 +42,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
             final AnchorIdlMetadata metaData,
             final List<String> docs,
             final byte[] json) {
-    super(address, version, name, origin, docs, json);
+    super(idlType, address, version, name, origin, docs, json);
     this.constants = constants;
     this.instructions = instructions;
     this.accounts = accounts;
@@ -264,6 +265,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
 
     AnchorIDL createIDL(final byte[] json) {
       return new AnchorIDL(
+          idlType,
           address,
           version == null ? metaData.version() : version,
           name == null ? metaData.name() : name,

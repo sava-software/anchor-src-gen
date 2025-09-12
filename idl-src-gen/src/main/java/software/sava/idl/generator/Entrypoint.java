@@ -123,6 +123,7 @@ public final class Entrypoint extends Thread {
           commonsPackage,
           task.exportPackages(),
           tabLength,
+          task.accountsHaveDiscriminators(),
           idl
       );
       generator.run();
@@ -145,7 +146,8 @@ public final class Entrypoint extends Thread {
                                PublicKey programAddress,
                                PublicKey idlAddress,
                                URI idlURL,
-                               Path idlFile) {
+                               Path idlFile,
+                               boolean accountsHaveDiscriminators) {
 
     String formatPackage(final String basePackageName) {
       return String.format("%s.%s.anchor", basePackageName, packageName);
@@ -180,13 +182,14 @@ public final class Entrypoint extends Thread {
       }
     }
 
-    public static void parseConfigs(final boolean exportPackages,
+    public static void parseConfigs(final Path programsPath,
+                                    final boolean exportPackages,
                                     final Collection<ProgramConfig> configs,
                                     final JsonIterator ji) {
       while (ji.readArray()) {
         final var parser = new Parser(exportPackages);
         ji.testObject(parser);
-        configs.add(parser.createConfig());
+        configs.add(parser.createConfig(programsPath));
       }
     }
 
@@ -198,12 +201,17 @@ public final class Entrypoint extends Thread {
       private PublicKey programAddress;
       private URI idlURL;
       private Path idlFile;
+      private boolean accountsHaveDiscriminators;
 
       private Parser(boolean exportPackages) {
         this.exportPackages = exportPackages;
+        this.accountsHaveDiscriminators = true;
       }
 
-      private ProgramConfig createConfig() {
+      private ProgramConfig createConfig(final Path programsPath) {
+        if (idlFile != null && !idlFile.isAbsolute()) {
+          idlFile = programsPath.getParent().resolve(idlFile);
+        }
         return new ProgramConfig(
             name,
             requireNonNullElse(packageName, name.toLowerCase(Locale.ENGLISH)),
@@ -211,7 +219,8 @@ public final class Entrypoint extends Thread {
             programAddress,
             AnchorUtil.createIdlAddress(programAddress),
             idlURL,
-            idlFile
+            idlFile,
+            accountsHaveDiscriminators
         );
       }
 
@@ -229,6 +238,8 @@ public final class Entrypoint extends Thread {
           idlURL = java.net.URI.create(ji.readString());
         } else if (fieldEquals("idlFile", buf, offset, len)) {
           idlFile = Path.of(ji.readString());
+        } else if (fieldEquals("accountsHaveDiscriminators", buf, offset, len)) {
+          accountsHaveDiscriminators = ji.readBoolean();
         } else {
           ji.skip();
         }
@@ -255,8 +266,9 @@ public final class Entrypoint extends Thread {
     final int baseDelayMillis = Integer.parseInt(propertyOrElse(moduleName + ".baseDelayMillis", "200"));
 
     final var tasks = new ConcurrentLinkedQueue<ProgramConfig>();
-    try (final var ji = JsonIterator.parse(Files.readAllBytes(Path.of(programsJsonFile)))) {
-      ProgramConfig.parseConfigs(exportPackages, tasks, ji);
+    final var programsPath = Path.of(programsJsonFile).toAbsolutePath();
+    try (final var ji = JsonIterator.parse(Files.readAllBytes(programsPath))) {
+      ProgramConfig.parseConfigs(programsPath, exportPackages, tasks, ji);
     }
 
     final var idlAccountKeys = tasks.stream().<PublicKey>mapMulti((programConfig, downstream) -> {

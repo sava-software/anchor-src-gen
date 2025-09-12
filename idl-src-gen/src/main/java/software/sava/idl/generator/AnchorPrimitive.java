@@ -41,6 +41,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
                                     final String varName,
                                     final String offsetVarName,
                                     final boolean optional) {
+    addWriteImports(genSrcContext);
     final String serializeCode;
     if (optional) {
       serializeCode = switch (type) {
@@ -262,15 +263,12 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
     );
   }
 
-  @Override
-  public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
+  private void addWriteImports(final GenSrcContext genSrcContext) {
     if (type == string) {
       genSrcContext.addUTF_8Import();
       genSrcContext.addImport(Borsh.class);
-      return String.format("%sBorsh.writeVector(_%s, _data, i);", hasNext ? "i += " : "", varName);
     } else if (type == bytes) {
       genSrcContext.addImport(Borsh.class);
-      return String.format("%sBorsh.writeVector(%s, _data, i);", hasNext ? "i += " : "", varName);
     } else {
       switch (type) {
         case f32 -> genSrcContext.addStaticImport(ByteUtil.class, "putFloat32LE");
@@ -281,6 +279,17 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
         case i128, u128 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt128LE");
         case i256, u256 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt256LE");
       }
+    }
+  }
+
+  @Override
+  public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
+    addWriteImports(genSrcContext);
+    if (type == string) {
+      return String.format("%sBorsh.writeVector(_%s, _data, i);", hasNext ? "i += " : "", varName);
+    } else if (type == bytes) {
+      return String.format("%sBorsh.writeVector(%s, _data, i);", hasNext ? "i += " : "", varName);
+    } else {
       final var write = generateWrite(varName);
       if (hasNext) {
         final int dataLength = type.dataLength();

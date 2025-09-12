@@ -11,6 +11,7 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public record AnchorIdlMetadata(String name,
                                 String version,
+                                String libVersion,
                                 String spec,
                                 String description,
                                 String repository,
@@ -30,6 +31,7 @@ public record AnchorIdlMetadata(String name,
 
     private String name;
     private String version;
+    private String libVersion;
     private String spec;
     private String description;
     private String repository;
@@ -46,6 +48,7 @@ public record AnchorIdlMetadata(String name,
       return new AnchorIdlMetadata(
           name,
           version,
+          libVersion,
           spec,
           description,
           repository,
@@ -61,8 +64,10 @@ public record AnchorIdlMetadata(String name,
     public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
       if (fieldEquals("name", buf, offset, len)) {
         this.name = ji.readString();
-      } else if (fieldEquals("version", buf, offset, len)) {
+      } else if (fieldEquals("version", buf, offset, len) || fieldEquals("binaryVersion", buf, offset, len)) {
         this.version = ji.readString();
+      } else if (fieldEquals("libVersion", buf, offset, len)) {
+        this.libVersion = ji.readString();
       } else if (fieldEquals("spec", buf, offset, len)) {
         this.spec = ji.readString();
       } else if (fieldEquals("description", buf, offset, len)) {

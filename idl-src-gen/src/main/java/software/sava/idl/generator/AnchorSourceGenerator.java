@@ -24,6 +24,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
                                     String commonsPackage,
                                     boolean exportPackages,
                                     int tabLength,
+                                    boolean accountsHaveDiscriminators,
                                     AnchorIDL idl) implements Runnable {
 
   private static final System.Logger logger = System.getLogger(AnchorSourceGenerator.class.getName());
@@ -126,6 +127,8 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     }
 
     final var genSrcContext = new GenSrcContext(
+        idl.type(),
+        accountsHaveDiscriminators,
         idl.accounts().keySet(),
         definedTypes,
         imports,

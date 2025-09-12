@@ -11,8 +11,8 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
     return false;
   }
 
-  default int serializedLength(final GenSrcContext genSrcContext, final boolean hasDiscriminator) {
-    if (hasDiscriminator) {
+  default int serializedLength(final GenSrcContext genSrcContext, final boolean isAccount) {
+    if (isAccount) {
       throw throwInvalidDataType();
     } else {
       return serializedLength(genSrcContext);
@@ -23,8 +23,8 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
     throw throwInvalidDataType();
   }
 
-  default int fixedSerializedLength(final GenSrcContext genSrcContext, final boolean hasDiscriminator) {
-    return serializedLength(genSrcContext, hasDiscriminator);
+  default int fixedSerializedLength(final GenSrcContext genSrcContext, final boolean isAccount) {
+    return serializedLength(genSrcContext, isAccount);
   }
 
   default int fixedSerializedLength(final GenSrcContext genSrcContext) {

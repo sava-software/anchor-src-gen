@@ -26,6 +26,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
   private boolean writable;
   private boolean optional;
   private boolean signer;
+  private boolean optionalSigner;
   private String desc;
   private List<String> docs;
   private AnchorPDA pda;
@@ -49,6 +50,7 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
         name,
         writable,
         signer,
+        optionalSigner,
         desc,
         docs == null ? desc == null || desc.isBlank() ? NO_DOCS : List.of(desc) : docs,
         optional,
@@ -82,7 +84,9 @@ final class AnchorAccountMetaParser implements ElementFactory<AnchorAccountMeta>
     } else if (fieldEquals("optional", buf, offset, len) || fieldEquals("isOptional", buf, offset, len)) {
       this.optional = ji.readBoolean();
     } else if (fieldEquals("isSigner", buf, offset, len) || fieldEquals("signer", buf, offset, len)) {
-      this.signer = ji.readBoolean();
+      this.signer = ji.readBoolean(); // isOptionalSigner
+    } else if (fieldEquals("isOptionalSigner", buf, offset, len)) {
+      this.optionalSigner = ji.readBoolean();
     } else if (fieldEquals("name", buf, offset, len)) {
       final var idlName = ji.readString();
       this.actualName = AnchorUtil.camelCase(idlName, false);

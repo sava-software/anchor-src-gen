@@ -54,6 +54,8 @@ public interface IDL {
     return removeBlankLines(builder.append('}').toString());
   }
 
+  IDLType type();
+
   PublicKey address();
 
   String version();
