@@ -1,7 +1,22 @@
 [
   {
-    "name": "Pyth Receiver",
-    "program": "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ",
-    "package": "pyth.receiver"
+    "name": "Glam Mint",
+    "program": "GM1NtvvnSXUptTrMCqbogAdZJydZSNv98DoU5AZVLmGh",
+    "package": "glam.mint"
+  },
+  {
+    "name": "Glam Protocol",
+    "program": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
+    "package": "glam.protocol"
+  },
+  {
+    "name": "GLAM Policy Program",
+    "program": "po1iCYakK3gHCLbuju4wGzFowTMpAJxkqK1iwUqMonY",
+    "package": "glam.policy"
+  },
+  {
+    "name": "GLAM SPL",
+    "program": "G1NTsQ36mjPe89HtPYqxKsjY5HmYsDR6CbD2gd2U2pta",
+    "package": "glam.spl"
   }
 ]

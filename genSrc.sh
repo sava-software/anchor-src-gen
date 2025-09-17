@@ -62,9 +62,6 @@ Options:
   --tabLength=N, --tl=N
       Number of spaces for indentation in generated sources. Default: 2
 
-  --targetJavaVersion=N, --tjv=N
-      Required Java major version. Script exits if current Java version != N. Default: 24
-
 Example:
   - ./genSrc.sh --bp=com.example.gen --programs=./programs.json --rpc=https://api.mainnet-beta.solana.com
 EOF
@@ -75,7 +72,6 @@ javaArgs=(
   '-Xmx1024M'
 )
 screen=0;
-targetJavaVersion=24
 logLevel="INFO";
 tabLength=2;
 sourceDirectory="src/main/java";
@@ -135,8 +131,6 @@ do
         esac
         ;;
 
-      tjv | targetJavaVersion) targetJavaVersion="$val";;
-
       bdm | baseDelayMillis) baseDelayMillis="$val";;
       bp | basePackageName) basePackageName="$val";;
       ep | exportPackages) exportPackages="$val";;
@@ -157,13 +151,6 @@ do
     exit 1;
   fi
 done
-
-javaVersion=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | grep -oEi '^[0-9]+')
-readonly javaVersion
-if [[ "$javaVersion" -ne "$targetJavaVersion" ]]; then
-  echo "Invalid Java version $javaVersion must be $targetJavaVersion."
-  exit 3
-fi
 
 readonly javaExe="$projectDirectory/idl-src-gen/build/images/idl-src-gen/bin/java"
 
