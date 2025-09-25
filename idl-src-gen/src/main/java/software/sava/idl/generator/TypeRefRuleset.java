@@ -76,7 +76,7 @@ record TypeRefRuleset(PublicKey refProgram,
           excludeTypes.add(ji.readString());
         }
       } else if (fieldEquals("explicitRules", buf, offset, len)) {
-        final var rules = new HashMap<String, TypeRefRule>();
+        final var rules = new LinkedHashMap<String, TypeRefRule>();
         while (ji.readArray()) {
           final var ruleParser = new TypeRefRuleParser(srcMismatch);
           ji.testObject(ruleParser);

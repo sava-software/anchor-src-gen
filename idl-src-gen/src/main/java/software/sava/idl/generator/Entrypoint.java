@@ -391,7 +391,9 @@ public final class Entrypoint extends Thread {
               if (typeRefRuleset.matchOnTypeName()) {
                 for (final var localType : localTypes.values()) {
                   final var typeName = localType.name();
-                  if (typeRefRuleset.isExcluded(typeName) || explicitRules.containsKey(typeName)) {
+                  if (typeRefRuleset.isExcluded(typeName)
+                      || explicitRules.containsKey(typeName)
+                      || externalTypes.containsKey(typeName)) {
                     continue;
                   }
                   checkRefType(
@@ -403,7 +405,9 @@ public final class Entrypoint extends Thread {
                 }
                 for (final var localAccount : localAccounts.values()) {
                   final var typeName = localAccount.name();
-                  if (typeRefRuleset.isExcluded(typeName) || explicitRules.containsKey(typeName)) {
+                  if (typeRefRuleset.isExcluded(typeName)
+                      || explicitRules.containsKey(typeName)
+                      || externalTypes.containsKey(typeName)) {
                     continue;
                   }
                   checkRefType(
@@ -464,7 +468,9 @@ public final class Entrypoint extends Thread {
     } else {
       final var msg = String.format("""
               Data Structure mismatch:
+              
                - Ref: %s
+              
                - Local: %s
               """,
           refType, localType

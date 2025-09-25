@@ -1,17 +1,12 @@
 [
   {
-    "name": "Glam Mint",
-    "program": "GM1NtvvnSXUptTrMCqbogAdZJydZSNv98DoU5AZVLmGh",
-    "package": "glam.mint",
-    "typeRefs": [
-      {
-        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
-        "srcMismatch": "WARN_KEEP_LOCAL",
-        "matchOnTypeName": true,
-        "excludeTypes": [],
-        "explicitRules": []
-      }
-    ]
+    "name": "Drift",
+    "program": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH"
+  },
+  {
+    "name": "Drift Vaults",
+    "program": "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR",
+    "package": "drift.vaults"
   },
   {
     "name": "Glam Protocol",
@@ -19,27 +14,31 @@
     "package": "glam.protocol"
   },
   {
-    "name": "GLAM Policy Program",
-    "program": "po1iCYakK3gHCLbuju4wGzFowTMpAJxkqK1iwUqMonY",
-    "package": "glam.policy",
+    "name": "GLAM Drift",
+    "program": "G1NTdrBmBpW43msRQmsf7qXSw3MFBNaqJcAkGiRmRq2F",
+    "package": "glam.drift",
     "typeRefs": [
       {
-        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
-        "srcMismatch": "WARN_KEEP_LOCAL",
+        "refProgram": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+        "srcMismatch": "ERROR",
         "matchOnTypeName": true,
-        "excludeTypes": [],
+        "excludeTypes": [
+          "FeeStructure"
+        ],
         "explicitRules": []
-      }
-    ]
-  },
-  {
-    "name": "GLAM SPL",
-    "program": "G1NTsQ36mjPe89HtPYqxKsjY5HmYsDR6CbD2gd2U2pta",
-    "package": "glam.spl",
-    "typeRefs": [
+      },
+      {
+        "refProgram": "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR",
+        "srcMismatch": "ERROR",
+        "matchOnTypeName": true,
+        "excludeTypes": [
+          "FeeStructure"
+        ],
+        "explicitRules": []
+      },
       {
         "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
-        "srcMismatch": "WARN_KEEP_LOCAL",
+        "srcMismatch": "ERROR",
         "matchOnTypeName": true,
         "excludeTypes": [],
         "explicitRules": []
