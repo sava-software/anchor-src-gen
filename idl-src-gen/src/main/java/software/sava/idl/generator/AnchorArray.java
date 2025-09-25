@@ -22,11 +22,13 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   static void addImports(final GenSrcContext genSrcContext,
-                         final AnchorTypeContext genericType) {
+                         final AnchorTypeContext genericType,
+                         final String typeName) {
     switch (genericType.type()) {
       case publicKey -> genSrcContext.addImport(PublicKey.class);
       case string -> genSrcContext.addImport(String.class);
       case u128, u256, i128, i256 -> genSrcContext.addImport(BigInteger.class);
+      case defined -> genSrcContext.addImportIfExternal(typeName);
     }
   }
 
@@ -34,10 +36,10 @@ public record AnchorArray(AnchorTypeContext genericType,
                                     final AnchorTypeContext genericType,
                                     final int depth,
                                     final NamedType context) {
-    addImports(genSrcContext, genericType);
+    final var typeName = genericType.realTypeName();
+    addImports(genSrcContext, genericType, typeName);
     final var docs = context.docComments();
     final var varName = context.name();
-    final var typeName = genericType.realTypeName();
     final var depthCode = arrayDepthCode(depth);
     return genericType.type() == string
         ? String.format("%s%s%s %s, byte[]%s _%s", docs, typeName, depthCode, varName, depthCode, varName)
@@ -48,8 +50,8 @@ public record AnchorArray(AnchorTypeContext genericType,
                                            final AnchorTypeContext genericType,
                                            final int depth,
                                            final String context) {
-    addImports(genSrcContext, genericType);
     final var typeName = genericType.realTypeName();
+    addImports(genSrcContext, genericType, typeName);
     final var depthCode = arrayDepthCode(depth);
     return String.format("%s%s %s", typeName, depthCode, context);
   }

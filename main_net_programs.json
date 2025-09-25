@@ -2,7 +2,16 @@
   {
     "name": "Glam Mint",
     "program": "GM1NtvvnSXUptTrMCqbogAdZJydZSNv98DoU5AZVLmGh",
-    "package": "glam.mint"
+    "package": "glam.mint",
+    "typeRefs": [
+      {
+        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
+        "srcMismatch": "WARN_KEEP_LOCAL",
+        "matchOnTypeName": true,
+        "excludeTypes": [],
+        "explicitRules": []
+      }
+    ]
   },
   {
     "name": "Glam Protocol",
@@ -12,11 +21,29 @@
   {
     "name": "GLAM Policy Program",
     "program": "po1iCYakK3gHCLbuju4wGzFowTMpAJxkqK1iwUqMonY",
-    "package": "glam.policy"
+    "package": "glam.policy",
+    "typeRefs": [
+      {
+        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
+        "srcMismatch": "WARN_KEEP_LOCAL",
+        "matchOnTypeName": true,
+        "excludeTypes": [],
+        "explicitRules": []
+      }
+    ]
   },
   {
     "name": "GLAM SPL",
     "program": "G1NTsQ36mjPe89HtPYqxKsjY5HmYsDR6CbD2gd2U2pta",
-    "package": "glam.spl"
+    "package": "glam.spl",
+    "typeRefs": [
+      {
+        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
+        "srcMismatch": "WARN_KEEP_LOCAL",
+        "matchOnTypeName": true,
+        "excludeTypes": [],
+        "explicitRules": []
+      }
+    ]
   }
 ]

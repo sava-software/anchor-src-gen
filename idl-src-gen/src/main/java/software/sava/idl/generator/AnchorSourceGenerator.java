@@ -2,7 +2,6 @@ package software.sava.idl.generator;
 
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.accounts.PublicKey;
-import software.sava.rpc.json.http.client.SolanaRpcClient;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
 import static java.nio.file.StandardOpenOption.*;
 
 public record AnchorSourceGenerator(Path sourceDirectory,
@@ -25,7 +25,8 @@ public record AnchorSourceGenerator(Path sourceDirectory,
                                     boolean exportPackages,
                                     int tabLength,
                                     boolean accountsHaveDiscriminators,
-                                    AnchorIDL idl) implements Runnable {
+                                    AnchorIDL idl,
+                                    Map<String, String> externalTypes) implements Runnable {
 
   private static final System.Logger logger = System.getLogger(AnchorSourceGenerator.class.getName());
 
@@ -33,29 +34,6 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     return Arrays.stream(str.split("\n"))
         .map(line -> !line.isEmpty() && line.isBlank() ? "" : line)
         .collect(Collectors.joining("\n", "", "\n"));
-  }
-
-  public static CompletableFuture<AnchorIDL> fetchIDL(final PublicKey idlAddress, final SolanaRpcClient rpcClient) {
-    return rpcClient.getAccountInfo(idlAddress, OnChainIDL.FACTORY).thenApply(idlAccountInfo -> {
-      final var idl = idlAccountInfo.data();
-      if (idl == null) {
-        return null;
-      } else {
-        final byte[] json = idl.json();
-//            try {
-//              Files.write(Path.of(idlAddress + "_idl.json"), json, CREATE, WRITE, TRUNCATE_EXISTING);
-//            } catch (final IOException e) {
-//              throw new UncheckedIOException(e);
-//            }
-        return IDL.parseIDL(json);
-      }
-    });
-  }
-
-  public static CompletableFuture<AnchorIDL> fetchIDLForProgram(final PublicKey programAddress,
-                                                                final SolanaRpcClient rpcClient) {
-    final var idlAddress = AnchorUtil.createIdlAddress(programAddress);
-    return fetchIDL(idlAddress, rpcClient);
   }
 
   public static CompletableFuture<AnchorIDL> fetchIDL(final HttpClient httpClient, final URI idlURL) {
@@ -95,6 +73,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     return fullSrcDir;
   }
 
+  @Override
   public void run() {
     final var fullSrcDir = resolveAndClearSourceDirectory(sourceDirectory, packageName);
 
@@ -130,6 +109,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
         idl.type(),
         accountsHaveDiscriminators,
         idl.accounts().keySet(),
+        externalTypes,
         definedTypes,
         imports,
         staticImports,
@@ -199,6 +179,10 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     final var types = idl.types();
     final var accounts = new HashSet<String>();
     for (final var account : idl.accounts().values()) {
+      final var accountName = account.name();
+      if (genSrcContext.isExternalType(accountName)) {
+        continue;
+      }
       genSrcContext.clearImports();
       final var namedType = account.type() == null ? types.get(account.name()) : account;
       accounts.add(namedType.name());
@@ -219,7 +203,8 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     }
 
     for (final var namedType : idl.types().values()) {
-      if (accounts.contains(namedType.name())) {
+      final var typeName = namedType.name();
+      if (accounts.contains(typeName) || genSrcContext.isExternalType(typeName)) {
         continue;
       }
       genSrcContext.clearImports();
@@ -229,20 +214,20 @@ public record AnchorSourceGenerator(Path sourceDirectory,
               struct.generateSource(genSrcContext, genSrcContext.typePackage(), namedType, false, null);
           case AnchorEnum anchorEnum -> anchorEnum.generateSource(genSrcContext, namedType);
           case AnchorVector anchorVector -> {
-            logger.log(System.Logger.Level.WARNING, "Ignoring defined vector type: " + anchorVector);
+            logger.log(WARNING, "Ignoring defined vector type: " + anchorVector);
             yield null;
           }
           case null, default -> throw new IllegalStateException("Unexpected anchor defined type " + namedType);
         };
         if (sourceCode != null) {
           try {
-            Files.writeString(typesDir.resolve(namedType.name() + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
+            Files.writeString(typesDir.resolve(typeName + ".java"), sourceCode, CREATE, TRUNCATE_EXISTING, WRITE);
           } catch (final IOException e) {
             throw new UncheckedIOException("Failed to write source code file.", e);
           }
         }
       } catch (final RuntimeException ex) {
-        logger.log(ERROR, String.format("Failed to generate type %s source for %s.", namedType.name(), idl.name()));
+        logger.log(ERROR, String.format("Failed to generate type %s source for %s.", typeName, idl.name()));
         throw ex;
       }
     }
@@ -270,11 +255,28 @@ public record AnchorSourceGenerator(Path sourceDirectory,
     }
   }
 
+  private void exportTypePackage(final Set<String> exports) {
+    exports.add(String.format("exports %s.types;", packageName));
+  }
+
   public void addExports(final Set<String> exports) {
     if (exportPackages) {
       exports.add(String.format("exports %s;", packageName));
-      if (!idl.accounts().isEmpty() || !idl.types().isEmpty() || !idl.events().isEmpty()) {
-        exports.add(String.format("exports %s.types;", packageName));
+      if (!idl.events().isEmpty()) {
+        exportTypePackage(exports);
+      } else {
+        for (final var account : idl.accounts().values()) {
+          if (!externalTypes.containsKey(account.name())) {
+            exportTypePackage(exports);
+            return;
+          }
+        }
+        for (final var type : idl.types().values()) {
+          if (!externalTypes.containsKey(type.name())) {
+            exportTypePackage(exports);
+            return;
+          }
+        }
       }
     }
   }

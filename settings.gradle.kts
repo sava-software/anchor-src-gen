@@ -1,3 +1,5 @@
+rootProject.name = "anchor-src-gen"
+
 pluginManagement {
   repositories {
     gradlePluginPortal()
@@ -14,8 +16,6 @@ plugins {
 }
 
 apply(plugin = "software.sava.build.feature-jdk-provisioning")
-
-rootProject.name = "anchor-src-gen"
 
 javaModules {
   directory(".") {

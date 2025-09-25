@@ -9,8 +9,8 @@ import systems.comodal.jsoniter.ValueType;
 
 import java.util.Map;
 
-import static software.sava.idl.generator.AnchorType.*;
 import static software.sava.anchor.AnchorUtil.camelCase;
+import static software.sava.idl.generator.AnchorType.*;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public record AnchorDefined(String typeName) implements AnchorReferenceTypeContext {
@@ -74,6 +74,7 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   public String generateRecordField(final GenSrcContext genSrcContext,
                                     final NamedType context,
                                     final boolean optional) {
+    genSrcContext.addImportIfExternal(typeName);
     return String.format("%s%s %s", context.docComments(), typeName, context.name());
   }
 

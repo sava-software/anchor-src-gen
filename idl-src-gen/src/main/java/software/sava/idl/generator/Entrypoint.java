@@ -17,17 +17,13 @@ import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongBinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.lang.System.Logger.Level.ERROR;
-import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.Logger.Level.*;
 import static java.nio.file.StandardOpenOption.*;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -40,42 +36,34 @@ public final class Entrypoint extends Thread {
   private static final System.Logger logger = System.getLogger(Entrypoint.class.getName());
   private static final LongBinaryOperator MAX = Long::max;
 
+  private record IDLResult(ProgramConfig config, AnchorIDL idl) {
+  }
+
   private final Semaphore semaphore;
   private final ConcurrentLinkedQueue<ProgramConfig> tasks;
+  private final ConcurrentMap<PublicKey, IDLResult> results;
   private final AtomicLong errorCount;
   private final long baseDelayMillis;
   private final AtomicLong latestCall;
   private final SolanaRpcClient rpcClient;
   private final Map<PublicKey, AccountInfo<byte[]>> idlAccounts;
-  private final Path sourceDirectory;
-  private final String basePackageName;
-  private final String commonsPackage;
-  private final Set<String> exports;
-  private final int tabLength;
 
   private Entrypoint(final Semaphore semaphore,
                      final ConcurrentLinkedQueue<ProgramConfig> tasks,
+                     final ConcurrentMap<PublicKey, IDLResult> results,
                      final AtomicLong errorCount,
                      final long baseDelayMillis,
                      final AtomicLong latestCall,
                      final SolanaRpcClient rpcClient,
-                     final Map<PublicKey, AccountInfo<byte[]>> idlAccounts,
-                     final Path sourceDirectory,
-                     final String basePackageName, final String commonsPackage,
-                     final Set<String> exports,
-                     final int tabLength) {
+                     final Map<PublicKey, AccountInfo<byte[]>> idlAccounts) {
     this.semaphore = semaphore;
     this.tasks = tasks;
+    this.results = results;
     this.errorCount = errorCount;
     this.baseDelayMillis = baseDelayMillis;
     this.latestCall = latestCall;
     this.rpcClient = rpcClient;
     this.idlAccounts = idlAccounts;
-    this.sourceDirectory = sourceDirectory;
-    this.basePackageName = basePackageName;
-    this.commonsPackage = commonsPackage;
-    this.exports = exports;
-    this.tabLength = tabLength;
   }
 
   @Override
@@ -116,23 +104,12 @@ public final class Entrypoint extends Thread {
       }
       this.errorCount.getAndUpdate(x -> x > 0 ? x - 1 : x);
 
-      final var packageName = task.formatPackage(basePackageName);
-      final var generator = new AnchorSourceGenerator(
-          sourceDirectory,
-          packageName,
-          commonsPackage,
-          task.exportPackages(),
-          tabLength,
-          task.accountsHaveDiscriminators(),
-          idl
-      );
-      generator.run();
-      generator.addExports(exports);
+      results.put(task.programAddress(), new IDLResult(task, idl));
     }
   }
 
   private static String mandatoryProperty(final String key) {
-    return Objects.requireNonNull(System.getProperty(key, "Must pass property "), key);
+    return Objects.requireNonNull(System.getProperty(key), key);
   }
 
   private static String propertyOrElse(final String key, final String orElse) {
@@ -147,7 +124,8 @@ public final class Entrypoint extends Thread {
                                PublicKey idlAddress,
                                URI idlURL,
                                Path idlFile,
-                               boolean accountsHaveDiscriminators) {
+                               boolean accountsHaveDiscriminators,
+                               List<TypeRefRuleset> typeRefs) {
 
     String formatPackage(final String basePackageName) {
       return String.format("%s.%s.anchor", basePackageName, packageName);
@@ -202,6 +180,7 @@ public final class Entrypoint extends Thread {
       private URI idlURL;
       private Path idlFile;
       private boolean accountsHaveDiscriminators;
+      private List<TypeRefRuleset> typeRefs;
 
       private Parser(boolean exportPackages) {
         this.exportPackages = exportPackages;
@@ -220,7 +199,8 @@ public final class Entrypoint extends Thread {
             AnchorUtil.createIdlAddress(programAddress),
             idlURL,
             idlFile,
-            accountsHaveDiscriminators
+            accountsHaveDiscriminators,
+            typeRefs == null ? List.of() : typeRefs
         );
       }
 
@@ -240,6 +220,8 @@ public final class Entrypoint extends Thread {
           idlFile = Path.of(ji.readString());
         } else if (fieldEquals("accountsHaveDiscriminators", buf, offset, len)) {
           accountsHaveDiscriminators = ji.readBoolean();
+        } else if (fieldEquals("typeRefs", buf, offset, len)) {
+          this.typeRefs = TypeRefRuleset.parseRulesets(ji);
         } else {
           ji.skip();
         }
@@ -265,13 +247,13 @@ public final class Entrypoint extends Thread {
     final int numThreads = Integer.parseInt(propertyOrElse(moduleName + ".numThreads", "5"));
     final int baseDelayMillis = Integer.parseInt(propertyOrElse(moduleName + ".baseDelayMillis", "200"));
 
-    final var tasks = new ConcurrentLinkedQueue<ProgramConfig>();
+    final var configs = new ArrayList<ProgramConfig>();
     final var programsPath = Path.of(programsJsonFile).toAbsolutePath();
     try (final var ji = JsonIterator.parse(Files.readAllBytes(programsPath))) {
-      ProgramConfig.parseConfigs(programsPath, exportPackages, tasks, ji);
+      ProgramConfig.parseConfigs(programsPath, exportPackages, configs, ji);
     }
 
-    final var idlAccountKeys = tasks.stream().<PublicKey>mapMulti((programConfig, downstream) -> {
+    final var idlAccountKeys = configs.stream().<PublicKey>mapMulti((programConfig, downstream) -> {
       final var idlAddress = programConfig.idlAddress();
       if (idlAddress != null) {
         downstream.accept(idlAddress);
@@ -315,13 +297,14 @@ public final class Entrypoint extends Thread {
         final var errorCount = new AtomicLong();
         final var latestCall = new AtomicLong();
         final var exports = new ConcurrentSkipListSet<String>();
+        final var tasks = new ConcurrentLinkedQueue<>(configs);
+        final var results = new ConcurrentHashMap<PublicKey, IDLResult>();
         final var threads = IntStream.range(0, numThreads).mapToObj(_ -> new Entrypoint(
-            semaphore, tasks, errorCount, baseDelayMillis, latestCall,
+            semaphore, tasks,
+            results,
+            errorCount, baseDelayMillis, latestCall,
             rpcClient,
-            idlAccounts,
-            sourceDirectory, basePackageName, commonsPackage,
-            exports,
-            tabLength
+            idlAccounts
         )).toList();
         threads.forEach(Thread::start);
 
@@ -370,6 +353,84 @@ public final class Entrypoint extends Thread {
           thread.join();
         }
 
+        configs.parallelStream().forEach(config -> {
+          final var idl = results.get(config.programAddress()).idl();
+          final var programName = idl.name();
+          final var localTypes = idl.types();
+          final var localAccounts = idl.accounts();
+          final var typeRefRulesets = config.typeRefs();
+          final Map<String, String> externalTypes;
+          if (typeRefRulesets.isEmpty()) {
+            externalTypes = Map.of();
+          } else {
+            externalTypes = new HashMap<>();
+            for (final var typeRefRuleset : typeRefRulesets) {
+              final var refIDLResult = results.get(typeRefRuleset.refProgram());
+              final var refIDL = refIDLResult.idl();
+              final var refTypes = refIDL.types();
+              final var refAccounts = refIDL.accounts();
+              final var refTypePackage = refIDLResult.config().formatPackage(basePackageName) + ".types.";
+              final var explicitRules = typeRefRuleset.explicitRules();
+              final var defaultSrcMismatch = typeRefRuleset.srcMismatch();
+              for (final var rule : explicitRules.values()) {
+                var localType = localTypes.get(rule.localType());
+                final NamedType refType;
+                if (localType == null) {
+                  localType = localAccounts.get(rule.localType());
+                  refType = refAccounts.get(rule.refType());
+                } else {
+                  refType = refTypes.get(rule.refType());
+                }
+                checkRefType(
+                    localType, refType, refTypePackage,
+                    requireNonNullElse(rule.srcMismatch(), defaultSrcMismatch),
+                    programName,
+                    externalTypes
+                );
+              }
+              if (typeRefRuleset.matchOnTypeName()) {
+                for (final var localType : localTypes.values()) {
+                  final var typeName = localType.name();
+                  if (typeRefRuleset.isExcluded(typeName) || explicitRules.containsKey(typeName)) {
+                    continue;
+                  }
+                  checkRefType(
+                      localType, refTypes.get(typeName), refTypePackage,
+                      defaultSrcMismatch,
+                      programName,
+                      externalTypes
+                  );
+                }
+                for (final var localAccount : localAccounts.values()) {
+                  final var typeName = localAccount.name();
+                  if (typeRefRuleset.isExcluded(typeName) || explicitRules.containsKey(typeName)) {
+                    continue;
+                  }
+                  checkRefType(
+                      localAccount, refAccounts.get(typeName), refTypePackage,
+                      defaultSrcMismatch,
+                      programName,
+                      externalTypes
+                  );
+                }
+              }
+            }
+          }
+          final var packageName = config.formatPackage(basePackageName);
+          final var generator = new AnchorSourceGenerator(
+              sourceDirectory,
+              packageName,
+              commonsPackage,
+              config.exportPackages(),
+              tabLength,
+              config.accountsHaveDiscriminators(),
+              idl,
+              externalTypes
+          );
+          generator.run();
+          generator.addExports(exports);
+        });
+
         if (moduleFileBuilder != null) {
           moduleFileBuilder.append(exports.stream().sorted(String::compareToIgnoreCase).collect(Collectors.joining("\n")).indent(tabLength));
           moduleFileBuilder.append('}').append('\n');
@@ -378,6 +439,47 @@ public final class Entrypoint extends Thread {
       }
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  private static void checkRefType(final NamedType localType,
+                                   final NamedType refType,
+                                   final String refTypePackage,
+                                   final TypeRefRuleset.SrcMismatch srcMismatch,
+                                   final String programName,
+                                   final Map<String, String> externalTypes) {
+    if (refType == null) {
+      return;
+    }
+    if (refType.equals(localType)) {
+      final var fullRefTypeName = refTypePackage + refType.name();
+      logger.log(DEBUG, String.format("""
+                  Using ref type %s for %s type %s
+                  
+                  """,
+              fullRefTypeName, programName, localType.name()
+          )
+      );
+      externalTypes.put(localType.name(), fullRefTypeName);
+    } else {
+      final var msg = String.format("""
+              Data Structure mismatch:
+               - Ref: %s
+               - Local: %s
+              """,
+          refType, localType
+      );
+      switch (srcMismatch) {
+        case ERROR -> throw new IllegalStateException(msg);
+        case KEEP_LOCAL -> {
+        }
+        case KEEP_REF -> externalTypes.put(localType.name(), refTypePackage + refType.name());
+        case WARN_KEEP_LOCAL -> logger.log(WARNING, msg);
+        case WARN_KEEP_REF -> {
+          logger.log(WARNING, msg);
+          externalTypes.put(localType.name(), refTypePackage + refType.name());
+        }
+      }
     }
   }
 }

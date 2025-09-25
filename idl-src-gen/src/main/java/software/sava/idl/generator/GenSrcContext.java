@@ -9,6 +9,7 @@ import java.util.Set;
 public record GenSrcContext(IDLType idlType,
                             boolean accountsHaveDiscriminators,
                             Set<String> accounts,
+                            Map<String, String> externalTypes,
                             Map<String, NamedType> definedTypes,
                             Set<String> imports,
                             Set<String> staticImports,
@@ -58,8 +59,20 @@ public record GenSrcContext(IDLType idlType,
     staticImports.clear();
   }
 
+  public boolean isExternalType(final String typeName) {
+    return externalTypes.containsKey(typeName);
+  }
+
   public void addDefinedImport(final String className) {
-    imports.add(String.format("%s.%s", typePackage, className));
+    final var externalType = externalTypes.get(className);
+    imports.add(externalType != null ? externalType : String.format("%s.%s", typePackage, className));
+  }
+
+  public void addImportIfExternal(final String typeName) {
+    final var externalType = externalTypes.get(typeName);
+    if (externalType != null) {
+      imports.add(externalType);
+    }
   }
 
   public void addImport(final String className) {
@@ -106,20 +119,19 @@ public record GenSrcContext(IDLType idlType,
       }
       builder.append("import ").append(importLine).append(";\n");
     }
-    if (staticImports.isEmpty()) {
-      return true;
-    }
-    currentGroup = null;
-    builder.append('\n');
-    for (final var importLine : staticImports) {
-      group = getPackageGroup(importLine);
-      if (currentGroup == null) {
-        currentGroup = group;
-      } else if (!group.equals(currentGroup)) {
-        builder.append('\n');
-        currentGroup = group;
+    if (!staticImports.isEmpty()) {
+      currentGroup = null;
+      builder.append('\n');
+      for (final var importLine : staticImports) {
+        group = getPackageGroup(importLine);
+        if (currentGroup == null) {
+          currentGroup = group;
+        } else if (!group.equals(currentGroup)) {
+          builder.append('\n');
+          currentGroup = group;
+        }
+        builder.append("import static ").append(importLine).append(";\n");
       }
-      builder.append("import static ").append(importLine).append(";\n");
     }
     return true;
   }
