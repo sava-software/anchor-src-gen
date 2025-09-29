@@ -1,46 +1,48 @@
 [
   {
-    "name": "Drift",
-    "program": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH"
+    "name": "Kamino Lend",
+    "program": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+    "package": "kamino.lend"
   },
   {
-    "name": "Drift Vaults",
-    "program": "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR",
-    "package": "drift.vaults"
+    "name": "Kamino Scope",
+    "program": "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
+    "package": "kamino.scope"
   },
   {
-    "name": "Glam Protocol",
-    "program": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
-    "package": "glam.protocol"
+    "name": "Kamino Farms",
+    "program": "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+    "package": "kamino.farms"
   },
   {
-    "name": "GLAM Drift",
-    "program": "G1NTdrBmBpW43msRQmsf7qXSw3MFBNaqJcAkGiRmRq2F",
-    "package": "glam.drift",
+    "name": "Kamino Vaults",
+    "program": "KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd",
+    "package": "kamino.vaults",
     "typeRefs": [
       {
-        "refProgram": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+        "refProgram": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
         "srcMismatch": "ERROR",
         "matchOnTypeName": true,
         "excludeTypes": [
-          "FeeStructure"
+          "ReserveConfig",
+          "Reserve"
         ],
         "explicitRules": []
       },
       {
-        "refProgram": "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR",
-        "srcMismatch": "ERROR",
-        "matchOnTypeName": true,
-        "excludeTypes": [
-          "FeeStructure"
-        ],
-        "explicitRules": []
-      },
-      {
-        "refProgram": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
+        "refProgram": "HFn8GnPADiny6XqUoWE8uRPPxb29ikn4yTuPa9MF2fWJ",
         "srcMismatch": "ERROR",
         "matchOnTypeName": true,
         "excludeTypes": [],
+        "explicitRules": []
+      },
+      {
+        "refProgram": "FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr",
+        "srcMismatch": "ERROR",
+        "matchOnTypeName": true,
+        "excludeTypes": [
+          "TimeUnit"
+        ],
         "explicitRules": []
       }
     ]

@@ -469,9 +469,9 @@ public final class Entrypoint extends Thread {
       final var msg = String.format("""
               Data Structure mismatch:
               
-               - Ref: %s
+               - R: %s
               
-               - Local: %s
+               - L: %s
               """,
           refType, localType
       );

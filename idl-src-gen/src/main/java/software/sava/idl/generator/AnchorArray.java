@@ -235,9 +235,9 @@ public record AnchorArray(AnchorTypeContext genericType,
                               final boolean hasNext) {
     genSrcContext.addImport(Borsh.class);
     final var write = switch (genericType.type()) {
-      case u128, i128 -> String.format("Borsh.write128Array(%s, _data, i);", varName);
-      case u256, i256 -> String.format("Borsh.write256Array(%s, _data, i);", varName);
-      default -> String.format("Borsh.writeArray(%s, _data, i);", varName);
+      case u128, i128 -> String.format("Borsh.write128ArrayChecked(%s, %d, _data, i);", varName, numElements);
+      case u256, i256 -> String.format("Borsh.write256ArrayChecked(%s, %d, _data, i);", varName, numElements);
+      default -> String.format("Borsh.writeArrayChecked(%s, %d, _data, i);", varName, numElements);
     };
     return hasNext ? "i += " + write : write;
   }

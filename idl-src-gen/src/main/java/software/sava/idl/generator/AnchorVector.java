@@ -191,12 +191,12 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
     genSrcContext.addImport(Borsh.class);
     final var typeQualifier = typeQualifier();
-    if (genericType instanceof AnchorArray) {
+    if (genericType instanceof AnchorArray array) {
+      final int numElements = array.numElements();
       return hasNext
-          ? String.format("i += Borsh.write%sVectorArray(%s, _data, i);", typeQualifier, varName)
-          : String.format("Borsh.writeVector%sArray(%s, _data, i);", typeQualifier, varName);
+          ? String.format("i += Borsh.write%sVectorArrayChecked(%s, %s, _data, i);", typeQualifier, varName, numElements)
+          : String.format("Borsh.writeVector%sArrayChecked(%s, %s, _data, i);", typeQualifier, varName, numElements);
     } else {
-
       return hasNext
           ? String.format("i += Borsh.write%sVector(%s, _data, i);", typeQualifier, varName)
           : String.format("Borsh.write%sVector(%s, _data, i);", typeQualifier, varName);
