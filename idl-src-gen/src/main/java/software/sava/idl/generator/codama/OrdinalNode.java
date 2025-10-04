@@ -9,7 +9,7 @@ abstract class OrdinalNode extends NamedNode {
     this.ordinal = ordinal;
   }
 
-  public final int ordinal() {
+  final int ordinal() {
     return ordinal;
   }
 }

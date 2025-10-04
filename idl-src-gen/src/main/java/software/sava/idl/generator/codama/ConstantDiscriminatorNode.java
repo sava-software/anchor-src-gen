@@ -5,7 +5,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public record ConstantDiscriminatorNode(ValueNode.Constant constant, int offset) implements DiscriminatorNode {
+record ConstantDiscriminatorNode(ValueNode.Constant constant, int offset) implements DiscriminatorNode {
 
   public static ConstantDiscriminatorNode parse(final JsonIterator ji) {
     final var parser = new Parser();

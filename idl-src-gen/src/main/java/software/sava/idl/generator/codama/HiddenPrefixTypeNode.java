@@ -17,7 +17,7 @@ final class HiddenPrefixTypeNode extends BaseNestedTypeNode implements NestedTyp
     this.prefix = prefix;
   }
 
-  public List<ValueNode.Constant> prefix() {
+  List<ValueNode.Constant> prefix() {
     return prefix;
   }
 

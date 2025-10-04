@@ -6,11 +6,11 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class VariablePdaSeedNode extends NamedDocsNode implements PdaSeedNode {
+public final class DefinedTypeNode extends NamedDocsNode {
 
   private final TypeNode type;
 
-  public VariablePdaSeedNode(final String name, final List<String> docs, final TypeNode type) {
+  public DefinedTypeNode(final String name, final List<String> docs, final TypeNode type) {
     super(name, docs);
     this.type = type;
   }
@@ -19,18 +19,25 @@ final class VariablePdaSeedNode extends NamedDocsNode implements PdaSeedNode {
     return type;
   }
 
-  public static VariablePdaSeedNode parse(final JsonIterator ji) {
+  public static DefinedTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
-    return parser.createVariablePdaSeedNode();
+    return parser.createDefinedTypeNode();
   }
 
   static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
 
-    VariablePdaSeedNode createVariablePdaSeedNode() {
-      return new VariablePdaSeedNode(name, docs == null ? List.of() : docs, type);
+    private Parser() {
+    }
+
+    DefinedTypeNode createDefinedTypeNode() {
+      return new DefinedTypeNode(
+          name,
+          docs == null ? List.of() : docs,
+          type
+      );
     }
 
     @Override

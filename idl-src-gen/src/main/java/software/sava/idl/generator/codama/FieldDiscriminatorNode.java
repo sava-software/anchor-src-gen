@@ -13,7 +13,7 @@ final class FieldDiscriminatorNode extends NamedNode implements DiscriminatorNod
     this.offset = offset;
   }
 
-  public int offset() {
+  int offset() {
     return offset;
   }
 

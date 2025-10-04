@@ -11,7 +11,7 @@ abstract class NamedDocsNode extends NamedNode {
     this.docs = docs;
   }
 
-  public final List<String> docs() {
+  final List<String> docs() {
     return docs;
   }
 }

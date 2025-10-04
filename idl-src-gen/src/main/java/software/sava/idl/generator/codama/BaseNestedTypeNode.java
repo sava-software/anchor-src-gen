@@ -15,7 +15,7 @@ abstract class BaseNestedTypeNode {
     this.typeNode = typeNode;
   }
 
-  public final TypeNode typeNode() {
+  final TypeNode typeNode() {
     return typeNode;
   }
 

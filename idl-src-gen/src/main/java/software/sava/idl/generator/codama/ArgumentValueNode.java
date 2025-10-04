@@ -5,7 +5,8 @@ import systems.comodal.jsoniter.JsonIterator;
 final class ArgumentValueNode extends NamedNode implements
     ContextualValueNode,
     ContextualValueNodeCondition,
-    PdaSeedValueNodeValue {
+    PdaSeedValueNodeValue,
+    InstructionByteDeltaNodeValue {
 
   public ArgumentValueNode(final String name) {
     super(name);

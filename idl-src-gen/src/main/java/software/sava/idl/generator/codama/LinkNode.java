@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface LinkNode permits
+sealed interface LinkNode permits
     AccountLinkNode,
     DefinedTypeLinkNode,
     InstructionAccountLinkNode,
@@ -25,5 +25,5 @@ public sealed interface LinkNode permits
     };
   }
 
-  String name();
+  public String name();
 }

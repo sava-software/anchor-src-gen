@@ -27,19 +27,19 @@ public final class AccountNode extends NamedDocsNode {
     this.discriminators = discriminators;
   }
 
-  public TypeNode data() {
+  TypeNode data() {
     return data;
   }
 
-  public LinkNode pda() {
+  LinkNode pda() {
     return pda;
   }
 
-  public int size() {
+  int size() {
     return size;
   }
 
-  public List<DiscriminatorNode> discriminators() {
+  List<DiscriminatorNode> discriminators() {
     return discriminators;
   }
 

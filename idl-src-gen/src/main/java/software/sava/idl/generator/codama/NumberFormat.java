@@ -9,7 +9,7 @@ import java.util.OptionalLong;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public enum NumberFormat {
+enum NumberFormat {
 
   f32(float.class, OptionalDouble.class, Float.BYTES),
   f64(double.class, OptionalDouble.class, Double.BYTES),

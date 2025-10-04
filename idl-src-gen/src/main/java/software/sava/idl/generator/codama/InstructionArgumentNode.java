@@ -6,17 +6,22 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class StructFieldTypeNode extends NamedDocsNode {
+public final class InstructionArgumentNode extends NamedDocsNode {
+
+  public enum Strategy {
+    optional,
+    omitted
+  }
 
   private final TypeNode type;
-  private final ValueNode defaultValue;
-  private final ValueStrategy defaultValueStrategy;
+  private final InstructionInputValueNode defaultValue;
+  private final Strategy defaultValueStrategy;
 
-  public StructFieldTypeNode(final String name,
-                             final List<String> docs,
-                             final TypeNode type,
-                             final ValueNode defaultValue,
-                             final ValueStrategy defaultValueStrategy) {
+  public InstructionArgumentNode(final String name,
+                                 final List<String> docs,
+                                 final TypeNode type,
+                                 final InstructionInputValueNode defaultValue,
+                                 final Strategy defaultValueStrategy) {
     super(name, docs);
     this.type = type;
     this.defaultValue = defaultValue;
@@ -27,31 +32,31 @@ public final class StructFieldTypeNode extends NamedDocsNode {
     return type;
   }
 
-  ValueNode defaultValue() {
+  InstructionInputValueNode defaultValue() {
     return defaultValue;
   }
 
-  ValueStrategy defaultValueStrategy() {
+  Strategy defaultValueStrategy() {
     return defaultValueStrategy;
   }
 
-  public static StructFieldTypeNode parse(final JsonIterator ji) {
+  public static InstructionArgumentNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
-    return parser.createStructFieldTypeNode();
+    return parser.createInstructionArgumentNode();
   }
 
   static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
-    private ValueNode defaultValue;
-    private ValueStrategy defaultValueStrategy;
+    private InstructionInputValueNode defaultValue;
+    private Strategy defaultValueStrategy = Strategy.optional; // Default to "optional"
 
     private Parser() {
     }
 
-    StructFieldTypeNode createStructFieldTypeNode() {
-      return new StructFieldTypeNode(
+    InstructionArgumentNode createInstructionArgumentNode() {
+      return new InstructionArgumentNode(
           name,
           docs == null ? List.of() : docs,
           type,
@@ -64,14 +69,16 @@ public final class StructFieldTypeNode extends NamedDocsNode {
     public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
       if (fieldEquals("type", buf, offset, len)) {
         type = TypeNode.parse(ji);
+        return true;
       } else if (fieldEquals("defaultValue", buf, offset, len)) {
-        defaultValue = ValueNode.parse(ji);
+        defaultValue = InstructionInputValueNode.parse(ji);
+        return true;
       } else if (fieldEquals("defaultValueStrategy", buf, offset, len)) {
-        defaultValueStrategy = ValueStrategy.valueOf(ji.readString());
+        defaultValueStrategy = Strategy.valueOf(ji.readString());
+        return true;
       } else {
         return super.test(buf, offset, len, ji);
       }
-      return true;
     }
   }
 }

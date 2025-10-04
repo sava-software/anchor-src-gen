@@ -1,6 +1,6 @@
 package software.sava.idl.generator.codama;
 
-public enum StringEncoding {
+enum StringEncoding {
   base16,
   base58,
   base64,

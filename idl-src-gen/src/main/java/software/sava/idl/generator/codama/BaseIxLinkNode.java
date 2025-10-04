@@ -13,7 +13,7 @@ abstract class BaseIxLinkNode extends BaseLinkNode {
     this.instruction = instruction;
   }
 
-  public final InstructionLinkNode instruction() {
+  final InstructionLinkNode instruction() {
     return instruction;
   }
 

@@ -18,7 +18,7 @@ public final class PdaNode extends NamedDocsNode implements PdaValueNodePda {
     this.seeds = seeds;
   }
 
-  public List<PdaSeedNode> seeds() {
+  List<PdaSeedNode> seeds() {
     return seeds;
   }
 

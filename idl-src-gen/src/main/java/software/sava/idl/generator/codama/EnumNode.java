@@ -9,7 +9,7 @@ abstract class EnumNode extends NamedNode {
     this.ordinal = ordinal;
   }
 
-  public final int ordinal() {
+  final int ordinal() {
     return ordinal;
   }
 }

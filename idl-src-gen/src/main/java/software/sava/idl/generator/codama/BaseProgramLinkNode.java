@@ -13,7 +13,7 @@ abstract class BaseProgramLinkNode extends BaseLinkNode {
     this.program = program;
   }
 
-  public final ProgramLinkNode program() {
+  final ProgramLinkNode program() {
     return program;
   }
 

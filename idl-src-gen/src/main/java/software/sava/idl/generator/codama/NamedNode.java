@@ -8,7 +8,7 @@ abstract class NamedNode {
     this.name = name;
   }
 
-  public final String name() {
+  final String name() {
     return name;
   }
 }

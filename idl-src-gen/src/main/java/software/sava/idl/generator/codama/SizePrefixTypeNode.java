@@ -15,7 +15,7 @@ final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeN
     this.prefix = prefix;
   }
 
-  public NestedTypeNode prefix() {
+  NestedTypeNode prefix() {
     return prefix;
   }
 

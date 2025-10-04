@@ -13,7 +13,7 @@ final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, En
     this.tuple = tuple;
   }
 
-  public NestedTypeNode tuple() {
+  NestedTypeNode tuple() {
     return tuple;
   }
 

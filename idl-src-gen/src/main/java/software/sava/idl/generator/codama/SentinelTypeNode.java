@@ -15,7 +15,7 @@ final class SentinelTypeNode extends BaseNestedTypeNode implements NestedTypeNod
     this.sentinel = sentinel;
   }
 
-  public ValueNode.Constant sentinel() {
+  ValueNode.Constant sentinel() {
     return sentinel;
   }
 

@@ -13,7 +13,7 @@ final class DefinedTypeLinkNode extends BaseLinkNode implements LinkNode {
     this.program = program;
   }
 
-  public String program() {
+  String program() {
     return program;
   }
 

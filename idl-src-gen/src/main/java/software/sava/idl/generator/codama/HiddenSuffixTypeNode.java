@@ -15,7 +15,7 @@ final class HiddenSuffixTypeNode extends BaseNestedTypeNode implements NestedTyp
     this.suffix = suffix;
   }
 
-  public ValueNode.Constant[] suffix() {
+  ValueNode.Constant[] suffix() {
     return suffix;
   }
 

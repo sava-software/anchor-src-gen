@@ -13,7 +13,7 @@ final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, E
     this.struct = struct;
   }
 
-  public NestedTypeNode struct() {
+  NestedTypeNode struct() {
     return struct;
   }
 

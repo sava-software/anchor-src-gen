@@ -13,7 +13,7 @@ final class PdaSeedValueNode extends NamedNode {
     this.value = value;
   }
 
-  public PdaSeedValueNodeValue value() {
+  PdaSeedValueNodeValue value() {
     return value;
   }
 

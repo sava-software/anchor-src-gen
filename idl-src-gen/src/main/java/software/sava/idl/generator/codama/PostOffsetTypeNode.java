@@ -26,11 +26,11 @@ final class PostOffsetTypeNode extends BaseNestedTypeNode implements NestedTypeN
     this.strategy = strategy;
   }
 
-  public int offset() {
+  int offset() {
     return offset;
   }
 
-  public Strategy strategy() {
+  Strategy strategy() {
     return strategy;
   }
 

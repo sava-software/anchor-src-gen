@@ -15,7 +15,7 @@ final class FixedSizeTypeNode extends BaseNestedTypeNode implements NestedTypeNo
     this.size = size;
   }
 
-  public int size() {
+  int size() {
     return size;
   }
 

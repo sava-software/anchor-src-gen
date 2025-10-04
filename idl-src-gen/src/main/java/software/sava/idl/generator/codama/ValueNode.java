@@ -9,7 +9,8 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeValue permits ValueNode.Array,
+public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeValue permits
+    ValueNode.Array,
     ValueNode.Boolean,
     ValueNode.Bytes,
     ValueNode.Constant,
@@ -290,7 +291,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
     }
   }
 
-  record Number(long number) implements ValueNode {
+  record Number(long number) implements ValueNode, InstructionByteDeltaNodeValue {
 
     public static Number parse(final JsonIterator ji) {
       final var parser = new Parser();

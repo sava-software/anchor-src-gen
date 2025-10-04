@@ -2,9 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
-
-final class AccountLinkNode extends BaseProgramLinkNode implements LinkNode {
+final class AccountLinkNode extends BaseProgramLinkNode implements LinkNode, InstructionByteDeltaNodeValue {
 
   AccountLinkNode(final String name, final ProgramLinkNode program) {
     super(name, program);
