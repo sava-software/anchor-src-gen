@@ -230,7 +230,7 @@ public final class Entrypoint extends Thread {
     }
   }
 
-  public static void main(final String[] args) throws InterruptedException, IOException {
+  static void main() throws InterruptedException, IOException {
     final var clas = Entrypoint.class;
     final var moduleName = clas.getModule().getName();
     final int tabLength = Integer.parseInt(propertyOrElse(

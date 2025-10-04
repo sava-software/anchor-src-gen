@@ -140,7 +140,6 @@ public enum AnchorType {
     }
   };
 
-
   private final Class<?> realJavaType;
   private final Class<?> javaType;
   private final Class<?> optionalJavaType;

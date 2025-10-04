@@ -24,4 +24,3 @@ out/
 ignore
 anchor-src-gen/src/main/java/software/sava/anchor/gen
 /idls/
-idl-src-gen/src/main/java/software/sava/idl/generator/codama

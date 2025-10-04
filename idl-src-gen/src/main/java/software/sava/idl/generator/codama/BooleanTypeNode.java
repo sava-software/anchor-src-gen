@@ -1,0 +1,38 @@
+package software.sava.idl.generator.codama;
+
+import systems.comodal.jsoniter.FieldBufferPredicate;
+import systems.comodal.jsoniter.JsonIterator;
+
+import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
+
+record BooleanTypeNode(NestedTypeNode size) implements TypeNode {
+
+  public static BooleanTypeNode parse(final JsonIterator ji) {
+    final var parser = new Parser();
+    ji.testObject(parser);
+    return parser.createTypeNode();
+  }
+
+  static final class Parser implements FieldBufferPredicate {
+
+    private NestedTypeNode size;
+
+    BooleanTypeNode createTypeNode() {
+      return new BooleanTypeNode(size);
+    }
+
+    @Override
+    public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
+      if (fieldEquals("size", buf, offset, len)) {
+        size = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+      } else {
+        throw new IllegalStateException(String.format(
+            "Unhandled %s field %s.",
+            getClass().getSimpleName(), new String(buf, offset, len)
+        ));
+      }
+      return true;
+    }
+  }
+
+}
