@@ -9,7 +9,7 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public sealed interface ValueNode permits ValueNode.Array,
+public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeValue permits ValueNode.Array,
     ValueNode.Boolean,
     ValueNode.Bytes,
     ValueNode.Constant,
@@ -24,10 +24,7 @@ public sealed interface ValueNode permits ValueNode.Array,
     ValueNode.Struct,
     ValueNode.Tuple {
 
-  static ValueNode parse(final JsonIterator ji) {
-    final int mark = ji.mark();
-    final var kind = ji.skipUntil("kind").readString();
-    ji.reset(mark);
+  static ValueNode parse(final JsonIterator ji, final java.lang.String kind) {
     return switch (kind) {
       case "arrayValueNode" -> Array.parse(ji);
       case "booleanValueNode" -> Boolean.parse(ji);
@@ -45,6 +42,11 @@ public sealed interface ValueNode permits ValueNode.Array,
       case "tupleValueNode" -> Tuple.parse(ji);
       default -> throw new UnsupportedOperationException(kind);
     };
+  }
+
+  static ValueNode parse(final JsonIterator ji) {
+    final var kind = ji.skipUntil("kind").readString();
+    return parse(ji, kind);
   }
 
   private static List<ValueNode> parseArray(final JsonIterator ji) {
@@ -461,7 +463,18 @@ public sealed interface ValueNode permits ValueNode.Array,
       }
     }
 
-    record Field(java.lang.String name, ValueNode val) {
+    static final class Field extends NamedNode {
+
+      private final ValueNode val;
+
+      public Field(final java.lang.String name, final ValueNode val) {
+        super(name);
+        this.val = val;
+      }
+
+      public ValueNode val() {
+        return val;
+      }
 
       public static Field parse(final JsonIterator ji) {
         final var parser = new Parser();

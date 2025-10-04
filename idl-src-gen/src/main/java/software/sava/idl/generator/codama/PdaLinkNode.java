@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-final class PdaLinkNode extends BaseProgramLinkNode implements LinkNode {
+final class PdaLinkNode extends BaseProgramLinkNode implements LinkNode, PdaValueNodePda {
 
   PdaLinkNode(final String name, final ProgramLinkNode program) {
     super(name, program);
