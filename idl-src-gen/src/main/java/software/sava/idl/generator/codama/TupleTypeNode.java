@@ -10,13 +10,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record TupleTypeNode(List<TypeNode> items) implements TypeNode {
 
-  public static TupleTypeNode parse(final JsonIterator ji) {
+  static TupleTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private List<TypeNode> items;
 

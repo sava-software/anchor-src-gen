@@ -9,7 +9,7 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class InstructionNode extends NamedDocsNode {
 
-  public enum AccountStrategy {
+  enum AccountStrategy {
     omitted,
     programId
   }
@@ -76,13 +76,13 @@ final class InstructionNode extends NamedDocsNode {
     return subInstructions;
   }
 
-  public static InstructionNode parse(final JsonIterator ji) {
+  static InstructionNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private AccountStrategy optionalAccountStrategy;
     private List<InstructionAccountNode> accounts;

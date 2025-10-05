@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record ConstantPdaSeedNode(TypeNode type, ValueNode value) implements PdaSeedNode {
 
-  public static ConstantPdaSeedNode parse(final JsonIterator ji) {
+  static ConstantPdaSeedNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createConstantPdaSeedNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private TypeNode type;
     private ValueNode value;

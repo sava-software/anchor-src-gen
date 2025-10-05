@@ -10,7 +10,7 @@ final class FixedSizeTypeNode extends BaseNestedTypeNode implements NestedTypeNo
 
   private final int size;
 
-  public FixedSizeTypeNode(final TypeNode typeNode, final int size) {
+  FixedSizeTypeNode(final TypeNode typeNode, final int size) {
     super(typeNode);
     this.size = size;
   }
@@ -19,7 +19,7 @@ final class FixedSizeTypeNode extends BaseNestedTypeNode implements NestedTypeNo
     return size;
   }
 
-  public static FixedSizeTypeNode parse(final JsonIterator ji,
+  static FixedSizeTypeNode parse(final JsonIterator ji,
                                         final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

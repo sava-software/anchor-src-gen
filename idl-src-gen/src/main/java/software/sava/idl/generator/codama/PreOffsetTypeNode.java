@@ -18,7 +18,7 @@ final class PreOffsetTypeNode extends BaseNestedTypeNode implements NestedTypeNo
   private final int offset;
   private final Strategy strategy;
 
-  public PreOffsetTypeNode(final TypeNode typeNode, final int offset, final Strategy strategy) {
+  PreOffsetTypeNode(final TypeNode typeNode, final int offset, final Strategy strategy) {
     super(typeNode);
     this.offset = offset;
     this.strategy = strategy;
@@ -32,7 +32,7 @@ final class PreOffsetTypeNode extends BaseNestedTypeNode implements NestedTypeNo
     return strategy;
   }
 
-  public static  PreOffsetTypeNode parse(final JsonIterator ji,
+  static  PreOffsetTypeNode parse(final JsonIterator ji,
                                                                 final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

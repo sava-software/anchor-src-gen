@@ -10,13 +10,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record EnumTypeNode(List<EnumVariantTypeNode> variants, TypeNode size) implements TypeNode {
 
-  public static EnumTypeNode parse(final JsonIterator ji) {
+  static EnumTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private List<EnumVariantTypeNode> variants;
     private TypeNode size;

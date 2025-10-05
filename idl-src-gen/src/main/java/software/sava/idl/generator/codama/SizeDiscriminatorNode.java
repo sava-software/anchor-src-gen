@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record SizeDiscriminatorNode(int size) implements DiscriminatorNode {
 
-  public static SizeDiscriminatorNode parse(final JsonIterator ji) {
+  static SizeDiscriminatorNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createSizeDiscriminatorNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private int size;
 

@@ -7,14 +7,14 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class AccountNode extends NamedDocsNode {
+final class AccountNode extends NamedDocsNode {
 
   private final TypeNode data;
   private final LinkNode pda;
   private final int size;
   private final List<DiscriminatorNode> discriminators;
 
-  public AccountNode(final String name,
+  AccountNode(final String name,
                      final List<String> docs,
                      final TypeNode data,
                      final LinkNode pda,
@@ -43,13 +43,13 @@ public final class AccountNode extends NamedDocsNode {
     return discriminators;
   }
 
-  public static AccountNode parse(final JsonIterator ji) {
+  static AccountNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createAccountNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private TypeNode data;
     private LinkNode pda;

@@ -6,7 +6,7 @@ record RemainderCountNode() implements CountNode {
 
   private static final RemainderCountNode INSTANCE = new RemainderCountNode();
 
-  public static RemainderCountNode parse(final JsonIterator ji) {
+  static RemainderCountNode parse(final JsonIterator ji) {
     ji.skipRestOfObject();
     return INSTANCE;
   }

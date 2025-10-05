@@ -8,13 +8,13 @@ final class AccountLinkNode extends BaseProgramLinkNode implements LinkNode, Ins
     super(name, program);
   }
 
-  public static AccountLinkNode parse(final JsonIterator ji) {
+  static AccountLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createAccountLinkNode();
   }
 
-  static final class Parser extends BaseProgramLinkNode.Parser {
+  private static final class Parser extends BaseProgramLinkNode.Parser {
 
     private Parser() {
     }

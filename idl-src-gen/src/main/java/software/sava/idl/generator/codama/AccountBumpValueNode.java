@@ -4,17 +4,17 @@ import systems.comodal.jsoniter.JsonIterator;
 
 final class AccountBumpValueNode extends NamedNode implements ContextualValueNode {
 
-  public AccountBumpValueNode(final String name) {
+  AccountBumpValueNode(final String name) {
     super(name);
   }
 
-  public static AccountBumpValueNode parse(final JsonIterator ji) {
+  static AccountBumpValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createAccountBumpValueNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     AccountBumpValueNode createAccountBumpValueNode() {
       return new AccountBumpValueNode(name);

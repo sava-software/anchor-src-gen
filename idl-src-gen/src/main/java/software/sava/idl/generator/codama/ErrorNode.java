@@ -6,12 +6,12 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class ErrorNode extends NamedDocsNode {
+final class ErrorNode extends NamedDocsNode {
 
   private final int code;
   private final String message;
 
-  public ErrorNode(final String name,
+  ErrorNode(final String name,
                    final List<String> docs,
                    final int code,
                    final String message) {
@@ -28,13 +28,13 @@ public final class ErrorNode extends NamedDocsNode {
     return message;
   }
 
-  public static ErrorNode parse(final JsonIterator ji) {
+  static ErrorNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createErrorNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private int code;
     private String message;

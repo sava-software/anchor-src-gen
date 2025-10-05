@@ -8,7 +8,7 @@ final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, En
 
   private final TypeNode tuple;
 
-  public EnumTupleVariantTypeNode(final String name, final int discriminator, final TypeNode tuple) {
+  EnumTupleVariantTypeNode(final String name, final int discriminator, final TypeNode tuple) {
     super(name, discriminator);
     this.tuple = tuple;
   }
@@ -17,13 +17,13 @@ final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, En
     return tuple;
   }
 
-  public static EnumTupleVariantTypeNode parse(final JsonIterator ji) {
+  static EnumTupleVariantTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createEnumTupleVariantTypeNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private int discriminator;
     private TypeNode tuple;

@@ -10,7 +10,7 @@ final class SentinelTypeNode extends BaseNestedTypeNode implements NestedTypeNod
 
   private final ValueNode.Constant sentinel;
 
-  public SentinelTypeNode(final TypeNode typeNode, final ValueNode.Constant sentinel) {
+  SentinelTypeNode(final TypeNode typeNode, final ValueNode.Constant sentinel) {
     super(typeNode);
     this.sentinel = sentinel;
   }
@@ -19,7 +19,7 @@ final class SentinelTypeNode extends BaseNestedTypeNode implements NestedTypeNod
     return sentinel;
   }
 
-  public static SentinelTypeNode parse(final JsonIterator ji,
+  static SentinelTypeNode parse(final JsonIterator ji,
                                        final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

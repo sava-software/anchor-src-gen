@@ -10,13 +10,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record NumberTypeNode(NumberFormat format, ByteOrder endian) implements TypeNode {
 
-  public static NumberTypeNode parse(final JsonIterator ji) {
+  static NumberTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private NumberFormat format;
     private ByteOrder endian;

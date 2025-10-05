@@ -10,13 +10,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record PdaValueNode(PdaValueNodePda pda, List<PdaSeedValueNode> seeds) implements ContextualValueNode {
 
-  public static PdaValueNode parse(final JsonIterator ji) {
+  static PdaValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createPdaValueNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private PdaValueNodePda pda;
     private List<PdaSeedValueNode> seeds;

@@ -6,9 +6,9 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class InstructionArgumentNode extends NamedDocsNode {
+final class InstructionArgumentNode extends NamedDocsNode {
 
-  public enum Strategy {
+  enum Strategy {
     optional,
     omitted
   }
@@ -17,11 +17,11 @@ public final class InstructionArgumentNode extends NamedDocsNode {
   private final InstructionInputValueNode defaultValue;
   private final Strategy defaultValueStrategy;
 
-  public InstructionArgumentNode(final String name,
-                                 final List<String> docs,
-                                 final TypeNode type,
-                                 final InstructionInputValueNode defaultValue,
-                                 final Strategy defaultValueStrategy) {
+  InstructionArgumentNode(final String name,
+                          final List<String> docs,
+                          final TypeNode type,
+                          final InstructionInputValueNode defaultValue,
+                          final Strategy defaultValueStrategy) {
     super(name, docs);
     this.type = type;
     this.defaultValue = defaultValue;
@@ -40,13 +40,13 @@ public final class InstructionArgumentNode extends NamedDocsNode {
     return defaultValueStrategy;
   }
 
-  public static InstructionArgumentNode parse(final JsonIterator ji) {
+  static InstructionArgumentNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionArgumentNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
     private InstructionInputValueNode defaultValue;

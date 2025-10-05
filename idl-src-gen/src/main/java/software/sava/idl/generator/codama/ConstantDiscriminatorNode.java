@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record ConstantDiscriminatorNode(ValueNode.Constant constant, int offset) implements DiscriminatorNode {
 
-  public static ConstantDiscriminatorNode parse(final JsonIterator ji) {
+  static ConstantDiscriminatorNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createConstantDiscriminatorNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private ValueNode.Constant constant;
     private int offset;

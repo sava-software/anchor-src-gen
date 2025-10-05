@@ -10,7 +10,7 @@ final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeN
 
   private final TypeNode prefix;
 
-  public SizePrefixTypeNode(final TypeNode typeNode, final TypeNode prefix) {
+  SizePrefixTypeNode(final TypeNode typeNode, final TypeNode prefix) {
     super(typeNode);
     this.prefix = prefix;
   }
@@ -19,7 +19,7 @@ final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeN
     return prefix;
   }
 
-  public static SizePrefixTypeNode parse(final JsonIterator ji,
+  static SizePrefixTypeNode parse(final JsonIterator ji,
                                          final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

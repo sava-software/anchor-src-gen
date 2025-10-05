@@ -11,13 +11,13 @@ final class InstructionArgumentLinkNode extends BaseIxLinkNode implements LinkNo
     super(name, instruction);
   }
 
-  public static InstructionArgumentLinkNode parse(final JsonIterator ji) {
+  static InstructionArgumentLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionArgumentLinkNode();
   }
 
-  static final class Parser extends BaseIxLinkNode.Parser {
+  private static final class Parser extends BaseIxLinkNode.Parser {
 
     private Parser() {
     }

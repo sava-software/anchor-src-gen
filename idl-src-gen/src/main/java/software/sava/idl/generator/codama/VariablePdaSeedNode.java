@@ -10,7 +10,7 @@ final class VariablePdaSeedNode extends NamedDocsNode implements PdaSeedNode {
 
   private final TypeNode type;
 
-  public VariablePdaSeedNode(final String name, final List<String> docs, final TypeNode type) {
+  VariablePdaSeedNode(final String name, final List<String> docs, final TypeNode type) {
     super(name, docs);
     this.type = type;
   }
@@ -19,13 +19,13 @@ final class VariablePdaSeedNode extends NamedDocsNode implements PdaSeedNode {
     return type;
   }
 
-  public static VariablePdaSeedNode parse(final JsonIterator ji) {
+  static VariablePdaSeedNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createVariablePdaSeedNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
 

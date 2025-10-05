@@ -6,17 +6,17 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class EnumEmptyVariantTypeNode extends OrdinalNode implements TypeNode, EnumVariantTypeNode {
 
-  public EnumEmptyVariantTypeNode(final String name, final int discriminator) {
+  EnumEmptyVariantTypeNode(final String name, final int discriminator) {
     super(name, discriminator);
   }
 
-  public static EnumEmptyVariantTypeNode parse(final JsonIterator ji) {
+  static EnumEmptyVariantTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createEnumEmptyVariantTypeNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private int discriminator;
 

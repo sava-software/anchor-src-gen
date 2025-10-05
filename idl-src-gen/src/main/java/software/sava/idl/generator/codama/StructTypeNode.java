@@ -10,13 +10,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record StructTypeNode(List<StructFieldTypeNode> fields) implements TypeNode {
 
-  public static StructTypeNode parse(final JsonIterator ji) {
+  static StructTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private List<StructFieldTypeNode> fields;
 

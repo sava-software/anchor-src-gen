@@ -17,13 +17,13 @@ final class DefinedTypeLinkNode extends BaseLinkNode implements LinkNode, TypeNo
     return program;
   }
 
-  public static DefinedTypeLinkNode parse(final JsonIterator ji) {
+  static DefinedTypeLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createDefinedTypeLinkNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private String program;
 

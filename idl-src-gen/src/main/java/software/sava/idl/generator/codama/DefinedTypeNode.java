@@ -6,11 +6,11 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class DefinedTypeNode extends NamedDocsNode {
+final class DefinedTypeNode extends NamedDocsNode {
 
   private final TypeNode type;
 
-  public DefinedTypeNode(final String name, final List<String> docs, final TypeNode type) {
+  DefinedTypeNode(final String name, final List<String> docs, final TypeNode type) {
     super(name, docs);
     this.type = type;
   }
@@ -19,13 +19,13 @@ public final class DefinedTypeNode extends NamedDocsNode {
     return type;
   }
 
-  public static DefinedTypeNode parse(final JsonIterator ji) {
+  static DefinedTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createDefinedTypeNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
 

@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record AmountTypeNode(int decimals, String unit, TypeNode number) implements TypeNode {
 
-  public static AmountTypeNode parse(final JsonIterator ji) {
+  static AmountTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private int decimals;
     private String unit;

@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record ZeroableOptionTypeNode(TypeNode item, ValueNode.Constant zeroValue) implements TypeNode {
 
-  public static ZeroableOptionTypeNode parse(final JsonIterator ji) {
+  static ZeroableOptionTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private TypeNode item;
     private ValueNode.Constant zeroValue;

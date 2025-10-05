@@ -8,7 +8,7 @@ final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, E
 
   private final TypeNode struct;
 
-  public EnumStructVariantTypeNode(final String name, final int discriminator, final TypeNode struct) {
+  EnumStructVariantTypeNode(final String name, final int discriminator, final TypeNode struct) {
     super(name, discriminator);
     this.struct = struct;
   }
@@ -17,13 +17,13 @@ final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, E
     return struct;
   }
 
-  public static EnumStructVariantTypeNode parse(final JsonIterator ji) {
+  static EnumStructVariantTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createEnumStructVariantTypeNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private int discriminator;
     private TypeNode struct;

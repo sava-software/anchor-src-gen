@@ -6,17 +6,17 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class StructFieldTypeNode extends NamedDocsNode {
+final class StructFieldTypeNode extends NamedDocsNode {
 
   private final TypeNode type;
   private final ValueNode defaultValue;
   private final ValueStrategy defaultValueStrategy;
 
-  public StructFieldTypeNode(final String name,
-                             final List<String> docs,
-                             final TypeNode type,
-                             final ValueNode defaultValue,
-                             final ValueStrategy defaultValueStrategy) {
+  StructFieldTypeNode(final String name,
+                      final List<String> docs,
+                      final TypeNode type,
+                      final ValueNode defaultValue,
+                      final ValueStrategy defaultValueStrategy) {
     super(name, docs);
     this.type = type;
     this.defaultValue = defaultValue;
@@ -35,13 +35,13 @@ public final class StructFieldTypeNode extends NamedDocsNode {
     return defaultValueStrategy;
   }
 
-  public static StructFieldTypeNode parse(final JsonIterator ji) {
+  static StructFieldTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createStructFieldTypeNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private TypeNode type;
     private ValueNode defaultValue;

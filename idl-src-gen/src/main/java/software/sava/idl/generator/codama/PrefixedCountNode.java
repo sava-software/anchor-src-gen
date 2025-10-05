@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record PrefixedCountNode(TypeNode prefix) implements CountNode {
 
-  public static PrefixedCountNode parse(final JsonIterator ji) {
+  static PrefixedCountNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createPrefixedCountNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private TypeNode prefix;
 

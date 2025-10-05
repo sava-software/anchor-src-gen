@@ -6,19 +6,20 @@ final class ArgumentValueNode extends NamedNode implements
     ContextualValueNode,
     ContextualValueNodeCondition,
     PdaSeedValueNodeValue,
-    InstructionByteDeltaNodeValue {
+    InstructionByteDeltaNodeValue,
+    ResolverDefaultValueNodes {
 
-  public ArgumentValueNode(final String name) {
+  ArgumentValueNode(final String name) {
     super(name);
   }
 
-  public static ArgumentValueNode parse(final JsonIterator ji) {
+  static ArgumentValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createArgumentValueNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     ArgumentValueNode createArgumentValueNode() {
       return new ArgumentValueNode(name);

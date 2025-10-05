@@ -12,7 +12,7 @@ final class HiddenPrefixTypeNode extends BaseNestedTypeNode implements NestedTyp
 
   private final List<ValueNode.Constant> prefix;
 
-  public HiddenPrefixTypeNode(final TypeNode typeNode, final List<ValueNode.Constant> prefix) {
+  HiddenPrefixTypeNode(final TypeNode typeNode, final List<ValueNode.Constant> prefix) {
     super(typeNode);
     this.prefix = prefix;
   }
@@ -21,11 +21,11 @@ final class HiddenPrefixTypeNode extends BaseNestedTypeNode implements NestedTyp
     return prefix;
   }
 
-  public static HiddenPrefixTypeNode parse(final JsonIterator ji) {
+  static HiddenPrefixTypeNode parse(final JsonIterator ji) {
     return parse(ji, null);
   }
 
-  public static HiddenPrefixTypeNode parse(final JsonIterator ji,
+  static HiddenPrefixTypeNode parse(final JsonIterator ji,
                                            final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

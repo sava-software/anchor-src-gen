@@ -9,13 +9,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record RootNode(String standard, String version, ProgramNode program, List<ProgramNode> additionalPrograms) {
 
-  public static RootNode parse(final JsonIterator ji) {
+  static RootNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createRootNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private String standard;
     private String version;

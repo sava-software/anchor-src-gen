@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record InstructionByteDeltaNode(InstructionByteDeltaNodeValue value, boolean withHeader, boolean subtract) {
 
-  public static InstructionByteDeltaNode parse(final JsonIterator ji) {
+  static InstructionByteDeltaNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionByteDeltaNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private InstructionByteDeltaNodeValue value;
     private boolean withHeader;

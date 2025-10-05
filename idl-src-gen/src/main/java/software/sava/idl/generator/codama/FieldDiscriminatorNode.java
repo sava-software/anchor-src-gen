@@ -8,7 +8,7 @@ final class FieldDiscriminatorNode extends NamedNode implements DiscriminatorNod
 
   private final int offset;
 
-  public FieldDiscriminatorNode(final String name, final int offset) {
+  FieldDiscriminatorNode(final String name, final int offset) {
     super(name);
     this.offset = offset;
   }
@@ -17,13 +17,13 @@ final class FieldDiscriminatorNode extends NamedNode implements DiscriminatorNod
     return offset;
   }
 
-  public static FieldDiscriminatorNode parse(final JsonIterator ji) {
+  static FieldDiscriminatorNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createFieldDiscriminatorNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private int offset;
 

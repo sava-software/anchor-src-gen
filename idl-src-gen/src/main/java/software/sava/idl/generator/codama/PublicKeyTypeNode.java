@@ -6,7 +6,7 @@ record PublicKeyTypeNode() implements TypeNode {
 
   private static final PublicKeyTypeNode INSTANCE = new PublicKeyTypeNode();
 
-  public static PublicKeyTypeNode parse(final JsonIterator ji) {
+  static PublicKeyTypeNode parse(final JsonIterator ji) {
     ji.skipRestOfObject();
     return INSTANCE;
   }

@@ -10,7 +10,7 @@ final class HiddenSuffixTypeNode extends BaseNestedTypeNode implements NestedTyp
 
   private final ValueNode.Constant[] suffix;
 
-  public HiddenSuffixTypeNode(final TypeNode typeNode, final ValueNode.Constant[] suffix) {
+  HiddenSuffixTypeNode(final TypeNode typeNode, final ValueNode.Constant[] suffix) {
     super(typeNode);
     this.suffix = suffix;
   }
@@ -19,7 +19,7 @@ final class HiddenSuffixTypeNode extends BaseNestedTypeNode implements NestedTyp
     return suffix;
   }
 
-  public static HiddenSuffixTypeNode parse(final JsonIterator ji,
+  static HiddenSuffixTypeNode parse(final JsonIterator ji,
                                            final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

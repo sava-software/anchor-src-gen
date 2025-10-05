@@ -8,7 +8,7 @@ final class PdaSeedValueNode extends NamedNode {
 
   private final PdaSeedValueNodeValue value;
 
-  public PdaSeedValueNode(final String name, final PdaSeedValueNodeValue value) {
+  PdaSeedValueNode(final String name, final PdaSeedValueNodeValue value) {
     super(name);
     this.value = value;
   }
@@ -17,13 +17,13 @@ final class PdaSeedValueNode extends NamedNode {
     return value;
   }
 
-  public static PdaSeedValueNode parse(final JsonIterator ji) {
+  static PdaSeedValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createPdaSeedValueNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     private PdaSeedValueNodeValue value;
 

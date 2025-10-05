@@ -7,13 +7,13 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class PdaNode extends NamedDocsNode implements PdaValueNodePda {
+final class PdaNode extends NamedDocsNode implements PdaValueNodePda {
 
   private final List<PdaSeedNode> seeds;
 
-  public PdaNode(final String name,
-                 final List<String> docs,
-                 final List<PdaSeedNode> seeds) {
+  PdaNode(final String name,
+          final List<String> docs,
+          final List<PdaSeedNode> seeds) {
     super(name, docs);
     this.seeds = seeds;
   }
@@ -22,13 +22,13 @@ public final class PdaNode extends NamedDocsNode implements PdaValueNodePda {
     return seeds;
   }
 
-  public static PdaNode parse(final JsonIterator ji) {
+  static PdaNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createPdaNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private List<PdaSeedNode> seeds;
 

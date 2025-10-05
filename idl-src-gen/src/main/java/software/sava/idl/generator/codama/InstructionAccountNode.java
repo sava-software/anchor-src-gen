@@ -6,14 +6,14 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public final class InstructionAccountNode extends NamedDocsNode {
+final class InstructionAccountNode extends NamedDocsNode {
 
   private final boolean isWritable;
   private final boolean isSigner;
   private final boolean isOptional;
   private final InstructionInputValueNode defaultValue;
 
-  public InstructionAccountNode(final String name,
+  InstructionAccountNode(final String name,
                                 final List<String> docs,
                                 final boolean isWritable,
                                 final boolean isSigner,
@@ -42,13 +42,13 @@ public final class InstructionAccountNode extends NamedDocsNode {
     return defaultValue;
   }
 
-  public static InstructionAccountNode parse(final JsonIterator ji) {
+  static InstructionAccountNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionAccountNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private boolean isWritable;
     private boolean isSigner;

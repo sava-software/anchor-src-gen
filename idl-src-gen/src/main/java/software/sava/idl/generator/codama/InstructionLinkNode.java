@@ -10,13 +10,13 @@ final class InstructionLinkNode extends BaseProgramLinkNode implements LinkNode 
     super(name, program);
   }
 
-  public static InstructionLinkNode parse(final JsonIterator ji) {
+  static InstructionLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionLinkNode();
   }
 
-  static final class Parser extends BaseProgramLinkNode.Parser {
+  private static final class Parser extends BaseProgramLinkNode.Parser {
 
     private Parser() {
     }

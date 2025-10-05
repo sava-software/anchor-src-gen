@@ -6,7 +6,7 @@ record PayerValueNode() implements ContextualValueNode {
 
   private static final PayerValueNode INSTANCE = new PayerValueNode();
 
-  public static PayerValueNode parse(final JsonIterator ji) {
+  static PayerValueNode parse(final JsonIterator ji) {
     ji.skipRestOfObject();
     return INSTANCE;
   }

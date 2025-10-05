@@ -74,7 +74,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createArray();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private List<ValueNode> items;
 
@@ -103,7 +103,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createBytes();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private StringEncoding encoding;
       private java.lang.String data;
@@ -134,7 +134,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createBoolean();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private boolean val;
 
@@ -162,7 +162,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createConstant();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private TypeNode type;
       private ValueNode val;
@@ -193,7 +193,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createEnum();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private java.lang.String variant;
       private DefinedTypeLinkNode _enum;
@@ -227,7 +227,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createMap();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private TypeNode type;
       private List<Entry> entries;
@@ -257,7 +257,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
         return parser.createEntry();
       }
 
-      static final class Parser implements FieldBufferPredicate {
+      private static final class Parser implements FieldBufferPredicate {
 
         private ValueNode key;
         private ValueNode val;
@@ -299,7 +299,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createNumber();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private long number;
 
@@ -327,7 +327,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createPublicKey();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private software.sava.core.accounts.PublicKey publicKey;
       private java.lang.String identifier;
@@ -358,7 +358,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createSet();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private List<ValueNode> items;
 
@@ -386,7 +386,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createSome();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private ValueNode val;
 
@@ -414,7 +414,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createString();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private java.lang.String string;
 
@@ -442,7 +442,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createStruct();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private List<Field> fields;
 
@@ -483,7 +483,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
         return parser.createField();
       }
 
-      static final class Parser extends BaseParser {
+      private static final class Parser extends BaseParser {
 
         private ValueNode val;
 
@@ -512,7 +512,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
       return parser.createTuple();
     }
 
-    static final class Parser implements FieldBufferPredicate {
+    private static final class Parser implements FieldBufferPredicate {
 
       private List<ValueNode> items;
 

@@ -6,7 +6,7 @@ record IdentityValueNode() implements ContextualValueNode {
 
   private static final IdentityValueNode INSTANCE = new IdentityValueNode();
 
-  public static IdentityValueNode parse(final JsonIterator ji) {
+  static IdentityValueNode parse(final JsonIterator ji) {
     ji.skipRestOfObject();
     return INSTANCE;
   }

@@ -20,7 +20,7 @@ final class PostOffsetTypeNode extends BaseNestedTypeNode implements NestedTypeN
   private final int offset;
   private final Strategy strategy;
 
-  public PostOffsetTypeNode(final TypeNode typeNode, final int offset, final Strategy strategy) {
+  PostOffsetTypeNode(final TypeNode typeNode, final int offset, final Strategy strategy) {
     super(typeNode);
     this.offset = offset;
     this.strategy = strategy;
@@ -34,7 +34,7 @@ final class PostOffsetTypeNode extends BaseNestedTypeNode implements NestedTypeN
     return strategy;
   }
 
-  public static  PostOffsetTypeNode parse(final JsonIterator ji,
+  static  PostOffsetTypeNode parse(final JsonIterator ji,
                                                                  final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);

@@ -6,7 +6,7 @@ record ProgramIdValueNode() implements ContextualValueNode {
 
   private static final ProgramIdValueNode INSTANCE = new ProgramIdValueNode();
 
-  public static ProgramIdValueNode parse(final JsonIterator ji) {
+  static ProgramIdValueNode parse(final JsonIterator ji) {
     ji.skipRestOfObject();
     return INSTANCE;
   }

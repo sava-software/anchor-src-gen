@@ -7,13 +7,13 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 record OptionTypeNode(TypeNode item, TypeNode prefix, boolean fixed) implements TypeNode {
 
-  public static OptionTypeNode parse(final JsonIterator ji) {
+  static OptionTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createTypeNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private TypeNode item;
     private TypeNode prefix;

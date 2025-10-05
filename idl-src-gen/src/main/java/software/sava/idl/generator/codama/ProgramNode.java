@@ -81,13 +81,13 @@ final class ProgramNode extends NamedDocsNode {
     return errors;
   }
 
-  public static ProgramNode parse(final JsonIterator ji) {
+  static ProgramNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createProgramNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private PublicKey publicKey;
     private String version;

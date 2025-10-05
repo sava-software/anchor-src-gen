@@ -8,13 +8,13 @@ final class InstructionAccountLinkNode extends BaseIxLinkNode implements LinkNod
     super(name, instruction);
   }
 
-  public static InstructionAccountLinkNode parse(final JsonIterator ji) {
+  static InstructionAccountLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionAccountLinkNode();
   }
 
-  static final class Parser extends BaseIxLinkNode.Parser {
+  private static final class Parser extends BaseIxLinkNode.Parser {
 
     private Parser() {
     }

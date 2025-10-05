@@ -12,13 +12,13 @@ record InstructionRemainingAccountsNode(List<String> docs,
                                       boolean isSigner,
                                       ArgumentValueNode value) {
 
-  public static InstructionRemainingAccountsNode parse(final JsonIterator ji) {
+  static InstructionRemainingAccountsNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createInstructionRemainingAccountsNode();
   }
 
-  static final class Parser extends BaseDocsParser {
+  private static final class Parser extends BaseDocsParser {
 
     private boolean isOptional;
     private boolean isSigner;

@@ -10,13 +10,13 @@ record ConditionalValueNode(ContextualValueNodeCondition condition,
                             InstructionInputValueNode ifTrue,
                             InstructionInputValueNode ifFalse) implements ContextualValueNode {
 
-  public static ConditionalValueNode parse(final JsonIterator ji) {
+  static ConditionalValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createConditionalValueNode();
   }
 
-  static final class Parser implements FieldBufferPredicate {
+  private static final class Parser implements FieldBufferPredicate {
 
     private ContextualValueNodeCondition condition;
     private ValueNode value;

@@ -5,19 +5,20 @@ import systems.comodal.jsoniter.JsonIterator;
 final class AccountValueNode extends NamedNode implements
     ContextualValueNode,
     ContextualValueNodeCondition,
-    PdaSeedValueNodeValue {
+    PdaSeedValueNodeValue,
+    ResolverDefaultValueNodes {
 
-  public AccountValueNode(final String name) {
+  AccountValueNode(final String name) {
     super(name);
   }
 
-  public static AccountValueNode parse(final JsonIterator ji) {
+  static AccountValueNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createAccountValueNode();
   }
 
-  static final class Parser extends BaseParser {
+  private static final class Parser extends BaseParser {
 
     AccountValueNode createAccountValueNode() {
       return new AccountValueNode(name);

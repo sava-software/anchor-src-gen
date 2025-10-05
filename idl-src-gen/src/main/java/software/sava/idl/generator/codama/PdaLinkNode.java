@@ -8,13 +8,13 @@ final class PdaLinkNode extends BaseProgramLinkNode implements LinkNode, PdaValu
     super(name, program);
   }
 
-  public static PdaLinkNode parse(final JsonIterator ji) {
+  static PdaLinkNode parse(final JsonIterator ji) {
     final var parser = new Parser();
     ji.testObject(parser);
     return parser.createPdaLinkNode();
   }
 
-  static final class Parser extends BaseProgramLinkNode.Parser {
+  private static final class Parser extends BaseProgramLinkNode.Parser {
 
     private Parser() {
     }
