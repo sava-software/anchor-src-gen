@@ -286,7 +286,7 @@ public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValu
     private static final None INSTANCE = new None();
 
     public static None parse(final JsonIterator ji) {
-      ji.skip();
+      ji.skipRestOfObject();
       return INSTANCE;
     }
   }
