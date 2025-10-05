@@ -26,6 +26,6 @@ final class FormatTests {
         asdf      poiu
         
         zxcv
-        """, AnchorSourceGenerator.removeBlankLines(str));
+        """, ParseUtil.removeBlankLines(str));
   }
 }

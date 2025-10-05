@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
@@ -23,8 +25,10 @@ final class ProgramNode extends NamedDocsNode {
   private final String version;
   private final Origin origin;
   private final List<AccountNode> accounts;
+  private final Map<String, AccountNode> accountMap;
   private final List<InstructionNode> instructions;
   private final List<DefinedTypeNode> definedTypes;
+  private final Map<String, DefinedTypeNode> definedTypeMap;
   private final List<PdaNode> pdas;
   private final List<ErrorNode> errors;
 
@@ -34,8 +38,10 @@ final class ProgramNode extends NamedDocsNode {
               final String version,
               final Origin origin,
               final List<AccountNode> accounts,
+              final Map<String, AccountNode> accountMap,
               final List<InstructionNode> instructions,
               final List<DefinedTypeNode> definedTypes,
+              final Map<String, DefinedTypeNode> definedTypeMap,
               final List<PdaNode> pdas,
               final List<ErrorNode> errors) {
     super(name, docs);
@@ -43,8 +49,10 @@ final class ProgramNode extends NamedDocsNode {
     this.version = version;
     this.origin = origin;
     this.accounts = accounts;
+    this.accountMap = accountMap;
     this.instructions = instructions;
     this.definedTypes = definedTypes;
+    this.definedTypeMap = definedTypeMap;
     this.pdas = pdas;
     this.errors = errors;
   }
@@ -65,12 +73,20 @@ final class ProgramNode extends NamedDocsNode {
     return accounts;
   }
 
+  AccountNode account(final String name) {
+    return accountMap.get(name);
+  }
+
   List<InstructionNode> instructions() {
     return instructions;
   }
 
   List<DefinedTypeNode> definedTypes() {
     return definedTypes;
+  }
+
+  DefinedTypeNode definedType(final String name) {
+    return definedTypeMap.get(name);
   }
 
   List<PdaNode> pdas() {
@@ -93,8 +109,10 @@ final class ProgramNode extends NamedDocsNode {
     private String version;
     private Origin origin;
     private List<AccountNode> accounts;
+    private Map<String, AccountNode> accountMap;
     private List<InstructionNode> instructions;
     private List<DefinedTypeNode> definedTypes;
+    private Map<String, DefinedTypeNode> definedTypeMap;
     private List<PdaNode> pdas;
     private List<ErrorNode> errors;
 
@@ -109,8 +127,10 @@ final class ProgramNode extends NamedDocsNode {
           version,
           origin,
           accounts == null ? List.of() : accounts,
+          accountMap == null ? Map.of() : accountMap,
           instructions == null ? List.of() : instructions,
           definedTypes == null ? List.of() : definedTypes,
+          definedTypeMap == null ? Map.of() : definedTypeMap,
           pdas == null ? List.of() : pdas,
           errors == null ? List.of() : errors
       );
@@ -128,34 +148,47 @@ final class ProgramNode extends NamedDocsNode {
         origin = Origin.valueOf(ji.readString());
         return true;
       } else if (fieldEquals("accounts", buf, offset, len)) {
-        accounts = new ArrayList<>();
+        final var accounts = new ArrayList<AccountNode>();
         while (ji.readArray()) {
           accounts.add(AccountNode.parse(ji));
         }
+        this.accounts = List.copyOf(accounts);
+        this.accountMap = HashMap.newHashMap(accounts.size());
+        for (final var account : accounts) {
+          this.accountMap.put(account.name(), account);
+        }
         return true;
       } else if (fieldEquals("instructions", buf, offset, len)) {
-        instructions = new ArrayList<>();
+        final var instructions = new ArrayList<InstructionNode>();
         while (ji.readArray()) {
           instructions.add(InstructionNode.parse(ji));
         }
+        this.instructions = List.copyOf(instructions);
         return true;
       } else if (fieldEquals("definedTypes", buf, offset, len)) {
-        definedTypes = new ArrayList<>();
+        final var definedTypes = new ArrayList<DefinedTypeNode>();
         while (ji.readArray()) {
           definedTypes.add(DefinedTypeNode.parse(ji));
         }
+        this.definedTypes = List.copyOf(definedTypes);
+        this.definedTypeMap = HashMap.newHashMap(definedTypes.size());
+        for (final var definedType : definedTypes) {
+          this.definedTypeMap.put(definedType.name(), definedType);
+        }
         return true;
       } else if (fieldEquals("pdas", buf, offset, len)) {
-        pdas = new ArrayList<>();
+        final var pdas = new ArrayList<PdaNode>();
         while (ji.readArray()) {
           pdas.add(PdaNode.parse(ji));
         }
+        this.pdas = List.copyOf(pdas);
         return true;
       } else if (fieldEquals("errors", buf, offset, len)) {
-        errors = new ArrayList<>();
+        final var errors = new ArrayList<ErrorNode>();
         while (ji.readArray()) {
           errors.add(ErrorNode.parse(ji));
         }
+        this.errors = List.copyOf(errors);
         return true;
       } else {
         return super.test(buf, offset, len, ji);

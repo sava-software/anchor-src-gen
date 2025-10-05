@@ -3,6 +3,7 @@ package software.sava.idl.generator;
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.accounts.PublicKey;
 import software.sava.core.tx.Instruction;
+import software.sava.idl.generator.anchor.*;
 import software.sava.rpc.json.PublicKeyEncoding;
 import software.sava.rpc.json.http.SolanaNetwork;
 import software.sava.rpc.json.http.client.SolanaRpcClient;
@@ -28,7 +29,7 @@ import static java.nio.file.StandardOpenOption.*;
 import static java.util.Objects.requireNonNullElse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static software.sava.idl.generator.AnchorSourceGenerator.resolveAndClearSourceDirectory;
+import static software.sava.idl.generator.anchor.AnchorSourceGenerator.resolveAndClearSourceDirectory;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 public final class Entrypoint extends Thread {

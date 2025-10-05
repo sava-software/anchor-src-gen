@@ -1,6 +1,7 @@
 package software.sava.idl.generator;
 
 import org.junit.jupiter.api.Test;
+import software.sava.idl.generator.anchor.OnChainIDL;
 
 import java.util.Base64;
 

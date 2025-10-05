@@ -20,7 +20,7 @@ final class FixedSizeTypeNode extends BaseNestedTypeNode implements NestedTypeNo
   }
 
   static FixedSizeTypeNode parse(final JsonIterator ji,
-                                        final Function<JsonIterator, TypeNode> typeParser) {
+                                 final Function<JsonIterator, TypeNode> typeParser) {
     final var parser = new Parser(typeParser);
     ji.testObject(parser);
     return parser.createTypeNode();

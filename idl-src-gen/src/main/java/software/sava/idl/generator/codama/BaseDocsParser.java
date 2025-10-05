@@ -14,10 +14,11 @@ abstract class BaseDocsParser extends BaseParser {
   @Override
   public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
     if (fieldEquals("docs", buf, offset, len)) {
-      docs = new ArrayList<>();
+      final var docs = new ArrayList<String>();
       while (ji.readArray()) {
         docs.add(ji.readString());
       }
+      this.docs = List.copyOf(docs);
     } else {
       return super.test(buf, offset, len, ji);
     }
