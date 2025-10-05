@@ -8,14 +8,14 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeNode {
 
-  private final NestedTypeNode prefix;
+  private final TypeNode prefix;
 
-  public SizePrefixTypeNode(final TypeNode typeNode, final NestedTypeNode prefix) {
+  public SizePrefixTypeNode(final TypeNode typeNode, final TypeNode prefix) {
     super(typeNode);
     this.prefix = prefix;
   }
 
-  NestedTypeNode prefix() {
+  TypeNode prefix() {
     return prefix;
   }
 
@@ -28,7 +28,7 @@ final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeN
 
   private static final class Parser extends BaseNestedTypeNode.Parser {
 
-    private NestedTypeNode prefix;
+    private TypeNode prefix;
 
     Parser(final Function<JsonIterator, TypeNode> typeParser) {
       super(typeParser);
@@ -41,7 +41,7 @@ final class SizePrefixTypeNode extends BaseNestedTypeNode implements NestedTypeN
     @Override
     public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
       if (fieldEquals("prefix", buf, offset, len)) {
-        prefix = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+        prefix = TypeNode.parse(ji, NumberTypeNode::parse);
       } else {
         return super.test(buf, offset, len, ji);
       }

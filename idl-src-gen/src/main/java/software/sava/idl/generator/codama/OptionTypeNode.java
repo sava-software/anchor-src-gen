@@ -5,7 +5,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-record OptionTypeNode(TypeNode item, NestedTypeNode prefix, boolean fixed) implements TypeNode {
+record OptionTypeNode(TypeNode item, TypeNode prefix, boolean fixed) implements TypeNode {
 
   public static OptionTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
@@ -16,7 +16,7 @@ record OptionTypeNode(TypeNode item, NestedTypeNode prefix, boolean fixed) imple
   static final class Parser implements FieldBufferPredicate {
 
     private TypeNode item;
-    private NestedTypeNode prefix;
+    private TypeNode prefix;
     private boolean fixed;
 
     OptionTypeNode createTypeNode() {
@@ -28,7 +28,7 @@ record OptionTypeNode(TypeNode item, NestedTypeNode prefix, boolean fixed) imple
       if (fieldEquals("item", buf, offset, len)) {
         item = TypeNode.parse(ji);
       } else if (fieldEquals("prefix", buf, offset, len)) {
-        prefix = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+        prefix = TypeNode.parse(ji, NumberTypeNode::parse);
       } else if (fieldEquals("fixed", buf, offset, len)) {
         fixed = ji.readBoolean();
       } else if (fieldEquals("kind", buf, offset, len)) {

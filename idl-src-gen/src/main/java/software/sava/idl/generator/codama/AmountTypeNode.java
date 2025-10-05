@@ -5,7 +5,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-record AmountTypeNode(int decimals, String unit, NestedTypeNode number) implements TypeNode {
+record AmountTypeNode(int decimals, String unit, TypeNode number) implements TypeNode {
 
   public static AmountTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
@@ -17,7 +17,7 @@ record AmountTypeNode(int decimals, String unit, NestedTypeNode number) implemen
 
     private int decimals;
     private String unit;
-    private NestedTypeNode number;
+    private TypeNode number;
 
     AmountTypeNode createTypeNode() {
       return new AmountTypeNode(decimals, unit, number);
@@ -30,7 +30,7 @@ record AmountTypeNode(int decimals, String unit, NestedTypeNode number) implemen
       } else if (fieldEquals("unit", buf, offset, len)) {
         unit = ji.readString();
       } else if (fieldEquals("number", buf, offset, len)) {
-        number = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+        number = TypeNode.parse(ji, NumberTypeNode::parse);
       } else {
         throw new IllegalStateException(String.format(
             "Unhandled %s field %s.",
@@ -40,5 +40,4 @@ record AmountTypeNode(int decimals, String unit, NestedTypeNode number) implemen
       return true;
     }
   }
-
 }

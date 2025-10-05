@@ -6,14 +6,14 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, EnumVariantTypeNode {
 
-  private final NestedTypeNode tuple;
+  private final TypeNode tuple;
 
-  public EnumTupleVariantTypeNode(final String name, final int discriminator, final NestedTypeNode tuple) {
+  public EnumTupleVariantTypeNode(final String name, final int discriminator, final TypeNode tuple) {
     super(name, discriminator);
     this.tuple = tuple;
   }
 
-  NestedTypeNode tuple() {
+  TypeNode tuple() {
     return tuple;
   }
 
@@ -26,7 +26,7 @@ final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, En
   static final class Parser extends BaseParser {
 
     private int discriminator;
-    private NestedTypeNode tuple;
+    private TypeNode tuple;
 
     EnumTupleVariantTypeNode createEnumTupleVariantTypeNode() {
       return new EnumTupleVariantTypeNode(name, discriminator, tuple);
@@ -38,7 +38,7 @@ final class EnumTupleVariantTypeNode extends OrdinalNode implements TypeNode, En
         discriminator = ji.readInt();
         return true;
       } else if (fieldEquals("tuple", buf, offset, len)) {
-        tuple = TypeNode.parseNestedTypeNode(ji, TupleTypeNode::parse);
+        tuple = TypeNode.parse(ji, TupleTypeNode::parse);
         return true;
       } else {
         return super.test(buf, offset, len, ji);

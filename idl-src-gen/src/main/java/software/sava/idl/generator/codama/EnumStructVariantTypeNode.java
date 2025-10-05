@@ -6,14 +6,14 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
 final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, EnumVariantTypeNode {
 
-  private final NestedTypeNode struct;
+  private final TypeNode struct;
 
-  public EnumStructVariantTypeNode(final String name, final int discriminator, final NestedTypeNode struct) {
+  public EnumStructVariantTypeNode(final String name, final int discriminator, final TypeNode struct) {
     super(name, discriminator);
     this.struct = struct;
   }
 
-  NestedTypeNode struct() {
+  TypeNode struct() {
     return struct;
   }
 
@@ -26,7 +26,7 @@ final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, E
   static final class Parser extends BaseParser {
 
     private int discriminator;
-    private NestedTypeNode struct;
+    private TypeNode struct;
 
     EnumStructVariantTypeNode createEnumStructVariantTypeNode() {
       return new EnumStructVariantTypeNode(name, discriminator, struct);
@@ -38,7 +38,7 @@ final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, E
         discriminator = ji.readInt();
         return true;
       } else if (fieldEquals("struct", buf, offset, len)) {
-        struct = TypeNode.parseNestedTypeNode(ji, StructTypeNode::parse);
+        struct = TypeNode.parse(ji, StructTypeNode::parse);
         return true;
       } else {
         return super.test(buf, offset, len, ji);

@@ -4,7 +4,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class DefinedTypeLinkNode extends BaseLinkNode implements LinkNode {
+final class DefinedTypeLinkNode extends BaseLinkNode implements LinkNode, TypeNode {
 
   private final String program;
 

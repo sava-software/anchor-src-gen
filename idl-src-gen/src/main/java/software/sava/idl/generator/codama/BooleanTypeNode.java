@@ -5,7 +5,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-record BooleanTypeNode(NestedTypeNode size) implements TypeNode {
+record BooleanTypeNode(TypeNode size) implements TypeNode {
 
   public static BooleanTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
@@ -15,7 +15,7 @@ record BooleanTypeNode(NestedTypeNode size) implements TypeNode {
 
   static final class Parser implements FieldBufferPredicate {
 
-    private NestedTypeNode size;
+    private TypeNode size;
 
     BooleanTypeNode createTypeNode() {
       return new BooleanTypeNode(size);
@@ -24,7 +24,7 @@ record BooleanTypeNode(NestedTypeNode size) implements TypeNode {
     @Override
     public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
       if (fieldEquals("size", buf, offset, len)) {
-        size = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+        size = TypeNode.parse(ji, NumberTypeNode::parse);
       } else {
         throw new IllegalStateException(String.format(
             "Unhandled %s field %s.",
@@ -34,5 +34,4 @@ record BooleanTypeNode(NestedTypeNode size) implements TypeNode {
       return true;
     }
   }
-
 }

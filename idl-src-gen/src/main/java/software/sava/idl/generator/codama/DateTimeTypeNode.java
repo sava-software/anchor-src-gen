@@ -5,7 +5,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-record DateTimeTypeNode(NestedTypeNode number) implements TypeNode {
+record DateTimeTypeNode(TypeNode number) implements TypeNode {
 
   public static DateTimeTypeNode parse(final JsonIterator ji) {
     final var parser = new Parser();
@@ -15,7 +15,7 @@ record DateTimeTypeNode(NestedTypeNode number) implements TypeNode {
 
   static final class Parser implements FieldBufferPredicate {
 
-    private NestedTypeNode number;
+    private TypeNode number;
 
     DateTimeTypeNode createTypeNode() {
       return new DateTimeTypeNode(number);
@@ -24,7 +24,7 @@ record DateTimeTypeNode(NestedTypeNode number) implements TypeNode {
     @Override
     public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
       if (fieldEquals("number", buf, offset, len)) {
-        number = TypeNode.parseNestedTypeNode(ji, NumberTypeNode::parse);
+        number = TypeNode.parse(ji, NumberTypeNode::parse);
       } else {
         throw new IllegalStateException(String.format(
             "Unhandled %s field %s.",
@@ -34,5 +34,4 @@ record DateTimeTypeNode(NestedTypeNode number) implements TypeNode {
       return true;
     }
   }
-
 }
