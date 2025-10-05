@@ -20,7 +20,7 @@ public sealed interface InstructionInputValueNode permits
       case "payerValueNode" -> PayerValueNode.parse(ji);
       case "pdaValueNode" -> PdaValueNode.parse(ji);
       case "programIdValueNode" -> ProgramIdValueNode.parse(ji);
-      // TODO case "resolverValueNode" -> ResolverValueNode.parse(ji);
+      case "resolverValueNode" -> ResolverValueNode.parse(ji);
       default -> ValueNode.parse(ji, kind);
     };
   }

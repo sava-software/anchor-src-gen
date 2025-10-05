@@ -25,7 +25,6 @@ enum NumberFormat {
   u64(long.class, OptionalLong.class, Long.BYTES),
   u128(BigInteger.class, Long.BYTES << 1);
 
-
   private final Class<?> realJavaType;
   private final Class<?> javaType;
   private final Class<?> optionalJavaType;

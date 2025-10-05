@@ -10,7 +10,8 @@ public sealed interface ContextualValueNode extends InstructionInputValueNode pe
     IdentityValueNode,
     PayerValueNode,
     PdaValueNode,
-    ProgramIdValueNode {
+    ProgramIdValueNode,
+    ResolverValueNode {
 
   static ContextualValueNode parse(final JsonIterator ji) {
     final var kind = ji.skipObjField().readString();
@@ -23,6 +24,7 @@ public sealed interface ContextualValueNode extends InstructionInputValueNode pe
       case "payerValueNode" -> PayerValueNode.parse(ji);
       case "pdaValueNode" -> PdaValueNode.parse(ji);
       case "programIdValueNode" -> ProgramIdValueNode.parse(ji);
+      case "resolverValueNode" -> ResolverValueNode.parse(ji);
       default -> throw new UnsupportedOperationException(kind);
     };
   }
