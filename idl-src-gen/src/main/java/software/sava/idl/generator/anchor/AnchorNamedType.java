@@ -1,6 +1,7 @@
 package software.sava.idl.generator.anchor;
 
 import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.src.SrcUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ public record AnchorNamedType(Discriminator discriminator,
 
   @Override
   public String docComments() {
-    return NamedType.formatComments(this.docs);
+    return SrcUtil.formatComments(this.docs);
   }
 
   @Override

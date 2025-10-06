@@ -1,5 +1,6 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.anchor.AnchorUtil;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.List;
@@ -33,6 +34,36 @@ final class StructFieldTypeNode extends NamedDocsNode {
 
   ValueStrategy defaultValueStrategy() {
     return defaultValueStrategy;
+  }
+
+  void generateMemCompFilter(final SrcGenContext srcGenContext,
+                             final StringBuilder builder,
+                             final String offsetVarName) {
+    type.generateMemCompFilter(srcGenContext, builder, name, offsetVarName);
+  }
+
+  String generateRecordField(final SrcGenContext srcGenContext) {
+    return type.generateRecordField(srcGenContext, this, false);
+  }
+
+  public String arrayLengthConstant() {
+    if (type instanceof ArrayTypeNode(_, CountNode count)) {
+      final int length;
+      if (count instanceof FixedCountNode(int value)) {
+        length = value;
+      } else if (count instanceof PrefixedCountNode(TypeNode prefix)) {
+        if (prefix instanceof FixedSizeTypeNode fixedSizeTypeNode) {
+          length = fixedSizeTypeNode.size();
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+      return String.format("public static final int %s_LEN = %d;\n", AnchorUtil.snakeCase(name, true), length);
+    } else {
+      return null;
+    }
   }
 
   static StructFieldTypeNode parse(final JsonIterator ji) {

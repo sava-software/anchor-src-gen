@@ -47,7 +47,7 @@ public sealed interface AnchorTypeContext permits AnchorDefinedTypeContext, Anch
   }
 
   default RuntimeException throwInvalidDataType() {
-    throw AnchorPrimitive.throwInvalidDataType(this.getClass());
+    return AnchorPrimitive.throwInvalidDataType(this.getClass());
   }
 
   default int numElements() {

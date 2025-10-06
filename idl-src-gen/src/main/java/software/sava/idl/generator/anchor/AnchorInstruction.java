@@ -5,13 +5,12 @@ import software.sava.core.accounts.PublicKey;
 import software.sava.core.accounts.meta.AccountMeta;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.tx.Instruction;
+import software.sava.idl.generator.src.SrcUtil;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static java.util.Locale.ENGLISH;
 import static software.sava.idl.generator.ParseUtil.removeBlankLines;
 
 public record AnchorInstruction(Discriminator discriminator,
@@ -20,46 +19,8 @@ public record AnchorInstruction(Discriminator discriminator,
                                 List<AnchorAccountMeta> accounts,
                                 List<NamedType> args) {
 
-  static String replaceNewLinesIfLessThan(final String lines, final int numLines, final int limit) {
-    return numLines < limit && !lines.contains("//") ? lines.replaceAll("\n +", " ") : lines;
-  }
-
-  static String replaceNewLinesIfLessThan(final StringBuilder lines, final int numLines, final int limit) {
-    return replaceNewLinesIfLessThan(lines.toString(), numLines, limit);
-  }
-
-  static String replaceNewLinesIfLessThan(final String lines, final int limit) {
-    int numNewLines = 0;
-    for (int from = 0, to = lines.length(); from < to; ++from) {
-      if (lines.indexOf('\n', from) > 0) {
-        ++numNewLines;
-      }
-    }
-    return replaceNewLinesIfLessThan(lines, numNewLines, limit);
-  }
-
-  static String replaceNewLinesIfLessThan(final StringBuilder lines, final int limit) {
-    return replaceNewLinesIfLessThan(lines.toString(), limit);
-  }
-
-  private static String formatKeyName(final String name) {
-    return name.endsWith("Key") || name.endsWith("key") ? name : name + "Key";
-  }
-
   private static String formatKeyName(final AnchorAccountMeta accountMeta) {
-    return formatKeyName(accountMeta.name());
-  }
-
-  private static String formatDiscriminatorReference(final String ixName) {
-    return String.format("%s_DISCRIMINATOR", AnchorUtil.snakeCase(ixName).toUpperCase(ENGLISH));
-  }
-
-  private static String formatDiscriminator(final String ixName, final Discriminator discriminator) {
-    return Arrays.stream(discriminator.toIntArray())
-        .mapToObj(Integer::toString)
-        .collect(Collectors.joining(", ",
-            String.format("  public static final Discriminator %s = toDiscriminator(", formatDiscriminatorReference(ixName)), ");"
-        ));
+    return SrcUtil.formatKeyName(accountMeta.name());
   }
 
   public String generateFactorySource(final GenSrcContext genSrcContext, final String parentTab) {
@@ -68,7 +29,7 @@ public record AnchorInstruction(Discriminator discriminator,
 
     genSrcContext.addImport(Discriminator.class);
     genSrcContext.addStaticImport(Discriminator.class, "toDiscriminator");
-    builder.append(formatDiscriminator(name, discriminator == null ? AnchorUtil.toDiscriminator(name) : discriminator));
+    builder.append(SrcUtil.formatDiscriminator(name, discriminator == null ? AnchorUtil.toDiscriminator(name) : discriminator));
     builder.append("\n\n");
 
     final var keyParamsBuilder = new StringBuilder(1_024);
@@ -199,7 +160,7 @@ public record AnchorInstruction(Discriminator discriminator,
     paramsBuilder.append(") {\n");
     final var paramTab = " ".repeat(methodSignature.length());
     final var params = paramsBuilder.toString().indent(paramTab.length()).stripLeading();
-    builder.append(replaceNewLinesIfLessThan(params, numArgs + accounts.size(), 3));
+    builder.append(SrcUtil.replaceNewLinesIfLessThan(params, numArgs + accounts.size(), 3));
 
     // Keys
     builder.append(createKeysBuilder);
@@ -207,7 +168,7 @@ public record AnchorInstruction(Discriminator discriminator,
     // String -> byte[]
     builder.append(stringsBuilder.toString().indent(dataTab.length()));
 
-    final var discriminatorReference = formatDiscriminatorReference(name);
+    final var discriminatorReference = SrcUtil.formatDiscriminatorReference(name);
     // Data, create and Instruction.
     if (numArgs > 0) {
       dataLength += AnchorUtil.DISCRIMINATOR_LENGTH;

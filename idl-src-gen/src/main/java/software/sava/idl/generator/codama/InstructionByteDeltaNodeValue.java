@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface InstructionByteDeltaNodeValue permits
+sealed interface InstructionByteDeltaNodeValue permits
     AccountLinkNode,
     ArgumentValueNode,
     ValueNode.Number {

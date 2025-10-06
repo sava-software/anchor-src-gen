@@ -9,7 +9,7 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-public sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeValue permits
+sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeValue permits
     ValueNode.Array,
     ValueNode.Boolean,
     ValueNode.Bytes,

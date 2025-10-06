@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface InstructionInputValueNode permits
+sealed interface InstructionInputValueNode permits
     ContextualValueNode,
     ProgramLinkNode,
     ValueNode {

@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface ResolverDefaultValueNodes permits AccountValueNode, ArgumentValueNode {
+sealed interface ResolverDefaultValueNodes permits AccountValueNode, ArgumentValueNode {
 
   static ResolverDefaultValueNodes parse(final JsonIterator ji) {
     final var kind = ji.skipObjField().readString();

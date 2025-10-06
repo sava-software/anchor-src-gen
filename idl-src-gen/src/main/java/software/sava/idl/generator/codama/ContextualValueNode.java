@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface ContextualValueNode extends InstructionInputValueNode permits
+sealed interface ContextualValueNode extends InstructionInputValueNode permits
     AccountBumpValueNode,
     AccountValueNode,
     ArgumentValueNode,

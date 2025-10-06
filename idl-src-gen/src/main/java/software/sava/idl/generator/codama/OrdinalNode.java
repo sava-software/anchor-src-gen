@@ -1,6 +1,8 @@
 package software.sava.idl.generator.codama;
 
-abstract class OrdinalNode extends NamedNode {
+abstract sealed class OrdinalNode extends NamedNode permits EnumEmptyVariantTypeNode,
+    EnumStructVariantTypeNode,
+    EnumTupleVariantTypeNode {
 
   protected final int ordinal;
 

@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface EnumVariantTypeNode permits
+sealed interface EnumVariantTypeNode permits
     EnumEmptyVariantTypeNode,
     EnumStructVariantTypeNode,
     EnumTupleVariantTypeNode {

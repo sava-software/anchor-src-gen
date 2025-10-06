@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface PdaSeedNode permits
+sealed interface PdaSeedNode permits
     ConstantPdaSeedNode,
     VariablePdaSeedNode {
 

@@ -1,6 +1,6 @@
 package software.sava.idl.generator.codama;
 
-public sealed interface NestedTypeNode extends TypeNode permits
+sealed interface NestedTypeNode extends TypeNode permits
     FixedSizeTypeNode,
     HiddenPrefixTypeNode,
     HiddenSuffixTypeNode,
@@ -8,4 +8,17 @@ public sealed interface NestedTypeNode extends TypeNode permits
     PreOffsetTypeNode,
     SentinelTypeNode,
     SizePrefixTypeNode {
+
+  TypeNode typeNode();
+
+//  default TypeNode leafTypeNode() {
+//    var typeNode = typeNode();
+//    for (; ; ) {
+//      if (typeNode instanceof NestedTypeNode nestedTypeNode) {
+//        typeNode = nestedTypeNode.typeNode();
+//      } else {
+//        return typeNode;
+//      }
+//    }
+//  }
 }

@@ -5,6 +5,7 @@ import software.sava.core.accounts.PublicKey;
 import software.sava.core.borsh.Borsh;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.rpc.Filter;
+import software.sava.idl.generator.src.StructGen;
 import software.sava.rpc.json.http.response.AccountInfo;
 import systems.comodal.jsoniter.JsonIterator;
 
@@ -16,9 +17,9 @@ import java.util.stream.Collectors;
 
 import static java.util.Locale.ENGLISH;
 import static software.sava.core.rpc.Filter.MAX_MEM_COMP_LENGTH;
-import static software.sava.idl.generator.anchor.AnchorInstruction.replaceNewLinesIfLessThan;
-import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseLowerList;
 import static software.sava.idl.generator.ParseUtil.removeBlankLines;
+import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
+import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseLowerList;
 import static software.sava.idl.generator.anchor.AnchorType.string;
 
 public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeContext {
@@ -52,41 +53,16 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     final var tab = genSrcContext.tab();
     final int tabLength = tab.length();
     final var builder = new StringBuilder(4_096);
-    final var paramsBuilder = new StringBuilder(4_096);
+    builder.append(context.docComments());
 
     final var name = context.name();
-    final var recordSigLine = recordAccessModifier
-        + (recordAccessModifier.isBlank() ? "" : " ")
-        + String.format("record %s(", name);
+    final int recordSigLineLength = StructGen.sigLine(builder, name, !recordAccessModifier.isBlank());
 
     if (fields.isEmpty()) {
-      builder.append(context.docComments());
-      builder.append(recordSigLine).append(String.format("""
-          ) implements %s {
-          
-          """, interfaceName
-      ));
-      builder.append(String.format("""
-          private static final %s INSTANCE = new %s();
-          
-          public static %s read(final byte[] _data, final int offset) {
-          %sreturn INSTANCE;
-          }
-          
-          @Override
-          public int write(final byte[] _data, final int offset) {
-          %sreturn 0;
-          }
-          
-          @Override
-          public int l() {
-          %sreturn 0;
-          }
-          """, name, name, name, tab, tab, tab
-      ).indent(tabLength));
-      return removeBlankLines(builder.append('}').toString());
+      return StructGen.emptyStruct(tab, builder, interfaceName, name);
     }
 
+    final var paramsBuilder = new StringBuilder(4_096);
     final StringBuilder offsetsBuilder;
     final StringBuilder memCompFiltersBuilder;
     if (isAccount) {
@@ -146,11 +122,8 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
       }
     }
 
-    final var params = paramsBuilder.toString().indent(recordSigLine.length()).strip();
-
+    final var params = paramsBuilder.toString().indent(recordSigLineLength).strip();
     builder
-        .append(context.docComments())
-        .append(recordSigLine)
         .append(replaceNewLinesIfLessThan(params, fields.size(), 3))
         .append(String.format("""
             ) implements %s {
@@ -170,6 +143,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
         builder.append(tab).append(fixedArrayLength);
       }
     }
+
     if (isAccount) {
       if (byteLength > 0) {
         builder.append(tab).append("""
@@ -295,15 +269,15 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     }
 
     builder.append("""
-          if (_data == null || _data.length == 0) {""".indent(tabLength << 1));
+        if (_data == null || _data.length == 0) {""".indent(tabLength << 1));
     builder.append(tab).append("""
-          return null;
-          }""".indent(tabLength << 1)
+        return null;
+        }""".indent(tabLength << 1)
     );
     if (hasDiscriminator) {
       builder.append("""
-            final var discriminator = createAnchorDiscriminator(_data, offset);
-            int i = offset + discriminator.length();""".indent(tabLength << 1)
+          final var discriminator = createAnchorDiscriminator(_data, offset);
+          int i = offset + discriminator.length();""".indent(tabLength << 1)
       );
       genSrcContext.addStaticImport(Discriminator.class, "createAnchorDiscriminator");
     } else if (!singleField) {

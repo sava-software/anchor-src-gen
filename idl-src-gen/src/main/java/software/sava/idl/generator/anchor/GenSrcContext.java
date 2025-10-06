@@ -1,33 +1,40 @@
 package software.sava.idl.generator.anchor;
 
 import software.sava.core.accounts.PublicKey;
+import software.sava.idl.generator.src.BaseSrcGenContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-public record GenSrcContext(IDLType idlType,
-                            boolean accountsHaveDiscriminators,
-                            Set<String> accounts,
-                            Map<String, String> externalTypes,
-                            Map<String, NamedType> definedTypes,
-                            Set<String> imports,
-                            Set<String> staticImports,
-                            String tab,
-                            String srcPackage,
-                            String commonsPackage,
-                            String typePackage,
-                            String programName,
-                            Map<PublicKey, AccountReferenceCall> accountMethods) {
+public final class GenSrcContext extends BaseSrcGenContext {
 
-  private static String getPackageGroup(final String importLine) {
-    int i = importLine.indexOf('.');
-    if (i < 0) {
-      return importLine;
-    } else {
-      i = importLine.indexOf('.', i + 1);
-      return i < 0 ? importLine : importLine.substring(0, i);
-    }
+  private final IDLType idlType;
+  private final boolean accountsHaveDiscriminators;
+  private final Set<String> accounts;
+  private final Map<String, NamedType> definedTypes;
+  private final Map<PublicKey, AccountReferenceCall> accountMethods;
+
+  public GenSrcContext(IDLType idlType,
+                       boolean accountsHaveDiscriminators,
+                       Set<String> accounts,
+                       Map<String, String> externalTypes,
+                       Map<String, NamedType> definedTypes,
+                       Set<String> imports,
+                       Set<String> staticImports,
+                       String tab,
+                       String srcPackage,
+                       String commonsPackage,
+                       String typePackage,
+                       String programName,
+                       Map<PublicKey, AccountReferenceCall> accountMethods) {
+    super(externalTypes, imports, staticImports, tab, srcPackage, commonsPackage, typePackage, programName);
+    this.idlType = idlType;
+    this.accountsHaveDiscriminators = accountsHaveDiscriminators;
+    this.accounts = accounts;
+    this.definedTypes = definedTypes;
+    this.accountMethods = accountMethods;
   }
 
   public boolean isAccount(final String typeName) {
@@ -46,93 +53,72 @@ public record GenSrcContext(IDLType idlType,
     return isAccount && accountsHaveDiscriminators;
   }
 
-  public int tabLength() {
-    return tab.length();
-  }
-
-  public void appendPackage(final StringBuilder builder) {
-    builder.append("package ").append(srcPackage).append(";\n\n");
-  }
-
-  public void clearImports() {
-    imports.clear();
-    staticImports.clear();
-  }
-
-  public boolean isExternalType(final String typeName) {
-    return externalTypes.containsKey(typeName);
-  }
-
   public void addDefinedImport(final String className) {
     final var externalType = externalTypes.get(className);
     imports.add(externalType != null ? externalType : String.format("%s.%s", typePackage, className));
   }
 
-  public void addImportIfExternal(final String typeName) {
-    final var externalType = externalTypes.get(typeName);
-    if (externalType != null) {
-      imports.add(externalType);
-    }
+  public IDLType idlType() {
+    return idlType;
   }
 
-  public void addImport(final String className) {
-    imports.add(className);
+  public boolean accountsHaveDiscriminators() {
+    return accountsHaveDiscriminators;
   }
 
-  public void importCommons(final String simpleClassNane) {
-    imports.add(commonsPackage + '.' + simpleClassNane);
+  public Set<String> accounts() {
+    return accounts;
   }
 
-  public void addImport(final Class<?> clas) {
-    addImport(clas.getName());
+  public Map<String, NamedType> definedTypes() {
+    return definedTypes;
   }
 
-  public void addStaticImport(final String className) {
-    staticImports.add(className);
+  public Map<PublicKey, AccountReferenceCall> accountMethods() {
+    return accountMethods;
   }
 
-  public void addStaticImport(final Class<?> clas, final String constantName) {
-    addStaticImport(clas.getName() + '.' + constantName);
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj == null || obj.getClass() != this.getClass()) return false;
+    var that = (GenSrcContext) obj;
+    return Objects.equals(this.idlType, that.idlType) &&
+        this.accountsHaveDiscriminators == that.accountsHaveDiscriminators &&
+        Objects.equals(this.accounts, that.accounts) &&
+        Objects.equals(this.externalTypes, that.externalTypes) &&
+        Objects.equals(this.definedTypes, that.definedTypes) &&
+        Objects.equals(this.imports, that.imports) &&
+        Objects.equals(this.staticImports, that.staticImports) &&
+        Objects.equals(this.tab, that.tab) &&
+        Objects.equals(this.srcPackage, that.srcPackage) &&
+        Objects.equals(this.commonsPackage, that.commonsPackage) &&
+        Objects.equals(this.typePackage, that.typePackage) &&
+        Objects.equals(this.programName, that.programName) &&
+        Objects.equals(this.accountMethods, that.accountMethods);
   }
 
-  public void addUTF_8Import() {
-    addStaticImport(StandardCharsets.class, "UTF_8");
+  @Override
+  public int hashCode() {
+    return Objects.hash(idlType, accountsHaveDiscriminators, accounts, externalTypes, definedTypes, imports, staticImports, tab, srcPackage, commonsPackage, typePackage, programName, accountMethods);
   }
 
-  public void addUS_ASCII_Import() {
-    addStaticImport(StandardCharsets.class, "US_ASCII");
+  @Override
+  public String toString() {
+    return "GenSrcContext[" +
+        "idlType=" + idlType + ", " +
+        "accountsHaveDiscriminators=" + accountsHaveDiscriminators + ", " +
+        "accounts=" + accounts + ", " +
+        "externalTypes=" + externalTypes + ", " +
+        "definedTypes=" + definedTypes + ", " +
+        "imports=" + imports + ", " +
+        "staticImports=" + staticImports + ", " +
+        "tab=" + tab + ", " +
+        "srcPackage=" + srcPackage + ", " +
+        "commonsPackage=" + commonsPackage + ", " +
+        "typePackage=" + typePackage + ", " +
+        "programName=" + programName + ", " +
+        "accountMethods=" + accountMethods + ']';
   }
 
-  public boolean appendImports(final StringBuilder builder) {
-    if (imports.isEmpty() && staticImports.isEmpty()) {
-      return false;
-    }
-
-    String group, currentGroup = null;
-    for (final var importLine : imports) {
-      group = getPackageGroup(importLine);
-      if (currentGroup == null) {
-        currentGroup = group;
-      } else if (!group.equals(currentGroup)) {
-        builder.append('\n');
-        currentGroup = group;
-      }
-      builder.append("import ").append(importLine).append(";\n");
-    }
-    if (!staticImports.isEmpty()) {
-      currentGroup = null;
-      builder.append('\n');
-      for (final var importLine : staticImports) {
-        group = getPackageGroup(importLine);
-        if (currentGroup == null) {
-          currentGroup = group;
-        } else if (!group.equals(currentGroup)) {
-          builder.append('\n');
-          currentGroup = group;
-        }
-        builder.append("import static ").append(importLine).append(";\n");
-      }
-    }
-    return true;
-  }
 }

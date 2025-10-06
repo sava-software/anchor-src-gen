@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface ContextualValueNodeCondition permits
+sealed interface ContextualValueNodeCondition permits
     AccountValueNode,
     ArgumentValueNode {
 

@@ -2,20 +2,9 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.core.programs.Discriminator;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public interface NamedType {
-
-  Pattern NEW_LINE_PATTERN = Pattern.compile("\n");
-
-  static String formatComments(final Collection<String> docs) {
-    return docs.stream()
-        .map(doc -> String.format("// %s\n", NEW_LINE_PATTERN.matcher(doc).replaceAll("\n//")))
-        .collect(Collectors.joining());
-  }
 
   Discriminator discriminator();
 

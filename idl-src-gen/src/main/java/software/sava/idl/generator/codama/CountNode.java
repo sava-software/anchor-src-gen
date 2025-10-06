@@ -2,7 +2,7 @@ package software.sava.idl.generator.codama;
 
 import systems.comodal.jsoniter.JsonIterator;
 
-public sealed interface CountNode extends TypeNode permits
+sealed interface CountNode extends TypeNode permits
     FixedCountNode,
     PrefixedCountNode,
     RemainderCountNode {

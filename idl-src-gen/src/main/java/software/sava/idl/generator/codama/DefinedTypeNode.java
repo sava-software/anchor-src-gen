@@ -6,7 +6,7 @@ import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class DefinedTypeNode extends NamedDocsNode {
+sealed class DefinedTypeNode extends NamedDocsNode implements StructNode permits AccountNode {
 
   private final TypeNode type;
 

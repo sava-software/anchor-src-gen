@@ -4,7 +4,7 @@ import systems.comodal.jsoniter.JsonIterator;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, EnumVariantTypeNode {
+final class EnumStructVariantTypeNode extends OrdinalNode implements TypeNode, EnumVariantTypeNode, StructNode {
 
   private final TypeNode struct;
 

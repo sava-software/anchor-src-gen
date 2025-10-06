@@ -1,6 +1,13 @@
 package software.sava.idl.generator.codama;
 
-abstract class NamedNode {
+abstract sealed class NamedNode implements TypeNode permits AccountBumpValueNode,
+    AccountValueNode,
+    ArgumentValueNode,
+    FieldDiscriminatorNode,
+    NamedDocsNode,
+    OrdinalNode,
+    PdaSeedValueNode,
+    ValueNode.Struct.Field {
 
   protected final String name;
 
@@ -10,5 +17,13 @@ abstract class NamedNode {
 
   final String name() {
     return name;
+  }
+
+  String docComments() {
+    return "";
+  }
+
+  void appendDocs(final StringBuilder src) {
+
   }
 }
