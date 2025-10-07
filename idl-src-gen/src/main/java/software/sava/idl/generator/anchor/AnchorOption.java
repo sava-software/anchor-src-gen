@@ -69,32 +69,37 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext,
+  public boolean isString() {
+    return genericType.isString();
+  }
+
+  @Override
+  public String generateRecordField(final SrcGenContext srcGenContext,
                                     final NamedType varName,
                                     final boolean optional) {
-    return genericType.generateRecordField(genSrcContext, varName, true);
+    return genericType.generateRecordField(srcGenContext, varName, true);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  public String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final String varName,
                                            final boolean optional) {
-    return genericType.generateStaticFactoryField(genSrcContext, varName, true);
+    return genericType.generateStaticFactoryField(srcGenContext, varName, true);
   }
 
   @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext, final String varName) {
+  public String generateNewInstanceField(final SrcGenContext srcGenContext, final String varName) {
     return AnchorArray.generateNewInstanceField(genericType, varName);
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String varName,
                              final boolean hasNext,
                              final boolean singleField,
                              final String offsetVarName) {
     final var read = genericType.generateRead(
-        genSrcContext,
+        srcGenContext,
         varName,
         hasNext,
         singleField,
@@ -115,7 +120,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
           notPresentCode(type()),
           presentCode(type(), readCall.substring(0, sizeLine - 1)),
           varName, presentCode(type()),
-          genSrcContext.tab(),
+          srcGenContext.tab(),
           readCall.substring(sizeLine + 1)
       );
     }
@@ -133,7 +138,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
             singleField ? offsetVarName : offsetVarName + "++",
             constructAndRead.substring(0, newLine),
             varName,
-            genSrcContext.tab(),
+            srcGenContext.tab(),
             constructAndRead.substring(newLine + 1)
         );
       }
@@ -147,10 +152,10 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
   }
 
   @Override
-  public String generateWrite(final GenSrcContext genSrcContext,
+  public String generateWrite(final SrcGenContext srcGenContext,
                               final String varName,
                               final boolean hasNext) {
-    genSrcContext.addImport(Borsh.class);
+    srcGenContext.addImport(Borsh.class);
     return switch (genericType.type()) {
       case bytes ->
           String.format((hasNext ? "i += Borsh.writeOptionalVector(%s, _data, i);" : "Borsh.writeOptionalVector(%s, _data, i);"), varName);
@@ -173,8 +178,8 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
               %s_data[i++] = 1;
               %s}""",
           notPresentCheckCode(type(), varName),
-          genSrcContext.tab(), genSrcContext.tab(),
-          genericType.generateWrite(genSrcContext, varName, hasNext).indent(genSrcContext.tabLength())
+          srcGenContext.tab(), srcGenContext.tab(),
+          genericType.generateWrite(srcGenContext, varName, hasNext).indent(srcGenContext.tabLength())
       );
       default ->
           String.format((hasNext ? "i += Borsh.writeOptional(%s, _data, i);" : "Borsh.writeOptional(%s, _data, i);"), varName);
@@ -182,21 +187,21 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
   }
 
   @Override
-  public int fixedSerializedLength(final GenSrcContext genSrcContext) {
-    final boolean isAccount = genSrcContext.isAccount(genericType.typeName());
-    return 1 + (genericType.isFixedLength(genSrcContext.definedTypes())
-        ? genericType.serializedLength(genSrcContext, isAccount)
-        : genericType.fixedSerializedLength(genSrcContext, isAccount));
+  public int optimisticSerializedLength(final SrcGenContext srcGenContext) {
+    final boolean isAccount = srcGenContext.isAccount(genericType.typeName());
+    return 1 + (genericType.isFixedLength(srcGenContext)
+        ? genericType.serializedLength(srcGenContext, isAccount)
+        : genericType.optimisticSerializedLength(srcGenContext, isAccount));
   }
 
   @Override
-  public String generateLength(final String varName, final GenSrcContext genSrcContext) {
+  public String generateLength(final String varName, final SrcGenContext srcGenContext) {
     final var notPresentCheckCode = notPresentCheckCode(type(), varName);
-    return String.format("(%s ? 1 : (1 + %s))", notPresentCheckCode, genericType.generateLength(varName, genSrcContext));
+    return String.format("(%s ? 1 : (1 + %s))", notPresentCheckCode, genericType.generateLength(varName, srcGenContext));
   }
 
   @Override
-  public int generateIxSerialization(final GenSrcContext genSrcContext,
+  public int generateIxSerialization(final SrcGenContext srcGenContext,
                                      final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
@@ -209,7 +214,7 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     final var notPresentCheckCode = notPresentCheckCode(type, varName);
     addParam(paramsBuilder, genericType.optionalTypeName(), varName);
     if (type == string) {
-      genSrcContext.addUTF_8Import();
+      srcGenContext.addUTF_8Import();
       stringsBuilder.append(String.format("""
               final byte[] _%s;
               final int _%sLen;
@@ -227,9 +232,9 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
     } else {
       var optionalType = type.optionalJavaType();
       if (optionalType != null) {
-        genSrcContext.addImport(optionalType);
+        srcGenContext.addImport(optionalType);
       } else if (type == defined) {
-        genSrcContext.addDefinedImport(genericType.typeName());
+        srcGenContext.addDefinedImport(genericType.typeName());
       } else if (genericType instanceof AnchorArray || genericType instanceof AnchorVector) {
         AnchorTypeContext next;
         do {
@@ -238,35 +243,35 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
         final var actualType = next.type();
         optionalType = actualType.optionalJavaType();
         if (optionalType != null) {
-          genSrcContext.addImport(optionalType);
+          srcGenContext.addImport(optionalType);
         } else if (actualType == defined) {
-          genSrcContext.addDefinedImport(next.typeName());
+          srcGenContext.addDefinedImport(next.typeName());
         }
       }
 
-      final var tab = genSrcContext.tab();
+      final var tab = srcGenContext.tab();
       dataLengthBuilder.append('\n').append(tab).append(tab);
 
       final int dataLength = type.dataLength();
       if (dataLength < 0) {
-        dataLengthBuilder.append(String.format("+ (%s ? 1 : (1 + %s))", notPresentCheckCode, genericType.generateLength(varName, genSrcContext)));
+        dataLengthBuilder.append(String.format("+ (%s ? 1 : (1 + %s))", notPresentCheckCode, genericType.generateLength(varName, srcGenContext)));
       } else {
         dataLengthBuilder.append(String.format("+ (%s ? 1 : %d)", notPresentCheckCode, 1 + dataLength));
       }
     }
-    dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+    dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
     return 0;
   }
 
   @Override
-  public String generateEnumRecord(final GenSrcContext genSrcContext,
+  public String generateEnumRecord(final SrcGenContext srcGenContext,
                                    final String enumTypeName,
                                    final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     final var type = type();
     if (type == string) {
-      genSrcContext.addUTF_8Import();
+      srcGenContext.addUTF_8Import();
       return String.format("""
               record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
               
@@ -286,9 +291,9 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
           name, enumTypeName, name, name, name, ordinal
       );
     } else if (type == defined || type == array || type == vec) {
-      return genericType.generateEnumRecord(genSrcContext, enumTypeName, enumName, ordinal);
+      return genericType.generateEnumRecord(srcGenContext, enumTypeName, enumName, ordinal);
     } else {
-      genSrcContext.addImport(type.optionalJavaType());
+      srcGenContext.addImport(type.optionalJavaType());
 
       final var enumType = switch (type) {
         case bool -> RustEnum.OptionalEnumBool.class;
@@ -320,18 +325,18 @@ public record AnchorOption(AnchorTypeContext genericType) implements AnchorRefer
               }""",
           name, recordSignature, enumType.getSimpleName(), enumTypeName,
           name,
-          name, notPresentCode(type), presentCode(type(), genericType.generateRead(genSrcContext, "i", name)),
+          name, notPresentCode(type), presentCode(type(), genericType.generateRead(srcGenContext, "i", name)),
           ordinal
       );
     }
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,
                                     final boolean optional) {
-    genericType.generateMemCompFilter(genSrcContext, builder, varName, offsetVarName, true);
+    genericType.generateMemCompFilter(srcGenContext, builder, varName, offsetVarName, true);
   }
 }

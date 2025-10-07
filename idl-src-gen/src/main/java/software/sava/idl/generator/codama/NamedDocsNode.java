@@ -12,7 +12,6 @@ abstract sealed class NamedDocsNode extends NamedNode permits DefinedTypeNode,
     PdaNode,
     ProgramNode,
     ResolverValueNode,
-    StructFieldTypeNode,
     VariablePdaSeedNode {
 
   protected final List<String> docs;

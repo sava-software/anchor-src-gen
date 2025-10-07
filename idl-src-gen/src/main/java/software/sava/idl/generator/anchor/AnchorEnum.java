@@ -6,11 +6,9 @@ import software.sava.core.rpc.Filter;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.List;
-import java.util.Map;
 
-import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseUpperList;
 import static software.sava.idl.generator.ParseUtil.removeBlankLines;
-import static software.sava.idl.generator.anchor.AnchorStruct.generateRecord;
+import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseUpperList;
 
 public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeContext {
 
@@ -29,17 +27,17 @@ public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeCon
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
+  public boolean isFixedLength(final SrcGenContext srcGenContext) {
     return values.stream().noneMatch(t -> t.type() != null);
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext) {
+  public int serializedLength(final SrcGenContext srcGenContext) {
     return type().dataLength();
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,
@@ -50,16 +48,16 @@ public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeCon
             public static Filter create%sFilter(final %s %s) {
             %s}
             """,
-        AnchorUtil.camelCase(varName, true), typeName(), varName, serializeCode.indent(genSrcContext.tabLength())
+        AnchorUtil.camelCase(varName, true), typeName(), varName, serializeCode.indent(srcGenContext.tabLength())
     ));
-    genSrcContext.addImport(Filter.class);
+    srcGenContext.addImport(Filter.class);
   }
 
-  private String generateSimpleEnum(final GenSrcContext genSrcContext,
+  private String generateSimpleEnum(final SrcGenContext srcGenContext,
                                     final NamedType context,
                                     final StringBuilder builder) {
-    final var tab = genSrcContext.tab();
-    final int tabLength = genSrcContext.tabLength();
+    final var tab = srcGenContext.tab();
+    final int tabLength = srcGenContext.tabLength();
     final var name = context.name();
     builder.append(String.format("""
             import software.sava.core.borsh.Borsh;
@@ -87,37 +85,23 @@ public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeCon
     }
   }
 
-  private boolean wrappedType(final Map<String, NamedType> definedTypes, final NamedType enumEntry) {
-    final var typeName = enumEntry.name();
-    final var type = enumEntry.type();
-    if (type instanceof AnchorTypeContextList(final List<NamedType> fields)) {
-      if (fields.size() == 1) {
-        final var field = fields.getFirst();
-        if (field.type() instanceof AnchorDefined(String _typeName) && _typeName.equals(typeName)) {
-          return definedTypes.get(typeName).type() instanceof AnchorStruct;
-        }
-      }
-    }
-    return false;
+  public String generateSource(final SrcGenContext srcGenContext, final NamedType context) {
+    return generateSource(srcGenContext, context, false);
   }
 
-  public String generateSource(final GenSrcContext genSrcContext, final NamedType context) {
-    return generateSource(genSrcContext, context, false);
-  }
-
-  public String generateSource(final GenSrcContext genSrcContext,
+  public String generateSource(final SrcGenContext srcGenContext,
                                final NamedType context,
                                final boolean isAccount) {
     final var header = new StringBuilder(2_048);
-    header.append("package ").append(genSrcContext.typePackage()).append(";\n\n");
+    header.append("package ").append(srcGenContext.typePackage()).append(";\n\n");
 
     final var name = context.name();
     if (values.stream().noneMatch(t -> t.type() != null)) {
-      return generateSimpleEnum(genSrcContext, context, header);
+      return generateSimpleEnum(srcGenContext, context, header);
     } else {
-      final var tab = genSrcContext.tab();
-      final int tabLength = genSrcContext.tabLength();
-      genSrcContext.addImport(RustEnum.class);
+      final var tab = srcGenContext.tab();
+      final int tabLength = srcGenContext.tabLength();
+      srcGenContext.addImport(RustEnum.class);
       final var builder = new StringBuilder(2_048);
       builder.append('\n');
       builder.append(context.docComments());
@@ -186,9 +170,10 @@ public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeCon
           builder.append('\n');
           if (fields.size() == 1) {
             final var field = fields.getFirst();
-            builder.append(field.type().generateEnumRecord(genSrcContext, name, entry, ordinal).indent(tabLength));
+            builder.append(field.type().generateEnumRecord(srcGenContext, name, entry, ordinal).indent(tabLength));
           } else {
-            final var recordSrc = generateRecord(genSrcContext, entry, fields, "", name, ordinal, isAccount, entry, isAccount);
+            final var struct = new AnchorStruct(fields);
+            final var recordSrc = struct.generateRecord(srcGenContext, entry, false, name, ordinal, isAccount, entry, isAccount);
             builder.append(recordSrc.indent(tabLength));
           }
         } else {
@@ -197,7 +182,7 @@ public record AnchorEnum(List<NamedType> values) implements AnchorDefinedTypeCon
         ++ordinal;
       }
 
-      genSrcContext.appendImports(header);
+      srcGenContext.appendImports(header);
 
       final var sourceCode = header.append(builder).append('}').toString();
       return removeBlankLines(sourceCode);

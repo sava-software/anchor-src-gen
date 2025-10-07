@@ -98,7 +98,7 @@ public record AnchorSourceGenerator(Path sourceDirectory,
       }
     }
 
-    final var genSrcContext = new GenSrcContext(
+    final var genSrcContext = new AnchorSrcGenContext(
         idl.type(),
         accountsHaveDiscriminators,
         idl.accounts().keySet(),

@@ -6,5 +6,5 @@ public sealed interface AnchorConstant permits BaseAnchorConstant {
 
   byte[] bytes();
 
-  void toSrc(final GenSrcContext genSrcContext, final StringBuilder src);
+  void toSrc(final SrcGenContext srcGenContext, final StringBuilder src);
 }

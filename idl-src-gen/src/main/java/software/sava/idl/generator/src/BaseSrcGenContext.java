@@ -1,10 +1,14 @@
 package software.sava.idl.generator.src;
 
+import software.sava.core.accounts.PublicKey;
+import software.sava.idl.generator.anchor.AccountReferenceCall;
+import software.sava.idl.generator.anchor.SrcGenContext;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class BaseSrcGenContext {
+public abstract class BaseSrcGenContext implements SrcGenContext {
 
   protected final Map<String, String> externalTypes;
   protected final Set<String> imports;
@@ -14,15 +18,19 @@ public abstract class BaseSrcGenContext {
   protected final String commonsPackage;
   protected final String typePackage;
   protected final String programName;
+  protected final Set<String> accounts;
+  protected final Map<PublicKey, AccountReferenceCall> accountMethods;
 
-  protected BaseSrcGenContext(Map<String, String> externalTypes,
-                              Set<String> imports,
-                              Set<String> staticImports,
-                              String tab,
-                              String srcPackage,
-                              String commonsPackage,
-                              String typePackage,
-                              String programName) {
+  protected BaseSrcGenContext(final Map<String, String> externalTypes,
+                              final Set<String> imports,
+                              final Set<String> staticImports,
+                              final String tab,
+                              final String srcPackage,
+                              final String commonsPackage,
+                              final String typePackage,
+                              final String programName,
+                              final Set<String> accounts,
+                              final Map<PublicKey, AccountReferenceCall> accountMethods) {
     this.externalTypes = externalTypes;
     this.imports = imports;
     this.staticImports = staticImports;
@@ -31,6 +39,72 @@ public abstract class BaseSrcGenContext {
     this.commonsPackage = commonsPackage;
     this.typePackage = typePackage;
     this.programName = programName;
+    this.accounts = accounts;
+    this.accountMethods = accountMethods;
+  }
+
+  @Override
+  public final int tabLength() {
+    return tab.length();
+  }
+
+  @Override
+  public final void appendPackage(final StringBuilder builder) {
+    builder.append("package ").append(srcPackage).append(";\n\n");
+  }
+
+  @Override
+  public final void clearImports() {
+    imports.clear();
+    staticImports.clear();
+  }
+
+  @Override
+  public final boolean isExternalType(final String typeName) {
+    return externalTypes.containsKey(typeName);
+  }
+
+  @Override
+  public final void addImportIfExternal(final String typeName) {
+    final var externalType = externalTypes.get(typeName);
+    if (externalType != null) {
+      imports.add(externalType);
+    }
+  }
+
+  @Override
+  public final void addImport(final String className) {
+    imports.add(className);
+  }
+
+  @Override
+  public final void importCommons(final String simpleClassNane) {
+    imports.add(commonsPackage + '.' + simpleClassNane);
+  }
+
+  @Override
+  public final void addImport(final Class<?> clas) {
+    addImport(clas.getName());
+  }
+
+  @Override
+  public final void addStaticImport(final String className) {
+    staticImports.add(className);
+  }
+
+  @Override
+  public final void addStaticImport(final Class<?> clas, final String constantName) {
+    addStaticImport(clas.getName() + '.' + constantName);
+  }
+
+  @Override
+  public final void addUTF_8Import() {
+    addStaticImport(StandardCharsets.class, "UTF_8");
+  }
+
+  @Override
+  public final void addUS_ASCII_Import() {
+    addStaticImport(StandardCharsets.class, "US_ASCII");
   }
 
   private static String getPackageGroup(final String importLine) {
@@ -43,58 +117,7 @@ public abstract class BaseSrcGenContext {
     }
   }
 
-  public final int tabLength() {
-    return tab.length();
-  }
-
-  public final void appendPackage(final StringBuilder builder) {
-    builder.append("package ").append(srcPackage).append(";\n\n");
-  }
-
-  public final void clearImports() {
-    imports.clear();
-    staticImports.clear();
-  }
-
-  public final boolean isExternalType(final String typeName) {
-    return externalTypes.containsKey(typeName);
-  }
-
-  public final void addImportIfExternal(final String typeName) {
-    final var externalType = externalTypes.get(typeName);
-    if (externalType != null) {
-      imports.add(externalType);
-    }
-  }
-
-  public final void addImport(final String className) {
-    imports.add(className);
-  }
-
-  public final void importCommons(final String simpleClassNane) {
-    imports.add(commonsPackage + '.' + simpleClassNane);
-  }
-
-  public final void addImport(final Class<?> clas) {
-    addImport(clas.getName());
-  }
-
-  public final void addStaticImport(final String className) {
-    staticImports.add(className);
-  }
-
-  public final void addStaticImport(final Class<?> clas, final String constantName) {
-    addStaticImport(clas.getName() + '.' + constantName);
-  }
-
-  public final void addUTF_8Import() {
-    addStaticImport(StandardCharsets.class, "UTF_8");
-  }
-
-  public final void addUS_ASCII_Import() {
-    addStaticImport(StandardCharsets.class, "US_ASCII");
-  }
-
+  @Override
   public final boolean appendImports(final StringBuilder builder) {
     if (imports.isEmpty() && staticImports.isEmpty()) {
       return false;
@@ -102,7 +125,7 @@ public abstract class BaseSrcGenContext {
 
     String group, currentGroup = null;
     for (final var importLine : imports) {
-      group = BaseSrcGenContext.getPackageGroup(importLine);
+      group = getPackageGroup(importLine);
       if (currentGroup == null) {
         currentGroup = group;
       } else if (!group.equals(currentGroup)) {
@@ -115,7 +138,7 @@ public abstract class BaseSrcGenContext {
       currentGroup = null;
       builder.append('\n');
       for (final var importLine : staticImports) {
-        group = BaseSrcGenContext.getPackageGroup(importLine);
+        group = getPackageGroup(importLine);
         if (currentGroup == null) {
           currentGroup = group;
         } else if (!group.equals(currentGroup)) {
@@ -128,35 +151,38 @@ public abstract class BaseSrcGenContext {
     return true;
   }
 
-  public final Map<String, String> externalTypes() {
-    return externalTypes;
-  }
-
-  public final Set<String> imports() {
-    return imports;
-  }
-
-  public final Set<String> staticImports() {
-    return staticImports;
-  }
-
+  @Override
   public final String tab() {
     return tab;
   }
 
-  public final String srcPackage() {
-    return srcPackage;
-  }
-
-  public final String commonsPackage() {
-    return commonsPackage;
-  }
-
+  @Override
   public final String typePackage() {
     return typePackage;
   }
 
+  @Override
   public final String programName() {
     return programName;
+  }
+
+  public final Set<String> accounts() {
+    return accounts;
+  }
+
+  @Override
+  public final boolean isAccount(final String typeName) {
+    return accounts.contains(typeName);
+  }
+
+  @Override
+  public final Map<PublicKey, AccountReferenceCall> accountMethods() {
+    return accountMethods;
+  }
+
+  @Override
+  public final void addDefinedImport(final String className) {
+    final var externalType = externalTypes.get(className);
+    imports.add(externalType != null ? externalType : String.format("%s.%s", typePackage, className));
   }
 }

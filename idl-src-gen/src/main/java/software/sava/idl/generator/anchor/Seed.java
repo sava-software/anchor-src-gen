@@ -8,7 +8,7 @@ public sealed interface Seed permits AnchorPDA.AccountSeed, AnchorPDA.ArgSeed, A
 
   AnchorType type();
 
-  String varName(final GenSrcContext genSrcContext);
+  String varName(final SrcGenContext srcGenContext);
 
-  String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown);
+  String fieldName(final SrcGenContext srcGenContext, final Set<String> deDuplicateKnown);
 }

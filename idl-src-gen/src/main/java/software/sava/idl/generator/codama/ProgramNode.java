@@ -89,6 +89,10 @@ final class ProgramNode extends NamedDocsNode {
     return definedTypeMap.get(name);
   }
 
+  boolean isDefinedType(final String typeName) {
+    return definedTypeMap.containsKey(typeName);
+  }
+
   List<PdaNode> pdas() {
     return pdas;
   }

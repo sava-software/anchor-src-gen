@@ -29,7 +29,7 @@ public record AccountReferenceCall(Class<?> clas,
           accountMethods.put(key, new AccountReferenceCall(api, referenceVarName, method, key, getter));
         }
       }
-    } catch (Throwable e) {
+    } catch (final Throwable e) {
       throw new RuntimeException(e);
     }
   }

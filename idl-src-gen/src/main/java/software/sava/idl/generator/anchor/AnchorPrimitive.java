@@ -8,13 +8,12 @@ import software.sava.core.encoding.ByteUtil;
 import software.sava.core.rpc.Filter;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 import static software.sava.idl.generator.anchor.AnchorType.*;
 
 public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeContext {
 
-  static RuntimeException throwInvalidDataType(final Class<? extends AnchorTypeContext> type) {
+  static RuntimeException throwInvalidDataType(final Class<? extends TypeContext> type) {
     throw new UnsupportedOperationException(type.getSimpleName());
   }
 
@@ -26,22 +25,27 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
+  public boolean isString() {
+    return type == AnchorType.string;
+  }
+
+  @Override
+  public boolean isFixedLength(final SrcGenContext srcGenContext) {
     return type.dataLength() > 0;
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext) {
+  public int serializedLength(final SrcGenContext srcGenContext) {
     return type.dataLength();
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,
                                     final boolean optional) {
-    addWriteImports(genSrcContext);
+    addWriteImports(srcGenContext);
     final String serializeCode;
     if (optional) {
       serializeCode = switch (type) {
@@ -115,9 +119,9 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
             public static Filter create%sFilter(final %s %s) {
             %s}
             """,
-        AnchorUtil.camelCase(varName, true), typeName(), varName, serializeCode.indent(genSrcContext.tabLength())
+        AnchorUtil.camelCase(varName, true), typeName(), varName, serializeCode.indent(srcGenContext.tabLength())
     ));
-    genSrcContext.addImport(Filter.class);
+    srcGenContext.addImport(Filter.class);
   }
 
   @Override
@@ -136,21 +140,21 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext,
+  public String generateRecordField(final SrcGenContext srcGenContext,
                                     final NamedType context,
                                     final boolean optional) {
     final var varName = context.name();
     final var typeName = optional ? optionalTypeName() : typeName();
     if (type == string) {
-      genSrcContext.addImport(String.class);
+      srcGenContext.addImport(String.class);
       return String.format("%s%s %s, byte[] _%s", context.docComments(), typeName, varName, varName);
     } else {
       switch (type) {
-        case publicKey -> genSrcContext.addImport(PublicKey.class);
-        case i128, u128, i256, u256 -> genSrcContext.addImport(BigInteger.class);
+        case publicKey -> srcGenContext.addImport(PublicKey.class);
+        case i128, u128, i256, u256 -> srcGenContext.addImport(BigInteger.class);
         default -> {
           if (optional) {
-            genSrcContext.addImport(type.optionalJavaType());
+            srcGenContext.addImport(type.optionalJavaType());
           }
         }
       }
@@ -159,16 +163,16 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  public String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final String varName,
                                            final boolean optional) {
     return String.format("%s %s", optional ? optionalTypeName() : typeName(), varName);
   }
 
   @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext, final String varName) {
+  public String generateNewInstanceField(final SrcGenContext srcGenContext, final String varName) {
     if (type == string) {
-      genSrcContext.addUTF_8Import();
+      srcGenContext.addUTF_8Import();
       return String.format("%s, %s.getBytes(UTF_8)", varName, varName);
     } else {
       return varName;
@@ -176,18 +180,18 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String offsetVarName,
                              final String varName) {
     switch (type) {
-      case f32 -> genSrcContext.addStaticImport(ByteUtil.class, "getFloat32LE");
-      case f64 -> genSrcContext.addStaticImport(ByteUtil.class, "getFloat64LE");
-      case i16, u16 -> genSrcContext.addStaticImport(ByteUtil.class, "getInt16LE");
-      case i32, u32 -> genSrcContext.addStaticImport(ByteUtil.class, "getInt32LE");
-      case i64, u64, usize -> genSrcContext.addStaticImport(ByteUtil.class, "getInt64LE");
-      case i128, u128 -> genSrcContext.addStaticImport(ByteUtil.class, "getInt128LE");
-      case i256, u256 -> genSrcContext.addStaticImport(ByteUtil.class, "getInt256LE");
-      case publicKey -> genSrcContext.addStaticImport(PublicKey.class, "readPubKey");
+      case f32 -> srcGenContext.addStaticImport(ByteUtil.class, "getFloat32LE");
+      case f64 -> srcGenContext.addStaticImport(ByteUtil.class, "getFloat64LE");
+      case i16, u16 -> srcGenContext.addStaticImport(ByteUtil.class, "getInt16LE");
+      case i32, u32 -> srcGenContext.addStaticImport(ByteUtil.class, "getInt32LE");
+      case i64, u64, usize -> srcGenContext.addStaticImport(ByteUtil.class, "getInt64LE");
+      case i128, u128 -> srcGenContext.addStaticImport(ByteUtil.class, "getInt128LE");
+      case i256, u256 -> srcGenContext.addStaticImport(ByteUtil.class, "getInt256LE");
+      case publicKey -> srcGenContext.addStaticImport(PublicKey.class, "readPubKey");
     }
     return switch (type) {
       case bool -> String.format("_data[%s] == 1", offsetVarName);
@@ -207,22 +211,22 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String varName,
                              final boolean hasNext,
                              final boolean singleField,
                              final String offsetVarName) {
     if (type == string) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       if (hasNext) {
-        genSrcContext.addStaticImport(ByteUtil.class, "getInt32LE");
+        srcGenContext.addStaticImport(ByteUtil.class, "getInt32LE");
       }
       final var readLine = String.format("final var %s = Borsh.string(_data, %s);", varName, offsetVarName);
       return hasNext
           ? readLine + "\ni += (Integer.BYTES + getInt32LE(_data, i));"
           : readLine;
     } else if (type == bytes) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       final var readLine = String.format("final byte[] %s = Borsh.readbyteVector(_data, %s);", varName, offsetVarName);
       return hasNext
           ? readLine + String.format("""
@@ -231,7 +235,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
       )
           : readLine;
     } else {
-      final var read = generateRead(genSrcContext, offsetVarName, varName);
+      final var read = generateRead(srcGenContext, offsetVarName, varName);
       final int dataLength = type.dataLength();
       final var readLine = String.format("final var %s = %s;", varName, read);
       if (dataLength == 1) {
@@ -263,28 +267,28 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
     );
   }
 
-  private void addWriteImports(final GenSrcContext genSrcContext) {
+  private void addWriteImports(final SrcGenContext srcGenContext) {
     if (type == string) {
-      genSrcContext.addUTF_8Import();
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addUTF_8Import();
+      srcGenContext.addImport(Borsh.class);
     } else if (type == bytes) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
     } else {
       switch (type) {
-        case f32 -> genSrcContext.addStaticImport(ByteUtil.class, "putFloat32LE");
-        case f64 -> genSrcContext.addStaticImport(ByteUtil.class, "putFloat64LE");
-        case i16, u16 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt16LE");
-        case i32, u32 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt32LE");
-        case i64, u64, usize -> genSrcContext.addStaticImport(ByteUtil.class, "putInt64LE");
-        case i128, u128 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt128LE");
-        case i256, u256 -> genSrcContext.addStaticImport(ByteUtil.class, "putInt256LE");
+        case f32 -> srcGenContext.addStaticImport(ByteUtil.class, "putFloat32LE");
+        case f64 -> srcGenContext.addStaticImport(ByteUtil.class, "putFloat64LE");
+        case i16, u16 -> srcGenContext.addStaticImport(ByteUtil.class, "putInt16LE");
+        case i32, u32 -> srcGenContext.addStaticImport(ByteUtil.class, "putInt32LE");
+        case i64, u64, usize -> srcGenContext.addStaticImport(ByteUtil.class, "putInt64LE");
+        case i128, u128 -> srcGenContext.addStaticImport(ByteUtil.class, "putInt128LE");
+        case i256, u256 -> srcGenContext.addStaticImport(ByteUtil.class, "putInt256LE");
       }
     }
   }
 
   @Override
-  public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
-    addWriteImports(genSrcContext);
+  public String generateWrite(final SrcGenContext srcGenContext, final String varName, final boolean hasNext) {
+    addWriteImports(srcGenContext);
     if (type == string) {
       return String.format("%sBorsh.writeVector(_%s, _data, i);", hasNext ? "i += " : "", varName);
     } else if (type == bytes) {
@@ -305,14 +309,14 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public String generateEnumRecord(final GenSrcContext genSrcContext,
+  public String generateEnumRecord(final SrcGenContext srcGenContext,
                                    final String enumTypeName,
                                    final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     if (type == string) {
-      genSrcContext.addUTF_8Import();
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addUTF_8Import();
+      srcGenContext.addImport(Borsh.class);
       return String.format("""
               record %s(byte[] val, java.lang.String _val) implements EnumString, %s {
               
@@ -342,15 +346,15 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
       case i32, u32 -> RustEnum.EnumInt32.class;
       case i64, u64, usize -> RustEnum.EnumInt64.class;
       case i128, u128 -> {
-        genSrcContext.addImport(BigInteger.class);
+        srcGenContext.addImport(BigInteger.class);
         yield RustEnum.EnumInt128.class;
       }
       case i256, u256 -> {
-        genSrcContext.addImport(BigInteger.class);
+        srcGenContext.addImport(BigInteger.class);
         yield RustEnum.EnumInt256.class;
       }
       case publicKey -> {
-        genSrcContext.addImport(PublicKey.class);
+        srcGenContext.addImport(PublicKey.class);
         yield RustEnum.EnumPublicKey.class;
       }
       default -> throw new IllegalStateException("Unexpected type: " + type);
@@ -388,7 +392,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
           name, name,
           name, name,
           name,
-          generateRead(genSrcContext, "i", name), name, name,
+          generateRead(srcGenContext, "i", name), name, name,
           ordinal
       );
     } else {
@@ -406,19 +410,19 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
               }""",
           name, recordSignature, enumType.getSimpleName(), enumTypeName,
           name,
-          name, generateRead(genSrcContext, "i", name),
+          name, generateRead(srcGenContext, "i", name),
           ordinal
       );
     }
   }
 
   @Override
-  public String generateLength(final String varName, final GenSrcContext genSrcContext) {
+  public String generateLength(final String varName, final SrcGenContext srcGenContext) {
     if (type == string) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       return String.format("Borsh.lenVector(_%s)", varName);
     } else if (type == bytes) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       return String.format("Borsh.lenVector(%s)", varName);
     } else {
       return Integer.toString(type.dataLength());
@@ -426,7 +430,7 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
   }
 
   @Override
-  public int generateIxSerialization(final GenSrcContext genSrcContext,
+  public int generateIxSerialization(final SrcGenContext srcGenContext,
                                      final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
@@ -438,23 +442,23 @@ public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeCon
     final var javaType = type.javaType();
     addParam(paramsBuilder, javaType.getSimpleName(), varName);
     if (type == string) {
-      genSrcContext.addUTF_8Import();
+      srcGenContext.addUTF_8Import();
       stringsBuilder.append(String.format("final byte[] _%s = %s.getBytes(UTF_8);\n", varName, varName));
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       dataLengthBuilder.append(String.format(" + Borsh.lenVector(_%s)", varName));
-      dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+      dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
       return 4;
     } else if (type == bytes) {
-      genSrcContext.addImport(Borsh.class);
+      srcGenContext.addImport(Borsh.class);
       dataLengthBuilder.append(String.format(" + Borsh.lenVector(%s)", varName));
-      dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+      dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
       return 4;
     } else {
       switch (type) {
-        case publicKey -> genSrcContext.addImport(PublicKey.class);
-        case i128, u128, i256, u256 -> genSrcContext.addImport(BigInteger.class);
+        case publicKey -> srcGenContext.addImport(PublicKey.class);
+        case i128, u128, i256, u256 -> srcGenContext.addImport(BigInteger.class);
       }
-      dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+      dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
       return type.dataLength();
     }
   }

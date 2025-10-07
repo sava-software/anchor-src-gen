@@ -1,10 +1,14 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.core.encoding.Base58;
+import software.sava.core.programs.Discriminator;
 import software.sava.rpc.json.PublicKeyEncoding;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
@@ -95,7 +99,11 @@ sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeVa
   }
 
   // https://github.com/codama-idl/codama/blob/main/packages/nodes/docs/valueNodes/BytesValueNode.md
-  record Bytes(StringEncoding encoding, java.lang.String data) implements ValueNode {
+  record Bytes(StringEncoding encoding, java.lang.String encodedData, byte[] data) implements ValueNode {
+
+    Discriminator createDiscriminator() {
+      return Discriminator.createDiscriminator(data);
+    }
 
     public static Bytes parse(final JsonIterator ji) {
       final var parser = new Parser();
@@ -106,10 +114,16 @@ sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeVa
     private static final class Parser implements FieldBufferPredicate {
 
       private StringEncoding encoding;
-      private java.lang.String data;
+      private java.lang.String encodedData;
 
       Bytes createBytes() {
-        return new Bytes(encoding, data);
+        final byte[] data = switch (encoding) {
+          case base16 -> throw new UnsupportedOperationException("TODO: decode base16 string");
+          case base58 -> Base58.decode(this.encodedData);
+          case base64 -> Base64.getDecoder().decode(this.encodedData);
+          case utf8 -> encodedData.getBytes(StandardCharsets.UTF_8);
+        };
+        return new Bytes(encoding, encodedData, data);
       }
 
       @Override
@@ -117,7 +131,7 @@ sealed interface ValueNode extends InstructionInputValueNode, PdaSeedValueNodeVa
         if (fieldEquals("encoding", buf, offset, len)) {
           encoding = StringEncoding.valueOf(ji.readString());
         } else if (fieldEquals("data", buf, offset, len)) {
-          data = ji.readString();
+          encodedData = ji.readString();
         } else {
           throw new IllegalStateException("Unhandled field " + java.lang.String.valueOf(buf, offset, len));
         }

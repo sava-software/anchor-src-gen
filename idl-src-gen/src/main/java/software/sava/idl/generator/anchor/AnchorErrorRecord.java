@@ -14,14 +14,14 @@ public record AnchorErrorRecord(int code,
     return new AnchorErrorRecord(code, name, msg, className);
   }
 
-  void generateSource(final GenSrcContext genSrcContext, final StringBuilder out) {
-    final var tab = genSrcContext.tab();
+  void generateSource(final SrcGenContext srcGenContext, final StringBuilder out) {
+    final var tab = srcGenContext.tab();
     out.append(String.format("""
             
             record %s(int code, String msg) implements %sError {
             
             """,
-        className, genSrcContext.programName()
+        className, srcGenContext.programName()
     ));
     out.append(tab).append(String.format("""
         public static final %s INSTANCE = new %s(

@@ -36,21 +36,21 @@ public interface IDL {
     }
   }
 
-  String generateConstantsSource(final GenSrcContext genSrcContext);
+  String generateConstantsSource(final SrcGenContext srcGenContext);
 
-  String generatePDASource(final GenSrcContext genSrcContext);
+  String generatePDASource(final SrcGenContext srcGenContext);
 
-  String generateErrorSource(final GenSrcContext genSrcContext);
+  String generateErrorSource(final SrcGenContext srcGenContext);
 
-  String generateSource(final GenSrcContext genSrcContext);
+  String generateSource(final SrcGenContext srcGenContext);
 
-  default String closeClass(final GenSrcContext genSrcContext,
+  default String closeClass(final SrcGenContext srcGenContext,
                             final String className,
                             final StringBuilder builder) {
     builder.append(String.format("""
         private %s() {
         }""", className
-    ).indent(genSrcContext.tabLength()));
+    ).indent(srcGenContext.tabLength()));
     return removeBlankLines(builder.append('}').toString());
   }
 

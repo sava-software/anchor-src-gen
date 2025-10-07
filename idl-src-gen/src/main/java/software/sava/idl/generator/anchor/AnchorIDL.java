@@ -11,8 +11,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static software.sava.idl.generator.ParseUtil.removeBlankLines;
 import static software.sava.idl.generator.ParseUtil.parseDocs;
+import static software.sava.idl.generator.ParseUtil.removeBlankLines;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 import static systems.comodal.jsoniter.factory.ElementFactory.parseList;
 
@@ -81,23 +81,23 @@ public final class AnchorIDL extends RootIDL implements IDL {
   }
 
   @Override
-  public String generateConstantsSource(final GenSrcContext genSrcContext) {
+  public String generateConstantsSource(final SrcGenContext srcGenContext) {
     if (constants == null || constants.isEmpty()) {
       return null;
     }
 
     final var constantsBuilder = new StringBuilder(1_024);
     for (final var constant : constants) {
-      constant.toSrc(genSrcContext, constantsBuilder);
+      constant.toSrc(srcGenContext, constantsBuilder);
     }
 
     final var out = new StringBuilder(constantsBuilder.length() << 1);
-    genSrcContext.appendPackage(out);
-    if (genSrcContext.appendImports(out)) {
+    srcGenContext.appendPackage(out);
+    if (srcGenContext.appendImports(out)) {
       out.append('\n');
     }
 
-    final var className = genSrcContext.programName() + "Constants";
+    final var className = srcGenContext.programName() + "Constants";
     out.append(String.format("""
         public final class %s {
         
@@ -105,11 +105,11 @@ public final class AnchorIDL extends RootIDL implements IDL {
     ));
     out.append(constantsBuilder);
 
-    return closeClass(genSrcContext, className, out);
+    return closeClass(srcGenContext, className, out);
   }
 
   @Override
-  public String generatePDASource(final GenSrcContext genSrcContext) {
+  public String generatePDASource(final SrcGenContext srcGenContext) {
     final var pdaAccounts = new TreeMap<String, AnchorPDA>();
     final var distinct = new HashSet<AnchorPDA>();
     for (final var ix : instructions) {
@@ -133,19 +133,19 @@ public final class AnchorIDL extends RootIDL implements IDL {
 
     final var pdaBuilder = new StringBuilder(4_096);
     pdaAccounts.forEach((name, pda) -> {
-      pda.genSrc(genSrcContext, name, pdaBuilder);
+      pda.genSrc(srcGenContext, name, pdaBuilder);
       pdaBuilder.append('\n');
     });
 
     final var out = new StringBuilder(pdaBuilder.length() << 1);
-    genSrcContext.appendPackage(out);
+    srcGenContext.appendPackage(out);
 
-    genSrcContext.addImport(ProgramDerivedAddress.class);
-    genSrcContext.addImport(PublicKey.class);
-    genSrcContext.addImport(List.class);
-    genSrcContext.appendImports(out);
+    srcGenContext.addImport(ProgramDerivedAddress.class);
+    srcGenContext.addImport(PublicKey.class);
+    srcGenContext.addImport(List.class);
+    srcGenContext.appendImports(out);
 
-    final var className = genSrcContext.programName() + "PDAs";
+    final var className = srcGenContext.programName() + "PDAs";
     out.append(String.format("""
         
         public final class %s {
@@ -153,33 +153,33 @@ public final class AnchorIDL extends RootIDL implements IDL {
         """, className
     ));
     out.append(pdaBuilder);
-    return closeClass(genSrcContext, className, out);
+    return closeClass(srcGenContext, className, out);
   }
 
   @Override
-  public String generateErrorSource(final GenSrcContext genSrcContext) {
+  public String generateErrorSource(final SrcGenContext srcGenContext) {
     if (errors.isEmpty()) {
       return null;
     }
     final var errorClassBuilder = new StringBuilder(4_096);
     for (final var error : errors) {
-      error.generateSource(genSrcContext, errorClassBuilder);
+      error.generateSource(srcGenContext, errorClassBuilder);
     }
 
     final var out = new StringBuilder(4_096);
-    genSrcContext.appendPackage(out);
+    srcGenContext.appendPackage(out);
 
-    genSrcContext.importCommons("ProgramError");
-    genSrcContext.appendImports(out);
+    srcGenContext.importCommons("ProgramError");
+    srcGenContext.appendImports(out);
 
-    final var className = genSrcContext.programName() + "Error";
+    final var className = srcGenContext.programName() + "Error";
     out.append(String.format("""
         
         public sealed interface %s extends ProgramError permits
         """, className
     ));
 
-    final var tab = genSrcContext.tab();
+    final var tab = srcGenContext.tab();
     final var iterator = errors.iterator();
     for (AnchorErrorRecord error; ; ) {
       error = iterator.next();
@@ -202,17 +202,17 @@ public final class AnchorIDL extends RootIDL implements IDL {
     out.append(tab).append(tab).append(tab);
     out.append(String.format("""
         default -> throw new IllegalStateException("Unexpected %s error code: " + errorCode);
-        """, genSrcContext.programName()
+        """, srcGenContext.programName()
     ));
     out.append(tab).append(tab).append("};\n");
     out.append(tab).append("}\n");
-    out.append(errorClassBuilder.toString().indent(genSrcContext.tabLength()));
+    out.append(errorClassBuilder.toString().indent(srcGenContext.tabLength()));
     out.append("}");
     return removeBlankLines(out.toString());
   }
 
   @Override
-  public String generateSource(final GenSrcContext genSrcContext) {
+  public String generateSource(final SrcGenContext srcGenContext) {
     final var pdaAccounts = HashMap.newHashMap(instructions.size() << 1);
     final var ixBuilder = new StringBuilder();
     for (final var ix : instructions) {
@@ -223,23 +223,23 @@ public final class AnchorIDL extends RootIDL implements IDL {
         }
       }
       if (ix.accounts().size() <= Transaction.MAX_ACCOUNTS) {
-        ixBuilder.append('\n').append(ix.generateFactorySource(genSrcContext, "  "));
+        ixBuilder.append('\n').append(ix.generateFactorySource(srcGenContext, "  "));
       }
     }
 
     final var builder = new StringBuilder(4_096);
-    genSrcContext.appendPackage(builder);
+    srcGenContext.appendPackage(builder);
 
-    genSrcContext.appendImports(builder);
+    srcGenContext.appendImports(builder);
 
-    final var className = genSrcContext.programName() + "Program";
+    final var className = srcGenContext.programName() + "Program";
     builder.append(String.format("""
         
         public final class %s {
         """, className
     ));
     builder.append(ixBuilder).append('\n');
-    return closeClass(genSrcContext, className, builder);
+    return closeClass(srcGenContext, className, builder);
   }
 
 
@@ -312,6 +312,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
                 null,
                 new AnchorStruct(fields),
                 nt.docs(),
+                nt.docComments(),
                 nt.index()
             );
           } else {

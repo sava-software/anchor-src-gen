@@ -23,30 +23,30 @@ public record AnchorInstruction(Discriminator discriminator,
     return SrcUtil.formatKeyName(accountMeta.name());
   }
 
-  public String generateFactorySource(final GenSrcContext genSrcContext, final String parentTab) {
-    final var tab = genSrcContext.tab();
+  public String generateFactorySource(final SrcGenContext srcGenContext, final String parentTab) {
+    final var tab = srcGenContext.tab();
     final var builder = new StringBuilder(2_048);
 
-    genSrcContext.addImport(Discriminator.class);
-    genSrcContext.addStaticImport(Discriminator.class, "toDiscriminator");
+    srcGenContext.addImport(Discriminator.class);
+    srcGenContext.addStaticImport(Discriminator.class, "toDiscriminator");
     builder.append(SrcUtil.formatDiscriminator(name, discriminator == null ? AnchorUtil.toDiscriminator(name) : discriminator));
     builder.append("\n\n");
 
     final var keyParamsBuilder = new StringBuilder(1_024);
-    final var programMetaReference = String.format("invoked%sProgramMeta", genSrcContext.programName());
+    final var programMetaReference = String.format("invoked%sProgramMeta", srcGenContext.programName());
     keyParamsBuilder.append("final AccountMeta ").append(programMetaReference).append(",\n");
-    genSrcContext.addImport(AccountMeta.class);
+    srcGenContext.addImport(AccountMeta.class);
 
     final var stringsBuilder = new StringBuilder(1_024);
     final var createKeysBuilder = new StringBuilder(1_024);
 
-    final var dataTab = parentTab + " ".repeat(genSrcContext.tabLength());
+    final var dataTab = parentTab + " ".repeat(srcGenContext.tabLength());
     final var keyTab = dataTab + tab;
     createKeysBuilder.append(dataTab).append("final var keys = ");
     if (accounts.isEmpty()) {
       createKeysBuilder.append("AccountMeta.NO_KEYS;\n\n");
     } else {
-      final var knownAccounts = genSrcContext.accountMethods();
+      final var knownAccounts = srcGenContext.accountMethods();
       final var knownAccountClasses = accounts.stream()
           .<Class<?>>mapMulti((accountMeta, downstream) -> {
             final var knownAccount = knownAccounts.get(accountMeta.address());
@@ -60,7 +60,7 @@ public record AnchorInstruction(Discriminator discriminator,
               final %s %s,
               """, accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false)
           ));
-          genSrcContext.addImport(accountsClas);
+          srcGenContext.addImport(accountsClas);
         }
       }
 
@@ -72,8 +72,8 @@ public record AnchorInstruction(Discriminator discriminator,
         }
       }
 
-      genSrcContext.addImport(PublicKey.class);
-      genSrcContext.addImport(List.class);
+      srcGenContext.addImport(PublicKey.class);
+      srcGenContext.addImport(List.class);
       createKeysBuilder.append("List.of(");
       final var accountsIterator = accounts.iterator();
       for (AnchorAccountMeta accountMeta; ; ) {
@@ -88,7 +88,7 @@ public record AnchorInstruction(Discriminator discriminator,
               ? accountMetaName
               : accountMetaName + "Key";
           if (accountMeta.optional()) {
-            genSrcContext.addStaticImport(Objects.class, "requireNonNullElse");
+            srcGenContext.addStaticImport(Objects.class, "requireNonNullElse");
             varName = String.format(
                 "requireNonNullElse(%s, %s.publicKey())",
                 varName, programMetaReference
@@ -99,17 +99,17 @@ public record AnchorInstruction(Discriminator discriminator,
         if (accountMeta.signer()) {
           if (accountMeta.writable()) {
             append = String.format("createWritableSigner(%s)", varName);
-            genSrcContext.addStaticImport(AccountMeta.class, "createWritableSigner");
+            srcGenContext.addStaticImport(AccountMeta.class, "createWritableSigner");
           } else {
             append = String.format("createReadOnlySigner(%s)", varName);
-            genSrcContext.addStaticImport(AccountMeta.class, "createReadOnlySigner");
+            srcGenContext.addStaticImport(AccountMeta.class, "createReadOnlySigner");
           }
         } else if (accountMeta.writable()) {
           append = String.format("createWrite(%s)", varName);
-          genSrcContext.addStaticImport(AccountMeta.class, "createWrite");
+          srcGenContext.addStaticImport(AccountMeta.class, "createWrite");
         } else {
           append = String.format("createRead(%s)", varName);
-          genSrcContext.addStaticImport(AccountMeta.class, "createRead");
+          srcGenContext.addStaticImport(AccountMeta.class, "createRead");
         }
         createKeysBuilder.append("\n").append(keyTab).append(append);
 
@@ -137,7 +137,7 @@ public record AnchorInstruction(Discriminator discriminator,
       for (final var argsIterator = args.iterator(); ; ) {
         final var arg = argsIterator.next();
         final boolean hasNext = argsIterator.hasNext();
-        dataLength += arg.generateSerialization(genSrcContext, paramsBuilder, dataBuilder, stringsBuilder, dataLengthBuilder, hasNext);
+        dataLength += arg.generateSerialization(srcGenContext, paramsBuilder, dataBuilder, stringsBuilder, dataLengthBuilder, hasNext);
         dataBuilder.append('\n');
         if (!hasNext) {
           break;
@@ -197,15 +197,14 @@ public record AnchorInstruction(Discriminator discriminator,
           programMetaReference, discriminatorReference
       ).indent(parentTab.length()));
     }
-    genSrcContext.addImport(Instruction.class);
+    srcGenContext.addImport(Instruction.class);
 
     if (!args.isEmpty()) {
-      final var definedTypes = genSrcContext.definedTypes();
       final var ixCamelName = AnchorUtil.camelCase(name, true);
       var typeName = ixCamelName + "IxData";
-      if (definedTypes.containsKey(typeName)) {
+      if (srcGenContext.isDefinedType(typeName)) {
         typeName = ixCamelName + "IxRecord";
-        for (int i = 2; definedTypes.containsKey(typeName); ++i) {
+        for (int i = 2; srcGenContext.isDefinedType(typeName); ++i) {
           typeName = ixCamelName + "IxData" + i;
         }
       }
@@ -217,9 +216,10 @@ public record AnchorInstruction(Discriminator discriminator,
           null,
           struct,
           List.of(),
+          "",
           false
       );
-      final var sourceCode = struct.generateSource(genSrcContext, namedType);
+      final var sourceCode = struct.generateSource(srcGenContext, namedType);
       final var injectKey = "implements Borsh {";
       int offset = sourceCode.indexOf(injectKey) + injectKey.length();
       final var header = sourceCode.substring(0, offset);
@@ -230,9 +230,9 @@ public record AnchorInstruction(Discriminator discriminator,
               %sreturn read(instruction.data(), instruction.offset());
               }""",
           typeName, tab
-      ).indent(genSrcContext.tabLength());
+      ).indent(srcGenContext.tabLength());
       final var withHelper = header + readHelper + sourceCode.substring(offset + 1);
-      builder.append(withHelper.indent(genSrcContext.tabLength()));
+      builder.append(withHelper.indent(srcGenContext.tabLength()));
     }
 
     return removeBlankLines(builder.toString());

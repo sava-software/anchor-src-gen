@@ -7,8 +7,6 @@ import systems.comodal.jsoniter.ContextFieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 
-import java.util.Map;
-
 import static software.sava.anchor.AnchorUtil.camelCase;
 import static software.sava.idl.generator.anchor.AnchorType.*;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
@@ -71,27 +69,27 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext,
+  public String generateRecordField(final SrcGenContext srcGenContext,
                                     final NamedType context,
                                     final boolean optional) {
-    genSrcContext.addImportIfExternal(typeName);
+    srcGenContext.addImportIfExternal(typeName);
     return String.format("%s%s %s", context.docComments(), typeName, context.name());
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  public String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final String varName,
                                            final boolean optional) {
     return String.format("%s %s", typeName, varName);
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext, final String offsetVarName, final String varName) {
+  public String generateRead(final SrcGenContext srcGenContext, final String offsetVarName, final String varName) {
     return String.format("%s.read(_data, i);", typeName);
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String varName,
                              final boolean hasNext,
                              final boolean singleField,
@@ -103,23 +101,23 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext, final String varName) {
+  public String generateNewInstanceField(final SrcGenContext srcGenContext, final String varName) {
     return varName;
   }
 
   @Override
-  public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
+  public String generateWrite(final SrcGenContext srcGenContext, final String varName, final boolean hasNext) {
     return String.format("%sBorsh.write(%s, _data, i);", hasNext ? "i += " : "", varName);
   }
 
   @Override
-  public String generateEnumRecord(final GenSrcContext genSrcContext,
+  public String generateEnumRecord(final SrcGenContext srcGenContext,
                                    final String enumTypeName,
                                    final NamedType enumName,
                                    final int ordinal) {
     final var name = enumName.name();
     final var valTypeName = enumName.name().equals(typeName)
-        ? genSrcContext.typePackage() + '.' + typeName
+        ? srcGenContext.typePackage() + '.' + typeName
         : typeName;
     return String.format("""
             record %s(%s val) implements BorshEnum, %s {
@@ -141,45 +139,41 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
   }
 
   @Override
-  public String generateLength(final String varName, final GenSrcContext genSrcContext) {
-    genSrcContext.addImport(Borsh.class);
+  public String generateLength(final String varName, final SrcGenContext srcGenContext) {
+    srcGenContext.addImport(Borsh.class);
     return String.format("Borsh.len(%s)", varName);
   }
 
   @Override
-  public int generateIxSerialization(final GenSrcContext genSrcContext,
+  public int generateIxSerialization(final SrcGenContext srcGenContext,
                                      final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
                                      final StringBuilder stringsBuilder,
                                      final StringBuilder dataLengthBuilder,
                                      final boolean hasNext) {
-    genSrcContext.addDefinedImport(typeName);
+    srcGenContext.addDefinedImport(typeName);
     paramsBuilder.append(context.docComments());
     final var varName = context.name();
     paramsBuilder.append(String.format("final %s %s,\n", typeName, varName));
-    genSrcContext.addImport(Borsh.class);
+    srcGenContext.addImport(Borsh.class);
     dataLengthBuilder.append(String.format(" + Borsh.len(%s)", varName));
-    dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+    dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
     return 0;
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
-    final var definedType = definedTypes.get(typeName);
-    if (definedType == null) {
-      throw new IllegalStateException("Failed to find defined type " + typeName);
-    }
-    return definedType.type().isFixedLength(definedTypes);
+  public boolean isFixedLength(final SrcGenContext srcGenContext) {
+    return srcGenContext.isDefinedTypeFixedLength(typeName);
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext) {
-    return genSrcContext.definedTypes().get(typeName).type().serializedLength(genSrcContext, genSrcContext.isAccount(typeName));
+  public int serializedLength(final SrcGenContext srcGenContext) {
+    return srcGenContext.definedTypeSerializedLength(typeName);
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,
@@ -190,8 +184,8 @@ public record AnchorDefined(String typeName) implements AnchorReferenceTypeConte
             %sreturn Filter.createMemCompFilter(%s, %s.%s());
             }
             """,
-        camelCase(varName, true), typeName(), varName, genSrcContext.tab(), offsetVarName, varName, optional ? "writeOptional" : "write"
+        camelCase(varName, true), typeName(), varName, srcGenContext.tab(), offsetVarName, varName, optional ? "writeOptional" : "write"
     ));
-    genSrcContext.addImport(Filter.class);
+    srcGenContext.addImport(Filter.class);
   }
 }

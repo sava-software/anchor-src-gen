@@ -4,20 +4,84 @@ import software.sava.core.programs.Discriminator;
 import software.sava.idl.generator.src.SrcUtil;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
-public record AnchorNamedType(Discriminator discriminator,
-                              String name,
-                              AnchorSerialization serialization,
-                              AnchorRepresentation representation,
-                              AnchorTypeContext type,
-                              List<String> docs,
-                              boolean index) implements NamedType {
+final class AnchorNamedType extends BaseNamedType {
 
-  static final Set<String> RESERVED_NAMES = Set.of(
-      "new",
-      "offset"
-  );
+  private final Discriminator discriminator;
+  private final AnchorSerialization serialization;
+  private final AnchorRepresentation representation;
+
+  AnchorNamedType(final Discriminator discriminator,
+                  final String name,
+                  final AnchorSerialization serialization,
+                  final AnchorRepresentation representation,
+                  final TypeContext type,
+                  final List<String> docs,
+                  final String docComments,
+                  final boolean index) {
+    super(name, type, docs, docComments, index);
+    this.discriminator = discriminator;
+    this.serialization = serialization;
+    this.representation = representation;
+  }
+
+  static NamedType createType(final Discriminator discriminator,
+                              final String name,
+                              final AnchorSerialization serialization,
+                              final AnchorRepresentation representation,
+                              final AnchorTypeContext type,
+                              final List<String> docs,
+                              final boolean index) {
+    if (name == null) {
+      return new AnchorNamedType(
+          discriminator,
+          '_' + type.type().name(),
+          serialization == null ? AnchorSerialization.borsh : serialization,
+          representation,
+          type,
+          docs == null ? IDL.NO_DOCS : docs,
+          docs == null ? "" : SrcUtil.formatComments(docs),
+          index
+      );
+    } else {
+      final String cleanedName;
+      if (RESERVED_NAMES.contains(name)) {
+        cleanedName = '_' + name;
+      } else {
+        cleanedName = NamedType.cleanName(name);
+      }
+      return new AnchorNamedType(
+          discriminator,
+          cleanedName,
+          serialization == null ? AnchorSerialization.borsh : serialization,
+          representation,
+          type,
+          docs == null ? IDL.NO_DOCS : docs,
+          docs == null ? "" : SrcUtil.formatComments(docs),
+          index
+      );
+    }
+  }
+
+  public static NamedType createType(final Discriminator discriminator,
+                                     final String name,
+                                     final AnchorTypeContext type) {
+    return createType(discriminator, name, null, null, type, IDL.NO_DOCS, false);
+  }
+
+  public AnchorSerialization serialization() {
+    return serialization;
+  }
+
+  public AnchorRepresentation representation() {
+    return representation;
+  }
+
+  @Override
+  public Discriminator discriminator() {
+    return discriminator;
+  }
 
   @Override
   public NamedType rename(final String newName) {
@@ -28,67 +92,26 @@ public record AnchorNamedType(Discriminator discriminator,
         representation,
         type,
         docs,
+        docComments,
         index
     );
   }
 
   @Override
-  public String docComments() {
-    return SrcUtil.formatComments(this.docs);
+  public boolean equals(final Object o) {
+    if (!(o instanceof final AnchorNamedType that)) return false;
+    if (!super.equals(o)) return false;
+    return Objects.equals(discriminator, that.discriminator)
+        && serialization == that.serialization
+        && Objects.equals(representation, that.representation);
   }
 
   @Override
-  public int generateSerialization(final GenSrcContext genSrcContext,
-                                   final StringBuilder paramsBuilder,
-                                   final StringBuilder dataBuilder,
-                                   final StringBuilder stringsBuilder,
-                                   final StringBuilder dataLengthBuilder,
-                                   final boolean hasNext) {
-    return type.generateIxSerialization(genSrcContext, this, paramsBuilder, dataBuilder, stringsBuilder, dataLengthBuilder, hasNext);
-  }
-
-  @Override
-  public String generateRecordField(final GenSrcContext genSrcContext) {
-    return type.generateRecordField(genSrcContext, this, false);
-  }
-
-  @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext) {
-    return type.generateStaticFactoryField(genSrcContext, name, false);
-  }
-
-  @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext) {
-    return type.generateNewInstanceField(genSrcContext, name);
-  }
-
-  @Override
-  public String generateWrite(final GenSrcContext genSrcContext, final boolean hasNext) {
-    return type.generateWrite(genSrcContext, name, hasNext);
-  }
-
-  @Override
-  public String generateRead(final GenSrcContext genSrcContext,
-                             final boolean hasNext,
-                             final boolean singleField,
-                             final String offsetVarName) {
-    return type.generateRead(genSrcContext, name, hasNext, singleField, offsetVarName);
-  }
-
-  @Override
-  public String generateLength(final GenSrcContext genSrcContext) {
-    return type.generateLength(name, genSrcContext);
-  }
-
-  @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
-                                    final StringBuilder builder,
-                                    final String offsetVarName) {
-    type.generateMemCompFilter(genSrcContext, builder, name, offsetVarName);
-  }
-
-  @Override
-  public String arrayLengthConstant() {
-    return type.arrayLengthConstant(name);
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + Objects.hashCode(discriminator);
+    result = 31 * result + serialization.hashCode();
+    result = 31 * result + Objects.hashCode(representation);
+    return result;
   }
 }

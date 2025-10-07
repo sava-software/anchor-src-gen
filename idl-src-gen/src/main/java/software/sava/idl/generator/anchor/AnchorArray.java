@@ -8,9 +8,7 @@ import systems.comodal.jsoniter.ValueType;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 
-import static software.sava.idl.generator.anchor.AnchorStruct.generateRecord;
 import static software.sava.idl.generator.anchor.AnchorType.*;
 
 public record AnchorArray(AnchorTypeContext genericType,
@@ -21,23 +19,23 @@ public record AnchorArray(AnchorTypeContext genericType,
     return "[]".repeat(depth);
   }
 
-  static void addImports(final GenSrcContext genSrcContext,
+  static void addImports(final SrcGenContext srcGenContext,
                          final AnchorTypeContext genericType,
                          final String typeName) {
     switch (genericType.type()) {
-      case publicKey -> genSrcContext.addImport(PublicKey.class);
-      case string -> genSrcContext.addImport(String.class);
-      case u128, u256, i128, i256 -> genSrcContext.addImport(BigInteger.class);
-      case defined -> genSrcContext.addImportIfExternal(typeName);
+      case publicKey -> srcGenContext.addImport(PublicKey.class);
+      case string -> srcGenContext.addImport(String.class);
+      case u128, u256, i128, i256 -> srcGenContext.addImport(BigInteger.class);
+      case defined -> srcGenContext.addImportIfExternal(typeName);
     }
   }
 
-  static String generateRecordField(final GenSrcContext genSrcContext,
+  static String generateRecordField(final SrcGenContext srcGenContext,
                                     final AnchorTypeContext genericType,
                                     final int depth,
                                     final NamedType context) {
     final var typeName = genericType.realTypeName();
-    addImports(genSrcContext, genericType, typeName);
+    addImports(srcGenContext, genericType, typeName);
     final var docs = context.docComments();
     final var varName = context.name();
     final var depthCode = arrayDepthCode(depth);
@@ -46,12 +44,12 @@ public record AnchorArray(AnchorTypeContext genericType,
         : String.format("%s%s%s %s", docs, typeName, depthCode, varName);
   }
 
-  static String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  static String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final AnchorTypeContext genericType,
                                            final int depth,
                                            final String context) {
     final var typeName = genericType.realTypeName();
-    addImports(genSrcContext, genericType, typeName);
+    addImports(srcGenContext, genericType, typeName);
     final var depthCode = arrayDepthCode(depth);
     return String.format("%s%s %s", typeName, depthCode, context);
   }
@@ -98,8 +96,8 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
-    return genericType.isFixedLength(definedTypes);
+  public boolean isFixedLength(final SrcGenContext srcGenContext) {
+    return genericType.isFixedLength(srcGenContext);
   }
 
   @Override
@@ -108,14 +106,14 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext) {
-    return genericType.isFixedLength(genSrcContext.definedTypes())
-        ? (depth * numElements) * genericType.serializedLength(genSrcContext, genSrcContext.isAccount(genericType.typeName()))
-        : genericType.serializedLength(genSrcContext);
+  public int serializedLength(final SrcGenContext srcGenContext) {
+    return genericType.isFixedLength(srcGenContext)
+        ? (depth * numElements) * genericType.serializedLength(srcGenContext, srcGenContext.isAccount(genericType.typeName()))
+        : genericType.serializedLength(srcGenContext);
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,
@@ -134,21 +132,21 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext,
+  public String generateRecordField(final SrcGenContext srcGenContext,
                                     final NamedType varName,
                                     final boolean optional) {
-    return generateRecordField(genSrcContext, genericType, depth, varName);
+    return generateRecordField(srcGenContext, genericType, depth, varName);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  public String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final String varName,
                                            final boolean optional) {
-    return generateStaticFactoryField(genSrcContext, genericType, depth, varName);
+    return generateStaticFactoryField(srcGenContext, genericType, depth, varName);
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String varName,
                              final boolean hasNext,
                              final boolean singleField,
@@ -225,15 +223,15 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext, final String varName) {
+  public String generateNewInstanceField(final SrcGenContext srcGenContext, final String varName) {
     return generateNewInstanceField(genericType, varName);
   }
 
   @Override
-  public String generateWrite(final GenSrcContext genSrcContext,
+  public String generateWrite(final SrcGenContext srcGenContext,
                               final String varName,
                               final boolean hasNext) {
-    genSrcContext.addImport(Borsh.class);
+    srcGenContext.addImport(Borsh.class);
     final var write = switch (genericType.type()) {
       case u128, i128 -> String.format("Borsh.write128ArrayChecked(%s, %d, _data, i);", varName, numElements);
       case u256, i256 -> String.format("Borsh.write256ArrayChecked(%s, %d, _data, i);", varName, numElements);
@@ -243,23 +241,23 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public String generateEnumRecord(final GenSrcContext genSrcContext,
+  public String generateEnumRecord(final SrcGenContext srcGenContext,
                                    final String enumTypeName,
                                    final NamedType enumName,
                                    final int ordinal) {
-    return generateRecord(
-        genSrcContext,
+    final var fields = List.of(AnchorNamedType.createType(null, "val", this));
+    final var struct = new AnchorStruct(fields);
+    return struct.generateRecord(
+        srcGenContext,
         enumName,
-        List.of(NamedType.createType(null, "val", this)),
-        "",
         enumTypeName,
         ordinal
     );
   }
 
   @Override
-  public String generateLength(final String varName, final GenSrcContext genSrcContext) {
-    genSrcContext.addImport(Borsh.class);
+  public String generateLength(final String varName, final SrcGenContext srcGenContext) {
+    srcGenContext.addImport(Borsh.class);
     return switch (genericType.type()) {
       case u128, i128 -> String.format("Borsh.len128Array(%s)", varName);
       case u256, i256 -> String.format("Borsh.len256Array(%s)", varName);
@@ -268,7 +266,7 @@ public record AnchorArray(AnchorTypeContext genericType,
   }
 
   @Override
-  public int generateIxSerialization(final GenSrcContext genSrcContext,
+  public int generateIxSerialization(final SrcGenContext srcGenContext,
                                      final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
@@ -279,11 +277,11 @@ public record AnchorArray(AnchorTypeContext genericType,
     final var varName = context.name();
     final var param = String.format("final %s%s %s,\n", genericType.realTypeName(), arrayDepthCode(depth), varName);
     paramsBuilder.append(param);
-    dataLengthBuilder.append(" + ").append(generateLength(varName, genSrcContext));
+    dataLengthBuilder.append(" + ").append(generateLength(varName, srcGenContext));
 
-    dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+    dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
     if (genericType instanceof AnchorDefined) {
-      genSrcContext.addDefinedImport(genericType.typeName());
+      srcGenContext.addDefinedImport(genericType.typeName());
     }
     return 0;
   }

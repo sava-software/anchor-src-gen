@@ -12,13 +12,13 @@ public final class AnchorBigIntegerConstant extends BaseAnchorConstant {
   }
 
   @Override
-  public void toSrc(final GenSrcContext genSrcContext, final StringBuilder src) {
-    genSrcContext.addImport(BigInteger.class);
+  public void toSrc(final SrcGenContext srcGenContext, final StringBuilder src) {
+    srcGenContext.addImport(BigInteger.class);
     src.append(String.format("""
             %spublic static final BigInteger %s = new BigInteger("%s");
             
             """,
-        genSrcContext.tab(), name, value
+        srcGenContext.tab(), name, value
     ));
   }
 }

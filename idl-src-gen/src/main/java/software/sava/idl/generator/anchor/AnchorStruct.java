@@ -1,62 +1,60 @@
 package software.sava.idl.generator.anchor;
 
 import software.sava.anchor.AnchorUtil;
-import software.sava.core.accounts.PublicKey;
 import software.sava.core.borsh.Borsh;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.rpc.Filter;
+import software.sava.idl.generator.src.BaseStruct;
 import software.sava.idl.generator.src.StructGen;
-import software.sava.rpc.json.http.response.AccountInfo;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Locale.ENGLISH;
 import static software.sava.core.rpc.Filter.MAX_MEM_COMP_LENGTH;
 import static software.sava.idl.generator.ParseUtil.removeBlankLines;
-import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
 import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseLowerList;
-import static software.sava.idl.generator.anchor.AnchorType.string;
+import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
 
-public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeContext {
+final class AnchorStruct extends BaseStruct implements AnchorDefinedTypeContext {
 
-  private static final String LENGTH_ADD_ALIGN_TAB = " ".repeat("retur".length());
+  final List<NamedType> fields;
+
+  AnchorStruct(final List<NamedType> fields) {
+    this.fields = fields;
+  }
 
   static AnchorStruct parseStruct(final IDLType idlType, final JsonIterator ji) {
     final var fields = parseLowerList(idlType, ji);
     return new AnchorStruct(fields);
   }
 
-  static String generateRecord(final GenSrcContext genSrcContext,
-                               final NamedType context,
-                               final List<NamedType> fields,
-                               final String recordAccessModifier,
-                               final String interfaceName,
-                               final int ordinal) {
-    return generateRecord(genSrcContext, context, fields, recordAccessModifier, interfaceName, ordinal, false, null, false);
+  String generateRecord(final SrcGenContext srcGenContext,
+                        final NamedType context,
+                        final String interfaceName,
+                        final int ordinal) {
+    return generateRecord(srcGenContext, context, false, interfaceName, ordinal, false, null, false);
   }
 
-  static String generateRecord(final GenSrcContext genSrcContext,
-                               final NamedType context,
-                               final List<NamedType> fields,
-                               final String recordAccessModifier,
-                               final String interfaceName,
-                               final int ordinal,
-                               final boolean isAccount,
-                               final NamedType account,
-                               final boolean maybeHasDiscriminator) {
-    final boolean hasDiscriminator = genSrcContext.hasDiscriminator(isAccount, maybeHasDiscriminator);
-    final var tab = genSrcContext.tab();
+  String generateRecord(final SrcGenContext srcGenContext,
+                        final NamedType context,
+                        final boolean publicAccess,
+                        final String interfaceName,
+                        final int ordinal,
+                        final boolean isAccount,
+                        final NamedType account,
+                        final boolean maybeHasDiscriminator) {
+    final boolean hasDiscriminator = srcGenContext.hasDiscriminator(isAccount, maybeHasDiscriminator);
+    final var tab = srcGenContext.tab();
     final int tabLength = tab.length();
     final var builder = new StringBuilder(4_096);
     builder.append(context.docComments());
 
     final var name = context.name();
-    final int recordSigLineLength = StructGen.sigLine(builder, name, !recordAccessModifier.isBlank());
+    final int recordSigLineLength = StructGen.sigLine(builder, name, publicAccess);
 
     if (fields.isEmpty()) {
       return StructGen.emptyStruct(tab, builder, interfaceName, name);
@@ -69,7 +67,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
       paramsBuilder.append("PublicKey _address,\n");
       if (hasDiscriminator) {
         paramsBuilder.append("Discriminator discriminator,\n");
-        genSrcContext.addImport(Discriminator.class);
+        srcGenContext.addImport(Discriminator.class);
       }
       offsetsBuilder = new StringBuilder(2_048);
       memCompFiltersBuilder = new StringBuilder(4_096);
@@ -87,8 +85,8 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
       if (byteLength >= 0) {
         final var type = field.type();
         if (offsetsBuilder == null) {
-          if (type.isFixedLength(genSrcContext.definedTypes())) {
-            byteLength += type.serializedLength(genSrcContext);
+          if (type.isFixedLength(srcGenContext)) {
+            byteLength += type.serializedLength(srcGenContext);
           } else {
             byteLength = -1;
           }
@@ -99,22 +97,22 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
                   """,
               offsetVarName, byteLength
           ));
-          if (type.isFixedLength(genSrcContext.definedTypes())) {
-            final int serializedLength = type.serializedLength(genSrcContext);
+          if (type.isFixedLength(srcGenContext)) {
+            final int serializedLength = type.serializedLength(srcGenContext);
             if (serializedLength <= MAX_MEM_COMP_LENGTH) {
-              field.generateMemCompFilter(genSrcContext, memCompFiltersBuilder, offsetVarName);
+              field.generateMemCompFilter(srcGenContext, memCompFiltersBuilder, offsetVarName);
             }
             byteLength += serializedLength;
           } else {
-            final int serializedLength = type.fixedSerializedLength(genSrcContext);
+            final int serializedLength = type.optimisticSerializedLength(srcGenContext);
             if (serializedLength > 0 && serializedLength <= MAX_MEM_COMP_LENGTH) {
-              field.generateMemCompFilter(genSrcContext, memCompFiltersBuilder, offsetVarName);
+              field.generateMemCompFilter(srcGenContext, memCompFiltersBuilder, offsetVarName);
             }
             byteLength = -1;
           }
         }
       }
-      paramsBuilder.append(field.generateRecordField(genSrcContext));
+      paramsBuilder.append(field.generateRecordField(srcGenContext));
       if (fieldIterator.hasNext()) {
         paramsBuilder.append(",\n");
       } else {
@@ -150,14 +148,14 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
             public static final Filter SIZE_FILTER = Filter.createDataSizeFilter(BYTES);
             
             """);
-        genSrcContext.addImport(Filter.class);
+        srcGenContext.addImport(Filter.class);
       }
 
       final var discriminator = account.discriminator();
       if (discriminator != null) {
-        genSrcContext.addImport(Filter.class);
-        genSrcContext.addImport(Discriminator.class);
-        genSrcContext.addStaticImport(Discriminator.class, "toDiscriminator");
+        srcGenContext.addImport(Filter.class);
+        srcGenContext.addImport(Discriminator.class);
+        srcGenContext.addStaticImport(Discriminator.class, "toDiscriminator");
 
         final var discriminatorLine = Arrays.stream(discriminator.toIntArray())
             .mapToObj(Integer::toString)
@@ -180,7 +178,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     }
 
     final var returnNewLine = String.format("return new %s(", name);
-    if (fields.stream().anyMatch(namedType -> namedType.type().type() == string)) {
+    if (fields.stream().anyMatch(namedType -> namedType.type().isString())) {
       final var factoryMethodBuilder = new StringBuilder(2_048);
       if (isAccount) {
         factoryMethodBuilder.append("final PublicKey _address,\n");
@@ -191,7 +189,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
       fieldIterator = fields.iterator();
       for (NamedType field; ; ) {
         field = fieldIterator.next();
-        factoryMethodBuilder.append("final ").append(field.generateStaticFactoryField(genSrcContext));
+        factoryMethodBuilder.append("final ").append(field.generateStaticFactoryField(srcGenContext));
         if (fieldIterator.hasNext()) {
           factoryMethodBuilder.append(",\n");
         } else {
@@ -217,7 +215,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
       fieldIterator = fields.iterator();
       for (NamedType field; ; ) {
         field = fieldIterator.next();
-        newInstanceBuilder.append(field.generateNewInstanceField(genSrcContext));
+        newInstanceBuilder.append(field.generateNewInstanceField(srcGenContext));
         if (fieldIterator.hasNext()) {
           newInstanceBuilder.append(",\n");
         } else {
@@ -239,33 +237,14 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     for (NamedType field; ; ) {
       field = fieldIterator.next();
       final boolean hasNext = fieldIterator.hasNext();
-      readBuilder.append(field.generateRead(genSrcContext, hasNext, singleField, offsetVarName)).append('\n');
+      readBuilder.append(field.generateRead(srcGenContext, hasNext, singleField, offsetVarName)).append('\n');
       if (!hasNext) {
         break;
       }
     }
     builder.append(String.format("public static %s read(final byte[] _data, final int offset) {", name).indent(tabLength));
     if (isAccount) {
-      genSrcContext.addImport(AccountInfo.class);
-      builder.append(String.format("""
-              %sreturn read(null, _data, offset);
-              }
-              
-              public static %s read(final AccountInfo<byte[]> accountInfo) {
-              %sreturn read(accountInfo.pubKey(), accountInfo.data(), 0);
-              }
-              
-              public static %s read(final PublicKey _address, final byte[] _data) {
-              %sreturn read(_address, _data, 0);
-              }
-              
-              public static final BiFunction<PublicKey, byte[], %s> FACTORY = %s::read;
-              
-              public static %s read(final PublicKey _address, final byte[] _data, final int offset) {""",
-          tab, name, tab, name, tab, name, name, name
-      ).indent(tabLength));
-      genSrcContext.addImport(BiFunction.class);
-      genSrcContext.addImport(PublicKey.class);
+      StructGen.readAccountInfo(srcGenContext, builder, name);
     }
 
     builder.append("""
@@ -279,7 +258,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
           final var discriminator = createAnchorDiscriminator(_data, offset);
           int i = offset + discriminator.length();""".indent(tabLength << 1)
       );
-      genSrcContext.addStaticImport(Discriminator.class, "createAnchorDiscriminator");
+      srcGenContext.addStaticImport(Discriminator.class, "createAnchorDiscriminator");
     } else if (!singleField) {
       builder.append(tab).append(tab).append("int i = offset;\n");
     }
@@ -295,7 +274,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     fieldIterator = fields.iterator();
     for (NamedType field; ; ) {
       field = fieldIterator.next();
-      newInstanceBuilder.append(field.generateNewInstanceField(genSrcContext));
+      newInstanceBuilder.append(field.generateNewInstanceField(srcGenContext));
       if (fieldIterator.hasNext()) {
         newInstanceBuilder.append(",\n");
       } else {
@@ -312,7 +291,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
 
     final var writeBuilder = new StringBuilder(4_096);
     for (final var field : fields) {
-      writeBuilder.append(field.generateWrite(genSrcContext, true)).append('\n');
+      writeBuilder.append(field.generateWrite(srcGenContext, true)).append('\n');
     }
     builder.append("""
         @Override
@@ -336,7 +315,7 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     fieldIterator = fields.iterator();
     for (NamedType field; ; ) {
       field = fieldIterator.next();
-      lengthBuilder.append(field.generateLength(genSrcContext));
+      lengthBuilder.append(field.generateLength(srcGenContext));
       if (fieldIterator.hasNext()) {
         lengthBuilder.append('\n').append(tab).append(tab).append(LENGTH_ADD_ALIGN_TAB).append("+ ");
       } else {
@@ -386,14 +365,13 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     return removeBlankLines(builder.append('}').toString());
   }
 
-  static String generatePublicRecord(final GenSrcContext genSrcContext,
-                                     final NamedType context,
-                                     final List<NamedType> fields,
-                                     final boolean isAccount,
-                                     final NamedType account,
-                                     final boolean maybeHasDiscriminator) {
-    final boolean hasDiscriminator = genSrcContext.hasDiscriminator(isAccount, maybeHasDiscriminator);
-    return generateRecord(genSrcContext, context, fields, "public", "Borsh", -1, isAccount, account, hasDiscriminator);
+  String generatePublicRecord(final SrcGenContext srcGenContext,
+                              final NamedType context,
+                              final boolean isAccount,
+                              final NamedType account,
+                              final boolean maybeHasDiscriminator) {
+    final boolean hasDiscriminator = srcGenContext.hasDiscriminator(isAccount, maybeHasDiscriminator);
+    return generateRecord(srcGenContext, context, true, "Borsh", -1, isAccount, account, hasDiscriminator);
   }
 
   @Override
@@ -407,20 +385,20 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
   }
 
   @Override
-  public boolean isFixedLength(final Map<String, NamedType> definedTypes) {
+  public boolean isFixedLength(final SrcGenContext srcGenContext) {
     return fields.stream()
         .map(NamedType::type)
-        .allMatch(type -> type.isFixedLength(definedTypes));
+        .allMatch(type -> type.isFixedLength(srcGenContext));
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext, final boolean isAccount) {
-    final boolean hasDiscriminator = genSrcContext.hasDiscriminator(isAccount);
+  public int serializedLength(final SrcGenContext srcGenContext, final boolean isAccount) {
+    final boolean hasDiscriminator = srcGenContext.hasDiscriminator(isAccount);
     int serializedLength = hasDiscriminator ? AnchorUtil.DISCRIMINATOR_LENGTH : 0;
     int len;
     for (final var field : fields) {
       final var type = field.type();
-      len = field.type().serializedLength(genSrcContext, genSrcContext.isAccount(type.typeName()));
+      len = field.type().serializedLength(srcGenContext, srcGenContext.isAccount(type.typeName()));
       if (len <= 0) {
 //        throw throwInvalidDataType();
         return len;
@@ -432,14 +410,13 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
   }
 
   @Override
-  public int fixedSerializedLength(final GenSrcContext genSrcContext, final boolean isAccount) {
-    final var definedTypes = genSrcContext.definedTypes();
-    final boolean hasDiscriminator = genSrcContext.hasDiscriminator(isAccount);
+  public int optimisticSerializedLength(final SrcGenContext srcGenContext, final boolean isAccount) {
+    final boolean hasDiscriminator = srcGenContext.hasDiscriminator(isAccount);
     int serializedLength = hasDiscriminator ? AnchorUtil.DISCRIMINATOR_LENGTH : 0;
     for (final var field : fields) {
-      if (isFixedLength(definedTypes)) {
+      if (isFixedLength(srcGenContext)) {
         final var type = field.type();
-        serializedLength += type.serializedLength(genSrcContext, genSrcContext.isAccount(type.typeName()));
+        serializedLength += type.serializedLength(srcGenContext, srcGenContext.isAccount(type.typeName()));
       } else {
         return serializedLength;
       }
@@ -447,14 +424,14 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     return serializedLength;
   }
 
-  public String generateSource(final GenSrcContext genSrcContext, final NamedType context) {
+  public String generateSource(final SrcGenContext srcGenContext, final NamedType context) {
     final var builder = new StringBuilder(4_096);
-    genSrcContext.addImport(Borsh.class);
-    final var recordSource = generatePublicRecord(genSrcContext, context, fields, false, null, true);
+    srcGenContext.addImport(Borsh.class);
+    final var recordSource = generatePublicRecord(srcGenContext, context, false, null, true);
     return builder.append('\n').append(recordSource).toString();
   }
 
-  public String generateSource(final GenSrcContext genSrcContext,
+  public String generateSource(final SrcGenContext srcGenContext,
                                final String packageName,
                                final NamedType context,
                                final boolean isAccount,
@@ -462,12 +439,35 @@ public record AnchorStruct(List<NamedType> fields) implements AnchorDefinedTypeC
     final var builder = new StringBuilder(4_096);
     builder.append("package ").append(packageName).append(";\n\n");
 
-    genSrcContext.addImport(Borsh.class);
+    srcGenContext.addImport(Borsh.class);
 
-    final var recordSource = generatePublicRecord(genSrcContext, context, fields, isAccount, account, isAccount);
+    final var recordSource = generatePublicRecord(srcGenContext, context, isAccount, account, isAccount);
 
-    genSrcContext.appendImports(builder);
+    srcGenContext.appendImports(builder);
 
     return builder.append('\n').append(recordSource).toString();
+  }
+
+  public List<NamedType> fields() {
+    return fields;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj == null || obj.getClass() != this.getClass()) return false;
+    var that = (AnchorStruct) obj;
+    return Objects.equals(this.fields, that.fields);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(fields);
+  }
+
+  @Override
+  public String toString() {
+    return "AnchorStruct[" +
+        "fields=" + fields + ']';
   }
 }

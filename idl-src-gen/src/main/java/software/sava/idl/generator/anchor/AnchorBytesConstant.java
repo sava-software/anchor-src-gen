@@ -11,7 +11,7 @@ public final class AnchorBytesConstant extends BaseAnchorConstant {
   }
 
   @Override
-  public void toSrc(final GenSrcContext genSrcContext, final StringBuilder src) {
+  public void toSrc(final SrcGenContext srcGenContext, final StringBuilder src) {
     final var elements = new String[value.length];
     for (int i = 0; i < elements.length; i++) {
       elements[i] = Byte.toString(value[i]);
@@ -21,7 +21,7 @@ public final class AnchorBytesConstant extends BaseAnchorConstant {
             %spublic static final byte[] %s = new byte[]{%s};
             
             """,
-        genSrcContext.tab(), name, String.join(", ", elements)
+        srcGenContext.tab(), name, String.join(", ", elements)
     ));
   }
 

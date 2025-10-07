@@ -1,5 +1,11 @@
 package software.sava.idl.generator.src;
 
+import software.sava.core.accounts.PublicKey;
+import software.sava.idl.generator.anchor.SrcGenContext;
+import software.sava.rpc.json.http.response.AccountInfo;
+
+import java.util.function.BiFunction;
+
 import static software.sava.idl.generator.ParseUtil.removeBlankLines;
 
 public class StructGen {
@@ -43,5 +49,31 @@ public class StructGen {
     ).indent(tab.length()));
     src.append('}');
     return removeBlankLines(src.toString());
+  }
+
+  public static void readAccountInfo(final SrcGenContext srcGenContext,
+                                     final StringBuilder src,
+                                     final String name) {
+    srcGenContext.addImport(AccountInfo.class);
+    srcGenContext.addImport(BiFunction.class);
+    srcGenContext.addImport(PublicKey.class);
+    final var tab = srcGenContext.tab();
+    src.append(String.format("""
+            %sreturn read(null, _data, offset);
+            }
+            
+            public static %s read(final AccountInfo<byte[]> accountInfo) {
+            %sreturn read(accountInfo.pubKey(), accountInfo.data(), 0);
+            }
+            
+            public static %s read(final PublicKey _address, final byte[] _data) {
+            %sreturn read(_address, _data, 0);
+            }
+            
+            public static final BiFunction<PublicKey, byte[], %s> FACTORY = %s::read;
+            
+            public static %s read(final PublicKey _address, final byte[] _data, final int offset) {""",
+        tab, name, tab, name, tab, name, name, name
+    ).indent(tab.length()));
   }
 }

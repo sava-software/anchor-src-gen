@@ -10,12 +10,12 @@ public final class AnchorLongConstant extends BaseAnchorConstant {
   }
 
   @Override
-  public void toSrc(final GenSrcContext genSrcContext, final StringBuilder src) {
+  public void toSrc(final SrcGenContext srcGenContext, final StringBuilder src) {
     src.append(String.format("""
             %spublic static final long %s = %d;
             
             """,
-        genSrcContext.tab(), name, value
+        srcGenContext.tab(), name, value
     ));
   }
 }

@@ -29,12 +29,12 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
                             String camelPath) implements Seed, ProgramSeed {
 
     @Override
-    public String varName(final GenSrcContext genSrcContext) {
+    public String varName(final SrcGenContext srcGenContext) {
       return camelPath + "Account.toByteArray()";
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
+    public String fieldName(final SrcGenContext srcGenContext, final Set<String> deDuplicateKnown) {
       return String.format(
           "final %s %sAccount",
           type.javaType().getSimpleName(),
@@ -66,12 +66,12 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
   public record ArgSeed(AnchorType type, int index, String path, String camelPath) implements Seed {
 
     @Override
-    public String varName(final GenSrcContext genSrcContext) {
+    public String varName(final SrcGenContext srcGenContext) {
       return type == null || type.javaType().equals(byte[].class) ? camelPath : camelPath + "Bytes";
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
+    public String fieldName(final SrcGenContext srcGenContext, final Set<String> deDuplicateKnown) {
       // TODO: generate more convenient methods based on type.
       return String.format(
           "final %s %s",
@@ -80,7 +80,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
       );
     }
 
-    public void serialize(final GenSrcContext genSrcContext, final StringBuilder src) {
+    public void serialize(final SrcGenContext srcGenContext, final StringBuilder src) {
       if (type != null) {
         final var serializationSrc = switch (type) {
           case bool -> String.format("""
@@ -97,7 +97,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
               camelPath, camelPath
           );
           case f32 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[Float.BYTES];
                     ByteUtil.putFloat32LE(%sBytes, 0, %s);""",
@@ -105,7 +105,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case f64 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[Double.BYTES];
                     ByteUtil.putFloat64LE(%sBytes, 0, %s);""",
@@ -113,14 +113,14 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case i8, u8 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[] {%s};""",
                 camelPath, camelPath
             );
           }
           case i16, u16 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[Short.BYTES];
                     ByteUtil.putInt16LE(%sBytes, 0, %s);""",
@@ -128,7 +128,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case i32, u32 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[Integer.BYTES];
                     ByteUtil.putInt32LE(%sBytes, 0, %s);""",
@@ -136,7 +136,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case i64, u64 -> {
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[Long.BYTES];
                     ByteUtil.putInt64LE(%sBytes, 0, %s);""",
@@ -144,8 +144,8 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case i128, u128 -> {
-            genSrcContext.addImport(BigDecimal.class);
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(BigDecimal.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[128];
                     ByteUtil.getUInt128LE(%sBytes, 0, %s);""",
@@ -153,8 +153,8 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
             );
           }
           case i256, u256 -> {
-            genSrcContext.addImport(BigDecimal.class);
-            genSrcContext.addImport(ByteUtil.class);
+            srcGenContext.addImport(BigDecimal.class);
+            srcGenContext.addImport(ByteUtil.class);
             yield String.format("""
                     final byte[] %sBytes = new byte[256];
                     ByteUtil.getUInt256LE(%sBytes, 0, %s);""",
@@ -166,7 +166,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
               throw new UnsupportedOperationException("TODO: Support PDA serialization for " + type + " type args");
         };
         if (serializationSrc != null) {
-          src.append(serializationSrc.indent(genSrcContext.tabLength() << 1));
+          src.append(serializationSrc.indent(srcGenContext.tabLength() << 1));
         }
       }
     }
@@ -203,15 +203,15 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
     }
 
     @Override
-    public String varName(final GenSrcContext genSrcContext) {
+    public String varName(final SrcGenContext srcGenContext) {
       if (isReadable) {
-        genSrcContext.addUS_ASCII_Import();
+        srcGenContext.addUS_ASCII_Import();
         return String.format("""
             "%s".getBytes(US_ASCII)""", str
         );
       } else if (maybeKnownPublicKey != null) {
         // TODO: fix naming if starts with digit.
-        final var knownAccountRef = genSrcContext.accountMethods().get(maybeKnownPublicKey);
+        final var knownAccountRef = srcGenContext.accountMethods().get(maybeKnownPublicKey);
         if (knownAccountRef != null) {
           return knownAccountRef.callReference() + ".toByteArray()";
         } else {
@@ -228,16 +228,16 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
     }
 
     @Override
-    public String fieldName(final GenSrcContext genSrcContext, final Set<String> deDuplicateKnown) {
+    public String fieldName(final SrcGenContext srcGenContext, final Set<String> deDuplicateKnown) {
       if (isReadable) {
         return null;
       } else if (maybeKnownPublicKey != null) {
-        final var knownAccountRef = genSrcContext.accountMethods().get(maybeKnownPublicKey);
+        final var knownAccountRef = srcGenContext.accountMethods().get(maybeKnownPublicKey);
         if (knownAccountRef != null) {
           final var accountsClas = knownAccountRef.clas();
           final var field = String.format("final %s %s", accountsClas.getSimpleName(), AnchorUtil.camelCase(accountsClas.getSimpleName(), false));
           if (deDuplicateKnown.add(field)) {
-            genSrcContext.addImport(accountsClas);
+            srcGenContext.addImport(accountsClas);
             return field;
           } else {
             return null;
@@ -417,10 +417,10 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
     }
   }
 
-  public void genSrc(final GenSrcContext genSrcContext,
+  public void genSrc(final SrcGenContext srcGenContext,
                      final String name,
                      final StringBuilder out) {
-    final var tab = genSrcContext.tab();
+    final var tab = srcGenContext.tab();
     final var signatureLine = tab + String.format("public static ProgramDerivedAddress %sPDA(", name);
     out.append(signatureLine);
     out.append("final PublicKey ");
@@ -429,7 +429,7 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
 
     final var deduplicateKnown = HashSet.<String>newHashSet(seeds.size());
     final var fieldsList = seeds.stream()
-        .map(seed -> seed.fieldName(genSrcContext, deduplicateKnown))
+        .map(seed -> seed.fieldName(srcGenContext, deduplicateKnown))
         .filter(Objects::nonNull)
         .toList();
     if (fieldsList.isEmpty()) {
@@ -441,19 +441,19 @@ public record AnchorPDA(List<Seed> seeds, ProgramSeed program) {
       out.append(fields);
       for (final var seed : seeds) {
         if (seed instanceof ArgSeed argSeed) {
-          argSeed.serialize(genSrcContext, out);
+          argSeed.serialize(srcGenContext, out);
         }
       }
     }
 
     final var paramRefs = seeds.stream()
-        .map(seed -> seed.varName(genSrcContext))
+        .map(seed -> seed.varName(srcGenContext))
         .collect(Collectors.joining(",\n"));
 
     out.append(tab).append(tab).append("""
         return PublicKey.findProgramAddress(List.of(
         """);
-    out.append(paramRefs.indent(genSrcContext.tabLength() + (genSrcContext.tabLength() << 1)));
+    out.append(paramRefs.indent(srcGenContext.tabLength() + (srcGenContext.tabLength() << 1)));
     out.append(tab).append(tab).append("), ").append(programFieldName).append(");\n");
     out.append(tab).append("}\n");
   }

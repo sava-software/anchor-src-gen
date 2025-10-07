@@ -32,7 +32,8 @@ final class ParseStructsTests {
     final var namedType = namedTypeParser.create();
     assertEquals("PodBool", namedType.name());
     final var type = namedType.type();
-    if (type instanceof AnchorStruct(final var fields)) {
+    if (type instanceof AnchorStruct anchorStruct) {
+      final var fields = anchorStruct.fields();
       assertEquals(1, fields.size());
       final var field = fields.getFirst();
       assertEquals("_u8", field.name());

@@ -1,5 +1,9 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.idl.generator.anchor.IDL;
+
+import java.util.List;
+
 abstract sealed class NamedNode implements TypeNode permits AccountBumpValueNode,
     AccountValueNode,
     ArgumentValueNode,
@@ -17,6 +21,10 @@ abstract sealed class NamedNode implements TypeNode permits AccountBumpValueNode
 
   final String name() {
     return name;
+  }
+
+  List<String> docs() {
+    return IDL.NO_DOCS;
   }
 
   String docComments() {

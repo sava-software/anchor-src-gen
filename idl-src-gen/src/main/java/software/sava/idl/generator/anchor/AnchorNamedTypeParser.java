@@ -52,7 +52,7 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
 
   @Override
   public NamedType create() {
-    return NamedType.createType(discriminator, name, serialization, representation, type, docs, index);
+    return AnchorNamedType.createType(discriminator, name, serialization, representation, type, docs, index);
   }
 
   @Override
@@ -106,6 +106,6 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
   @Override
   public NamedType apply(final char[] chars, final int offset, final int len) {
     final var primitiveType = AnchorType.parsePrimitive(chars, offset, len);
-    return NamedType.createType(null, null, primitiveType);
+    return AnchorNamedType.createType(null, null, primitiveType);
   }
 }

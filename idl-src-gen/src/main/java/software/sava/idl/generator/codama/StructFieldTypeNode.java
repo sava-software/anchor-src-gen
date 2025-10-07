@@ -1,13 +1,17 @@
 package software.sava.idl.generator.codama;
 
 import software.sava.anchor.AnchorUtil;
+import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.anchor.BaseNamedType;
+import software.sava.idl.generator.anchor.NamedType;
+import software.sava.idl.generator.src.SrcUtil;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class StructFieldTypeNode extends NamedDocsNode {
+final class StructFieldTypeNode extends BaseNamedType implements TypeNode {
 
   private final TypeNode type;
   private final ValueNode defaultValue;
@@ -15,16 +19,21 @@ final class StructFieldTypeNode extends NamedDocsNode {
 
   StructFieldTypeNode(final String name,
                       final List<String> docs,
+                      final String docComments,
                       final TypeNode type,
                       final ValueNode defaultValue,
                       final ValueStrategy defaultValueStrategy) {
-    super(name, docs);
+    super(name, type, docs, docComments, false);
     this.type = type;
     this.defaultValue = defaultValue;
     this.defaultValueStrategy = defaultValueStrategy;
   }
 
-  TypeNode type() {
+  TypeNode leafType() {
+    var type = this.type;
+    while (type instanceof NestedTypeNode nestedTypeNode) {
+      type = nestedTypeNode.typeNode();
+    }
     return type;
   }
 
@@ -36,14 +45,21 @@ final class StructFieldTypeNode extends NamedDocsNode {
     return defaultValueStrategy;
   }
 
-  void generateMemCompFilter(final SrcGenContext srcGenContext,
-                             final StringBuilder builder,
-                             final String offsetVarName) {
-    type.generateMemCompFilter(srcGenContext, builder, name, offsetVarName);
+  @Override
+  public Discriminator discriminator() {
+    throw new UnsupportedOperationException("TODO");
   }
 
-  String generateRecordField(final SrcGenContext srcGenContext) {
-    return type.generateRecordField(srcGenContext, this, false);
+  @Override
+  public NamedType rename(final String newName) {
+    return new StructFieldTypeNode(
+        newName,
+        docs,
+        docComments,
+        type,
+        defaultValue,
+        defaultValueStrategy
+    );
   }
 
   public String arrayLengthConstant() {
@@ -85,6 +101,7 @@ final class StructFieldTypeNode extends NamedDocsNode {
       return new StructFieldTypeNode(
           name,
           docs == null ? List.of() : docs,
+          docs == null ? "" : SrcUtil.formatComments(docs),
           type,
           defaultValue,
           defaultValueStrategy

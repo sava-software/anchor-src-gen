@@ -7,7 +7,6 @@ import systems.comodal.jsoniter.ValueType;
 import java.util.List;
 
 import static software.sava.idl.generator.anchor.AnchorArray.arrayDepthCode;
-import static software.sava.idl.generator.anchor.AnchorStruct.generateRecord;
 import static software.sava.idl.generator.anchor.AnchorType.*;
 
 public record AnchorVector(AnchorTypeContext genericType, int depth) implements AnchorReferenceTypeContext {
@@ -56,7 +55,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public int serializedLength(final GenSrcContext genSrcContext) {
+  public int serializedLength(final SrcGenContext srcGenContext) {
     return -1;
   }
 
@@ -66,21 +65,21 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public String generateRecordField(final GenSrcContext genSrcContext,
+  public String generateRecordField(final SrcGenContext srcGenContext,
                                     final NamedType context,
                                     final boolean optional) {
-    return AnchorArray.generateRecordField(genSrcContext, genericType, depth, context);
+    return AnchorArray.generateRecordField(srcGenContext, genericType, depth, context);
   }
 
   @Override
-  public String generateStaticFactoryField(final GenSrcContext genSrcContext,
+  public String generateStaticFactoryField(final SrcGenContext srcGenContext,
                                            final String varName,
                                            final boolean optional) {
-    return AnchorArray.generateStaticFactoryField(genSrcContext, genericType, depth, varName);
+    return AnchorArray.generateStaticFactoryField(srcGenContext, genericType, depth, varName);
   }
 
   @Override
-  public String generateNewInstanceField(final GenSrcContext genSrcContext, final String varName) {
+  public String generateNewInstanceField(final SrcGenContext srcGenContext, final String varName) {
     return AnchorArray.generateNewInstanceField(genericType, varName);
   }
 
@@ -110,7 +109,7 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public String generateRead(final GenSrcContext genSrcContext,
+  public String generateRead(final SrcGenContext srcGenContext,
                              final String varName,
                              final boolean hasNext,
                              final boolean singleField,
@@ -188,8 +187,8 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public String generateWrite(final GenSrcContext genSrcContext, final String varName, final boolean hasNext) {
-    genSrcContext.addImport(Borsh.class);
+  public String generateWrite(final SrcGenContext srcGenContext, final String varName, final boolean hasNext) {
+    srcGenContext.addImport(Borsh.class);
     final var typeQualifier = typeQualifier();
     if (genericType instanceof AnchorArray array) {
       final int numElements = array.numElements();
@@ -204,30 +203,30 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
   }
 
   @Override
-  public String generateEnumRecord(final GenSrcContext genSrcContext,
+  public String generateEnumRecord(final SrcGenContext srcGenContext,
                                    final String enumTypeName,
                                    final NamedType enumName,
                                    final int ordinal) {
-    return generateRecord(
-        genSrcContext,
+    final var fields = List.of(AnchorNamedType.createType(null, "val", this));
+    final var struct = new AnchorStruct(fields);
+    return struct.generateRecord(
+        srcGenContext,
         enumName,
-        List.of(NamedType.createType(null, "val", this)),
-        "",
         enumTypeName,
         ordinal
     );
   }
 
   @Override
-  public String generateLength(final String varName, final GenSrcContext genSrcContext) {
-    genSrcContext.addImport(Borsh.class);
+  public String generateLength(final String varName, final SrcGenContext srcGenContext) {
+    srcGenContext.addImport(Borsh.class);
     return genericType instanceof AnchorArray
         ? String.format("Borsh.len%sVectorArray(%s)", typeQualifier(), varName)
         : String.format("Borsh.len%sVector(%s)", typeQualifier(), varName);
   }
 
   @Override
-  public int generateIxSerialization(final GenSrcContext genSrcContext,
+  public int generateIxSerialization(final SrcGenContext srcGenContext,
                                      final NamedType context,
                                      final StringBuilder paramsBuilder,
                                      final StringBuilder dataBuilder,
@@ -238,26 +237,26 @@ public record AnchorVector(AnchorTypeContext genericType, int depth) implements 
     final var varName = context.name();
     final var param = String.format("final %s%s %s,\n", genericType.realTypeName(), arrayDepthCode(depth), varName);
     paramsBuilder.append(param);
-    genSrcContext.addImport(Borsh.class);
+    srcGenContext.addImport(Borsh.class);
     if (genericType instanceof AnchorArray) {
       dataLengthBuilder.append(String.format(" + Borsh.len%sVectorArray(%s)", typeQualifier(), varName));
     } else {
       dataLengthBuilder.append(String.format(" + Borsh.len%sVector(%s)", typeQualifier(), varName));
     }
-    dataBuilder.append(generateWrite(genSrcContext, varName, hasNext));
+    dataBuilder.append(generateWrite(srcGenContext, varName, hasNext));
     if (genericType instanceof AnchorDefined) {
-      genSrcContext.addDefinedImport(genericType.typeName());
+      srcGenContext.addDefinedImport(genericType.typeName());
     }
     return 0;
   }
 
   @Override
-  public int fixedSerializedLength(final GenSrcContext genSrcContext) {
+  public int optimisticSerializedLength(final SrcGenContext srcGenContext) {
     return Integer.BYTES;
   }
 
   @Override
-  public void generateMemCompFilter(final GenSrcContext genSrcContext,
+  public void generateMemCompFilter(final SrcGenContext srcGenContext,
                                     final StringBuilder builder,
                                     final String varName,
                                     final String offsetVarName,

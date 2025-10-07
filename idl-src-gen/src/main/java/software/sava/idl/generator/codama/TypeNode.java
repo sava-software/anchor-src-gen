@@ -1,10 +1,12 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.idl.generator.anchor.TypeContext;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.function.Function;
 
-sealed interface TypeNode permits AmountTypeNode,
+sealed interface TypeNode extends TypeContext permits
+    AmountTypeNode,
     ArrayTypeNode,
     BooleanTypeNode,
     BytesTypeNode,
@@ -25,6 +27,7 @@ sealed interface TypeNode permits AmountTypeNode,
     SetTypeNode,
     SolAmountTypeNode,
     StringTypeNode,
+    StructFieldTypeNode,
     StructTypeNode,
     TupleTypeNode,
     ZeroableOptionTypeNode {
@@ -69,53 +72,5 @@ sealed interface TypeNode permits AmountTypeNode,
 
   static TypeNode parse(final JsonIterator ji) {
     return parse(ji, null);
-  }
-
-  default boolean isFixedLength(final SrcGenContext srcGenContext) {
-    return false;
-  }
-
-  default RuntimeException throwInvalidDataType() {
-    throw new UnsupportedOperationException(getClass().getSimpleName());
-  }
-
-  default int serializedLength(final SrcGenContext srcGenContext) {
-    throw throwInvalidDataType();
-  }
-
-  default int optimisticSerializedLength(final SrcGenContext srcGenContext) {
-    return serializedLength(srcGenContext);
-  }
-
-  default void generateMemCompFilter(final SrcGenContext srcGenContext,
-                                     final StringBuilder builder,
-                                     final String varName,
-                                     final String offsetVarName,
-                                     final boolean optional) {
-    throw throwInvalidDataType();
-  }
-
-  default void generateMemCompFilter(final SrcGenContext srcGenContext,
-                                     final StringBuilder builder,
-                                     final String varName,
-                                     final String offsetVarName) {
-    generateMemCompFilter(srcGenContext, builder, varName, offsetVarName, false);
-  }
-
-  default String generateRecordField(final SrcGenContext srcGenContext,
-                                     final TypeNode varName,
-                                     final boolean optional) {
-    throw throwInvalidDataType();
-  }
-
-  default String generateStaticFactoryField(final SrcGenContext srcGenContext,
-                                            final String varName,
-                                            final boolean optional) {
-    throw throwInvalidDataType();
-  }
-
-  default String generateNewInstanceField(final SrcGenContext srcGenContext,
-                                          final String varName) {
-    throw throwInvalidDataType();
   }
 }
