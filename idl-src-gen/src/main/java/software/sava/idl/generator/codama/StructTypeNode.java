@@ -5,6 +5,7 @@ import software.sava.core.programs.Discriminator;
 import software.sava.core.rpc.Filter;
 import software.sava.idl.generator.anchor.SrcGenContext;
 import software.sava.idl.generator.src.BaseStruct;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.StructGen;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
@@ -19,20 +20,14 @@ import static software.sava.core.rpc.Filter.MAX_MEM_COMP_LENGTH;
 import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class StructTypeNode extends BaseStruct implements TypeNode {
-
-  private final List<StructFieldTypeNode> fields;
+final class StructTypeNode extends BaseStruct<StructFieldTypeNode> implements TypeNode {
 
   StructTypeNode(final List<StructFieldTypeNode> fields) {
-    this.fields = fields;
-  }
-
-  public List<StructFieldTypeNode> fields() {
-    return fields;
+    super(fields);
   }
 
   public String generateRecord(final SrcGenContext srcGenContext,
-                               final NamedNode namedNode,
+                               final NamedType namedNode,
                                final boolean publicAccess,
                                final String interfaceName) {
     final var tab = srcGenContext.tab();

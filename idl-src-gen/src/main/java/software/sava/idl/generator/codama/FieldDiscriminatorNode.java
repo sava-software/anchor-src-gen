@@ -41,4 +41,15 @@ final class FieldDiscriminatorNode extends NamedNode implements DiscriminatorNod
       }
     }
   }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof final FieldDiscriminatorNode that)) return false;
+    return offset == that.offset;
+  }
+
+  @Override
+  public int hashCode() {
+    return offset;
+  }
 }

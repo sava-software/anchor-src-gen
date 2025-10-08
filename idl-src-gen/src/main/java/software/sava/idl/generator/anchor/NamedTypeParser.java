@@ -1,5 +1,6 @@
 package software.sava.idl.generator.anchor;
 
+import software.sava.idl.generator.src.NamedType;
 import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.factory.ElementFactory;
 

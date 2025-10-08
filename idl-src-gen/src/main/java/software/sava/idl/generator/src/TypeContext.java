@@ -1,6 +1,7 @@
-package software.sava.idl.generator.anchor;
+package software.sava.idl.generator.src;
 
-import java.util.List;
+import software.sava.idl.generator.anchor.AnchorTypeContext;
+import software.sava.idl.generator.anchor.SrcGenContext;
 
 public interface TypeContext {
 
@@ -48,7 +49,7 @@ public interface TypeContext {
   }
 
   default RuntimeException throwInvalidDataType() {
-    return AnchorPrimitive.throwInvalidDataType(this.getClass());
+    return new UnsupportedOperationException(this.getClass().getSimpleName());
   }
 
   default int numElements() {
@@ -69,14 +70,6 @@ public interface TypeContext {
 
   default String optionalTypeName() {
     return typeName();
-  }
-
-  default int depth() {
-    throw throwInvalidDataType();
-  }
-
-  default List<NamedType> values() {
-    throw throwInvalidDataType();
   }
 
   default String generateRecordField(final SrcGenContext srcGenContext,

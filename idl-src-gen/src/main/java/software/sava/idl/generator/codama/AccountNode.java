@@ -1,5 +1,6 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.idl.generator.src.SrcUtil;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.ArrayList;
@@ -19,19 +20,19 @@ import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 /// @see <a href="https://github.com/codama-idl/codama/blob/main/packages/nodes/docs/AccountNode.md">AccountNode Documentation</a>
 final class AccountNode extends DefinedTypeNode implements StructNode {
 
-  private final TypeNode data;
   private final PdaLinkNode pda;
   private final int size;
   private final List<DiscriminatorNode> discriminators;
 
   AccountNode(final String name,
-              final List<String> docs,
               final TypeNode data,
+              final List<String> docs,
+              final String docComments,
               final PdaLinkNode pda,
               final int size,
               final List<DiscriminatorNode> discriminators) {
-    super(name, docs, data);
-    this.data = data;
+    super(name, data, docs, docComments);
+
     this.pda = pda;
     this.size = size;
     this.discriminators = discriminators;
@@ -43,7 +44,7 @@ final class AccountNode extends DefinedTypeNode implements StructNode {
   /// @see <a href="https://github.com/codama-idl/codama/blob/main/packages/nodes/docs/typeNodes/NestedTypeNode.md">NestedTypeNode</a>
   /// @see <a href="https://github.com/codama-idl/codama/blob/main/packages/nodes/docs/typeNodes/StructTypeNode.md">StructTypeNode</a>
   TypeNode data() {
-    return data;
+    return type;
   }
 
   /// The link node that describes the account's PDA, if its address is derived from one.
@@ -85,8 +86,9 @@ final class AccountNode extends DefinedTypeNode implements StructNode {
     AccountNode createAccountNode() {
       return new AccountNode(
           name,
-          docs == null ? List.of() : docs,
           data,
+          docs == null ? List.of() : docs,
+          docs == null ? "" : SrcUtil.formatComments(docs),
           pda,
           size,
           discriminators == null ? List.of() : discriminators
@@ -114,5 +116,21 @@ final class AccountNode extends DefinedTypeNode implements StructNode {
         return super.test(buf, offset, len, ji);
       }
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof final AccountNode that)) return false;
+    if (!super.equals(o)) return false;
+    return size == that.size && pda.equals(that.pda) && discriminators.equals(that.discriminators);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + pda.hashCode();
+    result = 31 * result + size;
+    result = 31 * result + discriminators.hashCode();
+    return result;
   }
 }

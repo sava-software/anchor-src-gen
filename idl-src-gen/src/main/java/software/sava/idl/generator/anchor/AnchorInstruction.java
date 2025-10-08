@@ -5,6 +5,7 @@ import software.sava.core.accounts.PublicKey;
 import software.sava.core.accounts.meta.AccountMeta;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.tx.Instruction;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.SrcUtil;
 
 import java.util.List;
@@ -216,8 +217,7 @@ public record AnchorInstruction(Discriminator discriminator,
           null,
           struct,
           List.of(),
-          "",
-          false
+          ""
       );
       final var sourceCode = struct.generateSource(srcGenContext, namedType);
       final var injectKey = "implements Borsh {";

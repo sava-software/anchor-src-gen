@@ -60,4 +60,5 @@ public final class SrcUtil {
             String.format("  public static final Discriminator %s = toDiscriminator(", formatDiscriminatorReference(ixName)), ");"
         ));
   }
+
 }

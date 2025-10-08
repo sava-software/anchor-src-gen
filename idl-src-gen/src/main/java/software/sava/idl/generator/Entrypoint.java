@@ -4,6 +4,7 @@ import software.sava.anchor.AnchorUtil;
 import software.sava.core.accounts.PublicKey;
 import software.sava.core.tx.Instruction;
 import software.sava.idl.generator.anchor.*;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.rpc.json.PublicKeyEncoding;
 import software.sava.rpc.json.http.SolanaNetwork;
 import software.sava.rpc.json.http.client.SolanaRpcClient;

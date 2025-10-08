@@ -1,22 +1,32 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.src.BaseNamedType;
+import software.sava.idl.generator.src.NamedType;
+import software.sava.idl.generator.src.SrcUtil;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.List;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-sealed class DefinedTypeNode extends NamedDocsNode implements StructNode permits AccountNode {
+sealed class DefinedTypeNode extends BaseNamedType<TypeNode> implements StructNode permits AccountNode {
 
-  private final TypeNode type;
-
-  DefinedTypeNode(final String name, final List<String> docs, final TypeNode type) {
-    super(name, docs);
-    this.type = type;
+  DefinedTypeNode(final String name,
+                  final TypeNode type,
+                  final List<String> docs,
+                  final String docComments) {
+    super(name, type, docs, docComments);
   }
 
-  TypeNode type() {
-    return type;
+  @Override
+  public Discriminator discriminator() {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  @Override
+  public NamedType rename(final String newName) {
+    return new DefinedTypeNode(newName, type, docs, docComments);
   }
 
   static DefinedTypeNode parse(final JsonIterator ji) {
@@ -35,8 +45,9 @@ sealed class DefinedTypeNode extends NamedDocsNode implements StructNode permits
     DefinedTypeNode createDefinedTypeNode() {
       return new DefinedTypeNode(
           name,
+          type,
           docs == null ? List.of() : docs,
-          type
+          docs == null ? "" : SrcUtil.formatComments(docs)
       );
     }
 

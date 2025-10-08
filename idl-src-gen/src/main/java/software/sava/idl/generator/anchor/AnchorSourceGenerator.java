@@ -2,6 +2,7 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.accounts.PublicKey;
+import software.sava.idl.generator.src.NamedType;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

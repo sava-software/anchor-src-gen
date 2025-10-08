@@ -2,6 +2,7 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.src.NamedType;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.factory.ElementFactory;
 

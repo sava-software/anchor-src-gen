@@ -2,18 +2,18 @@ package software.sava.idl.generator.codama;
 
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.programs.Discriminator;
-import software.sava.idl.generator.anchor.BaseNamedType;
-import software.sava.idl.generator.anchor.NamedType;
+import software.sava.idl.generator.src.BaseNamedType;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.SrcUtil;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.List;
+import java.util.Objects;
 
 import static systems.comodal.jsoniter.JsonIterator.fieldEquals;
 
-final class StructFieldTypeNode extends BaseNamedType implements TypeNode {
+final class StructFieldTypeNode extends BaseNamedType<TypeNode> implements TypeNode {
 
-  private final TypeNode type;
   private final ValueNode defaultValue;
   private final ValueStrategy defaultValueStrategy;
 
@@ -23,8 +23,7 @@ final class StructFieldTypeNode extends BaseNamedType implements TypeNode {
                       final TypeNode type,
                       final ValueNode defaultValue,
                       final ValueStrategy defaultValueStrategy) {
-    super(name, type, docs, docComments, false);
-    this.type = type;
+    super(name, type, docs, docComments);
     this.defaultValue = defaultValue;
     this.defaultValueStrategy = defaultValueStrategy;
   }
@@ -121,5 +120,23 @@ final class StructFieldTypeNode extends BaseNamedType implements TypeNode {
       }
       return true;
     }
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (!(o instanceof final StructFieldTypeNode that)) return false;
+    if (!super.equals(o)) return false;
+    return type.equals(that.type)
+        && Objects.equals(defaultValue, that.defaultValue)
+        && defaultValueStrategy == that.defaultValueStrategy;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + type.hashCode();
+    result = 31 * result + Objects.hashCode(defaultValue);
+    result = 31 * result + Objects.hashCode(defaultValueStrategy);
+    return result;
   }
 }

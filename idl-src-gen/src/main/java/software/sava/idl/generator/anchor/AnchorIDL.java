@@ -3,6 +3,7 @@ package software.sava.idl.generator.anchor;
 import software.sava.core.accounts.ProgramDerivedAddress;
 import software.sava.core.accounts.PublicKey;
 import software.sava.core.tx.Transaction;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.rpc.json.PublicKeyEncoding;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
@@ -312,8 +313,7 @@ public final class AnchorIDL extends RootIDL implements IDL {
                 null,
                 new AnchorStruct(fields),
                 nt.docs(),
-                nt.docComments(),
-                nt.index()
+                nt.docComments()
             );
           } else {
             return nt;

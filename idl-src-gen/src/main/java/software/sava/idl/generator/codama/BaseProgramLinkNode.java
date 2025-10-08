@@ -34,4 +34,16 @@ abstract class BaseProgramLinkNode extends BaseLinkNode {
       }
     }
   }
+
+  @Override
+  public final boolean equals(final Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    final var that = (BaseProgramLinkNode) o;
+    return program.equals(that.program);
+  }
+
+  @Override
+  public final int hashCode() {
+    return program.hashCode();
+  }
 }

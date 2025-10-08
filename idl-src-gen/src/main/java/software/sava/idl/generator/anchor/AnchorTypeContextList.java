@@ -1,5 +1,7 @@
 package software.sava.idl.generator.anchor;
 
+import software.sava.idl.generator.src.NamedType;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

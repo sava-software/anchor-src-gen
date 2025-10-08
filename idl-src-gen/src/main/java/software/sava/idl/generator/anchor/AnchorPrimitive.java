@@ -6,16 +6,13 @@ import software.sava.core.borsh.Borsh;
 import software.sava.core.borsh.RustEnum;
 import software.sava.core.encoding.ByteUtil;
 import software.sava.core.rpc.Filter;
+import software.sava.idl.generator.src.NamedType;
 
 import java.math.BigInteger;
 
 import static software.sava.idl.generator.anchor.AnchorType.*;
 
 public record AnchorPrimitive(AnchorType type) implements AnchorReferenceTypeContext {
-
-  static RuntimeException throwInvalidDataType(final Class<? extends TypeContext> type) {
-    throw new UnsupportedOperationException(type.getSimpleName());
-  }
 
   static void addParam(final StringBuilder paramsBuilder,
                        final String type,

@@ -5,12 +5,12 @@ import software.sava.core.borsh.Borsh;
 import software.sava.core.programs.Discriminator;
 import software.sava.core.rpc.Filter;
 import software.sava.idl.generator.src.BaseStruct;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.StructGen;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Locale.ENGLISH;
@@ -19,12 +19,10 @@ import static software.sava.idl.generator.ParseUtil.removeBlankLines;
 import static software.sava.idl.generator.anchor.AnchorNamedTypeParser.parseLowerList;
 import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
 
-final class AnchorStruct extends BaseStruct implements AnchorDefinedTypeContext {
-
-  final List<NamedType> fields;
+final class AnchorStruct extends BaseStruct<NamedType> implements AnchorDefinedTypeContext {
 
   AnchorStruct(final List<NamedType> fields) {
-    this.fields = fields;
+    super(fields);
   }
 
   static AnchorStruct parseStruct(final IDLType idlType, final JsonIterator ji) {
@@ -446,28 +444,5 @@ final class AnchorStruct extends BaseStruct implements AnchorDefinedTypeContext 
     srcGenContext.appendImports(builder);
 
     return builder.append('\n').append(recordSource).toString();
-  }
-
-  public List<NamedType> fields() {
-    return fields;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) return true;
-    if (obj == null || obj.getClass() != this.getClass()) return false;
-    var that = (AnchorStruct) obj;
-    return Objects.equals(this.fields, that.fields);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(fields);
-  }
-
-  @Override
-  public String toString() {
-    return "AnchorStruct[" +
-        "fields=" + fields + ']';
   }
 }

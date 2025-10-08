@@ -1,6 +1,6 @@
 package software.sava.idl.generator.codama;
 
-import software.sava.idl.generator.anchor.TypeContext;
+import software.sava.idl.generator.src.TypeContext;
 import systems.comodal.jsoniter.JsonIterator;
 
 import java.util.function.Function;

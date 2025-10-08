@@ -2,6 +2,7 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.core.borsh.Borsh;
 import software.sava.core.rpc.Filter;
+import software.sava.idl.generator.src.NamedType;
 import systems.comodal.jsoniter.CharBufferFunction;
 import systems.comodal.jsoniter.ContextFieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;

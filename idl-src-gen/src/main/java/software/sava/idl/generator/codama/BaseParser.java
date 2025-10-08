@@ -1,5 +1,6 @@
 package software.sava.idl.generator.codama;
 
+import software.sava.idl.generator.ParseUtil;
 import systems.comodal.jsoniter.FieldBufferPredicate;
 import systems.comodal.jsoniter.JsonIterator;
 
@@ -12,7 +13,8 @@ abstract class BaseParser implements FieldBufferPredicate {
   @Override
   public boolean test(final char[] buf, final int offset, final int len, final JsonIterator ji) {
     if (fieldEquals("name", buf, offset, len)) {
-      name = ji.readString();
+      final var name = ji.readString();
+      this.name = ParseUtil.checkTypeName(name);
     } else if (fieldEquals("kind", buf, offset, len)) {
       ji.skip();
     } else {

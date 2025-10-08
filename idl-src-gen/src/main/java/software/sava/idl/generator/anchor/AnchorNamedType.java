@@ -1,12 +1,16 @@
 package software.sava.idl.generator.anchor;
 
 import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.ParseUtil;
+import software.sava.idl.generator.src.BaseNamedType;
+import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.SrcUtil;
+import software.sava.idl.generator.src.TypeContext;
 
 import java.util.List;
 import java.util.Objects;
 
-final class AnchorNamedType extends BaseNamedType {
+final class AnchorNamedType extends BaseNamedType<TypeContext> {
 
   private final Discriminator discriminator;
   private final AnchorSerialization serialization;
@@ -18,9 +22,8 @@ final class AnchorNamedType extends BaseNamedType {
                   final AnchorRepresentation representation,
                   final TypeContext type,
                   final List<String> docs,
-                  final String docComments,
-                  final boolean index) {
-    super(name, type, docs, docComments, index);
+                  final String docComments) {
+    super(name, type, docs, docComments);
     this.discriminator = discriminator;
     this.serialization = serialization;
     this.representation = representation;
@@ -31,51 +34,28 @@ final class AnchorNamedType extends BaseNamedType {
                               final AnchorSerialization serialization,
                               final AnchorRepresentation representation,
                               final AnchorTypeContext type,
-                              final List<String> docs,
-                              final boolean index) {
+                              final List<String> docs) {
+    final String checkedName;
     if (name == null) {
-      return new AnchorNamedType(
-          discriminator,
-          '_' + type.type().name(),
-          serialization == null ? AnchorSerialization.borsh : serialization,
-          representation,
-          type,
-          docs == null ? IDL.NO_DOCS : docs,
-          docs == null ? "" : SrcUtil.formatComments(docs),
-          index
-      );
+      checkedName = '_' + type.type().name();
     } else {
-      final String cleanedName;
-      if (RESERVED_NAMES.contains(name)) {
-        cleanedName = '_' + name;
-      } else {
-        cleanedName = NamedType.cleanName(name);
-      }
-      return new AnchorNamedType(
-          discriminator,
-          cleanedName,
-          serialization == null ? AnchorSerialization.borsh : serialization,
-          representation,
-          type,
-          docs == null ? IDL.NO_DOCS : docs,
-          docs == null ? "" : SrcUtil.formatComments(docs),
-          index
-      );
+      checkedName = ParseUtil.checkTypeName(name);
     }
+    return new AnchorNamedType(
+        discriminator,
+        checkedName,
+        serialization == null ? AnchorSerialization.borsh : serialization,
+        representation,
+        type,
+        docs == null ? IDL.NO_DOCS : docs,
+        docs == null ? "" : SrcUtil.formatComments(docs)
+    );
   }
 
   public static NamedType createType(final Discriminator discriminator,
                                      final String name,
                                      final AnchorTypeContext type) {
-    return createType(discriminator, name, null, null, type, IDL.NO_DOCS, false);
-  }
-
-  public AnchorSerialization serialization() {
-    return serialization;
-  }
-
-  public AnchorRepresentation representation() {
-    return representation;
+    return createType(discriminator, name, null, null, type, IDL.NO_DOCS);
   }
 
   @Override
@@ -92,8 +72,7 @@ final class AnchorNamedType extends BaseNamedType {
         representation,
         type,
         docs,
-        docComments,
-        index
+        docComments
     );
   }
 

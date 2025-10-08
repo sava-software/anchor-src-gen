@@ -2,6 +2,7 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.anchor.AnchorUtil;
 import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.src.NamedType;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 import systems.comodal.jsoniter.factory.ElementFactory;
@@ -19,7 +20,6 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
   private final IDLType idlType;
   private Discriminator discriminator;
   private AnchorRepresentation representation;
-  private boolean index;
 
   AnchorNamedTypeParser(final IDLType idlType, final boolean firstUpper) {
     super(firstUpper);
@@ -52,7 +52,7 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
 
   @Override
   public NamedType create() {
-    return AnchorNamedType.createType(discriminator, name, serialization, representation, type, docs, index);
+    return AnchorNamedType.createType(discriminator, name, serialization, representation, type, docs);
   }
 
   @Override
@@ -65,7 +65,8 @@ final class AnchorNamedTypeParser extends BaseNamedTypeParser {
       } else if (fieldEquals("fields", buf, offset, len)) {
         this.type = AnchorTypeContextList.createList(ElementFactory.parseList(ji, idlType.lowerTypeParserFactory(), this));
       } else if (fieldEquals("index", buf, offset, len)) {
-        this.index = ji.readBoolean();
+        // this.index = ji.readBoolean();
+        ji.skip();
       } else if (fieldEquals("name", buf, offset, len)) {
         this.name = NamedTypeParser.cleanName(ji.readString(), firstUpper);
         // System.out.println(name);

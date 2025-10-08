@@ -1,6 +1,7 @@
-package software.sava.idl.generator.anchor;
+package software.sava.idl.generator.src;
 
 import software.sava.core.programs.Discriminator;
+import software.sava.idl.generator.anchor.SrcGenContext;
 
 import java.util.List;
 
@@ -12,28 +13,7 @@ public interface NamedType {
 
   List<String> docs();
 
-  boolean index();
-
-  static String cleanName(final String name) {
-    final int length = name.length();
-    char c;
-    for (int i = 0; i < length; ++i) {
-      c = name.charAt(i);
-      if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '_') {
-        int index = i;
-        final char[] chars = name.toCharArray();
-        chars[index] = '_';
-        while (++index < length) {
-          c = chars[index];
-          if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '_') {
-            chars[index] = '_';
-          }
-        }
-        return new String(chars);
-      }
-    }
-    return name;
-  }
+  void appendDocs(final StringBuilder src);
 
   NamedType rename(final String newName);
 

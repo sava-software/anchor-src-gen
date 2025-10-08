@@ -2,6 +2,7 @@ package software.sava.idl.generator.anchor;
 
 import software.sava.core.accounts.PublicKey;
 import software.sava.idl.generator.src.BaseSrcGenContext;
+import software.sava.idl.generator.src.NamedType;
 
 import java.util.Map;
 import java.util.Set;

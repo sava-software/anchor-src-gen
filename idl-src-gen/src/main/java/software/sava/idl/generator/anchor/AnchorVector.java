@@ -1,6 +1,7 @@
 package software.sava.idl.generator.anchor;
 
 import software.sava.core.borsh.Borsh;
+import software.sava.idl.generator.src.NamedType;
 import systems.comodal.jsoniter.JsonIterator;
 import systems.comodal.jsoniter.ValueType;
 

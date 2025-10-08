@@ -4,7 +4,7 @@ import software.sava.idl.generator.src.SrcUtil;
 
 import java.util.List;
 
-abstract sealed class NamedDocsNode extends NamedNode permits DefinedTypeNode,
+abstract sealed class NamedDocsNode extends NamedNode permits
     ErrorNode,
     InstructionAccountNode,
     InstructionArgumentNode,
