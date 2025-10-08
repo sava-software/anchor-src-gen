@@ -36,6 +36,11 @@ final class StructFieldTypeNode extends BaseNamedType<TypeNode> implements TypeN
     return type;
   }
 
+  @Override
+  public boolean isString() {
+    return leafType().isString();
+  }
+
   ValueNode defaultValue() {
     return defaultValue;
   }

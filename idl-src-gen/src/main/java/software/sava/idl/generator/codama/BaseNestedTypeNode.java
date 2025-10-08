@@ -19,6 +19,18 @@ abstract class BaseNestedTypeNode {
     return typeNode;
   }
 
+  TypeNode leafType() {
+    var type = this.typeNode;
+    while (type instanceof NestedTypeNode nestedTypeNode) {
+      type = nestedTypeNode.typeNode();
+    }
+    return type;
+  }
+
+  public boolean isString() {
+    return leafType().isString();
+  }
+
   static abstract class Parser implements FieldBufferPredicate {
 
     private final Function<JsonIterator, TypeNode> typeParser;

@@ -13,6 +13,11 @@ record StringTypeNode(StringEncoding encoding) implements TypeNode {
     return parser.createTypeNode();
   }
 
+  @Override
+  public boolean isString() {
+    return true;
+  }
+
   private static final class Parser implements FieldBufferPredicate {
 
     private StringEncoding encoding;
