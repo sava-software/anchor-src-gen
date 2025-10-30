@@ -1,7 +1,7 @@
 [
   {
-    "name": "Glam Protocol",
-    "program": "GLAMpaME8wdTEzxtiYEAa5yD8fZbxZiz2hNtV58RZiEz",
-    "package": "glam.protocol"
+    "name": "Pyth Receiver",
+    "program": "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ",
+    "package": "pyth.receiver"
   }
 ]

@@ -93,4 +93,17 @@ final class AnchorNamedType extends BaseNamedType<TypeContext> {
     result = 31 * result + Objects.hashCode(representation);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "AnchorNamedType{" +
+        "discriminator=" + discriminator +
+        ", serialization=" + serialization +
+        ", representation=" + representation +
+        ", name='" + name + '\'' +
+        ", type=" + type +
+        ", docs=" + docs +
+        ", docComments='" + docComments + '\'' +
+        '}';
+  }
 }

@@ -9,6 +9,7 @@ import software.sava.idl.generator.src.NamedType;
 import software.sava.idl.generator.src.StructGen;
 import systems.comodal.jsoniter.JsonIterator;
 
+import java.util.HashMap;
 import java.util.List;
 
 import static java.util.Locale.ENGLISH;
@@ -20,7 +21,16 @@ import static software.sava.idl.generator.src.SrcUtil.replaceNewLinesIfLessThan;
 final class AnchorStruct extends BaseStruct<NamedType> implements AnchorDefinedTypeContext {
 
   AnchorStruct(final List<NamedType> fields) {
-    super(fields);
+    super(deduplicate(fields));
+  }
+
+  static List<NamedType> deduplicate(final List<NamedType> types) {
+    final var deDuplicate = HashMap.<String, Integer>newHashMap(types.size());
+    return types.stream().map(type -> {
+      final var name = type.name();
+      final int dedupeCount = deDuplicate.compute(name, (_, v) -> v == null ? 1 : v + 1);
+      return dedupeCount == 1 ? type : type.rename(name + dedupeCount);
+    }).toList();
   }
 
   static AnchorStruct parseStruct(final IDLType idlType, final JsonIterator ji) {

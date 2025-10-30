@@ -120,4 +120,14 @@ public abstract class BaseNamedType<C extends TypeContext> implements NamedType 
     result = 31 * result + docComments.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "BaseNamedType{" +
+        "name='" + name + '\'' +
+        ", type=" + type +
+        ", docs=" + docs +
+        ", docComments='" + docComments + '\'' +
+        '}';
+  }
 }
