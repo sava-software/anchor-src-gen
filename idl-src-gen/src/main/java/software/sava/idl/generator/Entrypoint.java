@@ -319,7 +319,6 @@ public final class Entrypoint extends Thread {
           moduleFileBuilder = new StringBuilder(2_048);
           exports.add(String.format("exports %s;", commonsPackage));
           exports.add(String.format("requires %s;", HttpClient.class.getModule().getName()));
-          exports.add(String.format("requires transitive %s;", JsonIterator.class.getModule().getName()));
           exports.add(String.format("requires transitive %s;", Instruction.class.getModule().getName()));
           exports.add(String.format("requires transitive %s;", SolanaRpcClient.class.getModule().getName()));
           exports.add(String.format("requires %s;", System.class.getModule().getName()));
