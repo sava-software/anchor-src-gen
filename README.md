@@ -1,6 +1,8 @@
 ![](https://github.com/sava-software/sava/blob/003cf88b3cd2a05279027557f23f7698662d2999/assets/images/solana_java_cup.svg)
 
-# Anchor Source Generator [![Gradle Check](https://github.com/sava-software/anchor-src-gen/actions/workflows/build.yml/badge.svg)](https://github.com/sava-software/anchor-src-gen/actions/workflows/build.yml) [![Publish Release](https://github.com/sava-software/anchor-src-gen/actions/workflows/publish.yml/badge.svg)](https://github.com/sava-software/anchor-src-gen/actions/workflows/publish.yml)
+# Anchor Source Generator
+
+> Active development of this project has moved to a private repository, which now supports both Anchor and Codama IDL formats. If interested in acquiring a license to use the generator binary or a paywalled service, please reach out to [hello@sava.software](mailto:hello@sava.software).
 
 ## Documentation
 
